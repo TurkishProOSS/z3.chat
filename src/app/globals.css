@@ -1,0 +1,57 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+	:root {
+		--primary: 255 0% 99%;
+		--secondary: 255 0% 96%;
+		--tertiary: 255 0% 94%;
+		--accent: 255 0% 90%;
+		--popover: 255 0% 99%;
+		--input: 255 0% 98%;
+		--border: 255 0% 90%;
+		--foreground: 0 0% 0%;
+		--muted: 0 0% 40%;
+		--colored: 215 72% 57%;
+	}
+
+	.dark {
+		--primary: 240 10% 5%;
+		--secondary: 240 10% 8%;
+		--tertiary: 240 10% 10%;
+		--accent: 240 10% 12%;
+		--popover: 240 10% 14%;
+		--input: 240 10% 16%;
+		--border: 240 10% 12%;
+
+		--foreground: 0 0% 100%;
+		--muted: 0 0% 60%;
+		--colored: 215 72% 57%;
+	}
+}
+
+@theme inline {
+	--color-primary: hsl(var(--primary));
+	--color-secondary: hsl(var(--secondary));
+	--color-tertiary: hsl(var(--tertiary));
+	--color-accent: hsl(var(--accent));
+	--color-popover: hsl(var(--popover));
+	--color-input: hsl(var(--input));
+	--color-border: hsl(var(--border));
+	--color-foreground: hsl(var(--foreground));
+	--color-muted: hsl(var(--muted));
+	--color-colored: hsl(var(--colored));
+    --animate-slow-spin: spin 10s linear infinite
+}
+
+@layer components {
+	* {
+		@apply box-border border-border;
+	}
+
+	body {
+		font-family: var(--font-albert-sans);
+		@apply text-foreground bg-primary;
+	}
+}
