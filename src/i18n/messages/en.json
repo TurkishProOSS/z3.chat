@@ -7,8 +7,11 @@
 			"Start_Dictate": "Click to dictate",
 			"Recording": "Recording...",
 			"Agent_Features": "Agent Features",
-			"Attachment": "Add Attachment",
-			"Agent_Feature_Web_Search": "Web Search"
+			"Attachment_Not_Available": "This model does not support adding attachments.",
+			"Attachment": "Add Attachment ({types})",
+			"Agent_Feature_Web_Search": "Web Search",
+			"Submit_Disabled": "You must write something to submit",
+			"Submit": "Submit"
 		}
 	},
 	"HomePage": {

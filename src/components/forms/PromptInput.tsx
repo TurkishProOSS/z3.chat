@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "motion/react";
 import { ToolButton } from "@/forms/ToolButton";
 import { useId, useState } from "react";
+import { useZ3 } from "@/hooks/use-z3";
 
 const getAnimationVariants = (groupIndex: number) => ({
 	initial: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 },
@@ -17,9 +18,11 @@ const getAnimationVariants = (groupIndex: number) => ({
 export default function PromptInput({ enableAgents = false }: {
 	enableAgents?: boolean
 }) {
+	const prompt = useZ3(state => state.prompt);
+	const setPrompt = useZ3(state => state.setPrompt);
+	const isEnhancing = useZ3(state => state.isEnhancing);
 	const id = useId();
 	const t = useTranslations("PromptInput");
-	const isEnhancing = false;
 	const tools = useTools(() => { });
 	const [focus, setFocus] = useState(false);
 
@@ -44,6 +47,9 @@ export default function PromptInput({ enableAgents = false }: {
 			disabled={isEnhancing}
 			className="w-full h-full bg-transparent outline-none resize-none select-none"
 			id={id}
+			value={prompt}
+			onChange={(e) => setPrompt(e.target.value)}
+			autoFocus
 			onFocus={() => setFocus(true)}
 			onBlur={() => setFocus(false)}
 		/>

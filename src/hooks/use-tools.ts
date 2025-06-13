@@ -15,6 +15,9 @@ export const useTools = (
 	const activeAgent = useZ3((state) => state.selectedAgent);
 	const setFeature = useZ3((state) => state.setFeature);
 	const features = useZ3((state) => state.features);
+	const isEnhancing = useZ3(state => state.isEnhancing);
+	const prompt = useZ3(state => state.prompt);
+	const enhancePrompt = useZ3(state => state.enhancePrompt);
 
 	const {
 		browserSupportsSpeechRecognition,
@@ -47,6 +50,7 @@ export const useTools = (
 	// 	}
 	// }, [listening, transcript, handleTranscript]);
 
+	const fileTypes = [activeAgent?.features?.vision ? "Image" : "", activeAgent?.features?.pdfSupport ? "PDF Document" : ""].filter(Boolean).join(", ");
 	const agentFeatures = [
 		{
 			type: "menu",
@@ -65,8 +69,8 @@ export const useTools = (
 		{
 			icon: RiAttachmentLine,
 			onClick: () => { },
-			disabled: true,
-			tooltip: t("Attachment")
+			disabled: !activeAgent?.features?.vision || !activeAgent?.features?.pdfSupport,
+			tooltip: fileTypes.length > 0 ? t("Attachment", { types: fileTypes }) : t("Attachment_Not_Available")
 		}
 	]
 
@@ -82,8 +86,8 @@ export const useTools = (
 				[
 					{
 						icon: RiSparklingFill,
-						// onClick: enhancePrompt,
-						disabled: true,
+						onClick: enhancePrompt,
+						disabled: isEnhancing,
 						tooltip: t("Enhance_Prompt")
 					},
 					{
@@ -96,12 +100,13 @@ export const useTools = (
 						variant: "primary",
 						icon: RiArrowUpLine,
 						onClick: submitPrompt,
-						disabled: true
+						tooltip: (isEnhancing || !prompt.trim()) ? t("Submit_Disabled") : t("Submit"),
+						disabled: isEnhancing || !prompt.trim()
 					},
 				]
 			])
 		),
-		[t, SpeechRecognition.browserSupportsSpeechRecognition, listening, activeAgent, isMicrophoneAvailable, features]
+		[t, SpeechRecognition.browserSupportsSpeechRecognition, listening, activeAgent, isMicrophoneAvailable, features, isEnhancing, enhancePrompt]
 	);
 
 	return tools;

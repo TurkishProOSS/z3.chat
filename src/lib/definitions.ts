@@ -47,7 +47,12 @@ export const z3Schema = z.object({
 		search: z.boolean().optional()
 	}).partial().default({}),
 	setFeature: z.function().args(z.string(), z.any())
-		.returns(z.void())
+		.returns(z.void()),
+	prompt: z.string().default(''),
+	setPrompt: z.function().args(z.string())
+		.returns(z.void()),
+	isEnhancing: z.boolean().default(false),
+	enhancePrompt: z.function().args().returns(z.void())
 });
 
 export const initZ3Schema = z3Schema.omit({ selectedAgent: true, changeAgent: true });

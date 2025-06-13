@@ -21,6 +21,14 @@ export const useZ3 = <T>(callback: (data: Z3Schema) => T) => {
 			},
 			setFeature: () => {
 				console.warn("useZ3: No Z3Context found. Ensure you are using Z3Provider.");
+			},
+			prompt: "",
+			isEnhancing: false,
+			enhancePrompt: () => {
+				console.warn("useZ3: No Z3Context found. Ensure you are using Z3Provider.");
+			},
+			setPrompt: () => {
+				console.warn("useZ3: No Z3Context found. Ensure you are using Z3Provider.");
 			}
 		});
 	}

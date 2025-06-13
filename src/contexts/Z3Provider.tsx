@@ -2,7 +2,7 @@
 import { agentModelSchema, InitZ3Schema, Z3Schema } from '@/lib/definitions';
 import { useAgentSelectionStore } from '@/stores/use-agent-selection';
 import { useAgentFeatureStore } from '@/stores/use-feature-store';
-import { createContext, useMemo } from 'react';
+import { createContext, useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 export const Z3Context = createContext<Z3Schema>({
@@ -13,22 +13,25 @@ export const Z3Context = createContext<Z3Schema>({
 	features: {
 		search: false
 	},
-	setFeature: (feature: string, value: any) => { }
+	setFeature: (feature: string, value: any) => { },
+	prompt: '',
+	isEnhancing: false,
+	enhancePrompt: () => { },
+	setPrompt: (prompt: string) => { },
 });
 export const Z3Provider = ({ z3, children, }: {
 	z3: InitZ3Schema;
 	children: React.ReactNode;
 }) => {
+	const [prompt, setPrompt] = useState<string>('');
+	const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
 	const defaultAgent = z3.defaultAgent || null;
 	const selectedAgent = useAgentSelectionStore((state) => state.selectedAgent);
 	const setSelectedAgent = useAgentSelectionStore((state) => state.setSelectedAgent);
 	const setFeature = useAgentFeatureStore((state) => state.setFeature);
 	const features = useAgentFeatureStore((state) => state.features);
 
-
-	if (!z3) {
-		throw new Error('Z3Provider requires a z3 prop');
-	}
+	if (!z3) throw new Error('Z3Provider requires a z3 prop');
 
 	const changeAgent = (agentId: string | null) => {
 		if (agentId === null) {
@@ -52,14 +55,30 @@ export const Z3Provider = ({ z3, children, }: {
 		if (!selectedAgent) changeAgent(defaultAgent?.id || null);
 	}, [selectedAgent, defaultAgent, setSelectedAgent]);
 
+	const enhancePrompt = useCallback(() => {
+		setIsEnhancing(true);
+
+		setTimeout(() => {
+			setIsEnhancing(false);
+			setPrompt((prev) => {
+				if (!prev) return prev;
+				return `${prev} iyileştirildi.`;
+			});
+		}, 2000);
+	}, [prompt, setPrompt]);
+
 	const z3ContextValue = useMemo(() => ({
 		...z3,
 		selectedAgent,
 		changeAgent,
 		defaultAgent,
 		features,
-		setFeature
-	}), [z3, selectedAgent, changeAgent, features, setFeature]);
+		setFeature,
+		prompt,
+		setPrompt,
+		isEnhancing,
+		enhancePrompt
+	}), [z3, selectedAgent, changeAgent, features, setFeature, prompt, setPrompt, isEnhancing, enhancePrompt]);
 
 	return (
 		<Z3Context.Provider

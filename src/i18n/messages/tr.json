@@ -7,8 +7,11 @@
 			"Start_Dictate": "Tıklayarak konuşmaya başlayın",
 			"Recording": "Kaydediliyor...",
 			"Agent_Features": "Araçlar",
-			"Attachment": "Ek Dosya Ekle",
-			"Agent_Feature_Web_Search": "Web'te Arama"
+			"Attachment_Not_Available": "Bu model ek dosya eklemeyi desteklemiyor.",
+			"Attachment": "Ek Dosya Ekle ({types})",
+			"Agent_Feature_Web_Search": "Web'te Arama",
+			"Submit_Disabled": "Göndermek için bir şeyler yazmalısınız",
+			"Submit": "Gönder"
 		}
 	},
 	"HomePage": {
