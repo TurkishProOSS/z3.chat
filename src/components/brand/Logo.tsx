@@ -1,4 +1,6 @@
 import * as React from "react";
+import logoAnimation from "@/constants/logo.json";
+import Lottie from "lottie-react";
 
 const Logo = (props: {
 	size?: number | string;
@@ -39,4 +41,13 @@ const Logo = (props: {
 	</svg>
 );
 
-export { Logo };
+const AnimatedLogo = ({
+	size = 100,
+	loop = true
+}: {
+	size?: number | string;
+	loop?: boolean;
+}) => (
+	<Lottie style={{ width: size + "px", height: size + "px" }} animationData={logoAnimation} loop={loop} />
+);
+export { Logo, AnimatedLogo };

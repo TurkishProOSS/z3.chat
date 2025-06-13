@@ -10,7 +10,8 @@ const nextConfig: NextConfig = {
 				destination: process.env.VERCEL_BLOB_STORAGE_URL + '/:path*'
 			},
 		];
-	}
+	},
+	transpilePackages: ['@lobehub/icons']
 };
 
 const withNextIntl = createNextIntlPlugin();

@@ -1,0 +1,18 @@
+{
+	"PromptInput": {
+		"Placeholder": "Bugün size nasıl yardımcı olabilirim?",
+		"Tools": {
+			"Speech_Recognition_Not_Supported": "Tarayıcınız konuşma tanımayı desteklemiyor.",
+			"Enhance_Prompt": "Metni Geliştir",
+			"Start_Dictate": "Tıklayarak konuşmaya başlayın",
+			"Recording": "Kaydediliyor...",
+			"Agent_Features": "Araçlar",
+			"Attachment": "Ek Dosya Ekle",
+			"Agent_Feature_Web_Search": "Web'te Arama"
+		}
+	},
+	"HomePage": {
+		"Evening": "{is_logged_in, plural, =0 {İyi günler!} =1 {İyi günler, <name-mark>{name}</name-mark>!} other {İyi günler!}}",
+		"Warning": "z3.chat hata yapabilir, yanıtları kontrol edin."
+	}
+}

@@ -3,7 +3,7 @@ import { getRequestConfig } from 'next-intl/server';
 import { headers } from 'next/headers';
 
 export default getRequestConfig(async () => {
-	const avaiableLocales = ['en'];
+	const avaiableLocales = ['en', 'tr'];
 	const acceptLanguage = (await headers()).get('accept-language') || '';
 	const n = new Negotiator({
 		headers: {
@@ -15,6 +15,6 @@ export default getRequestConfig(async () => {
 
 	return {
 		locale,
-		messages: (await import(`@/messages/${locale}.json`)).default
+		messages: (await import(`@/i18n/messages/${locale}.json`)).default
 	};
 });

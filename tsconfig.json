@@ -29,12 +29,18 @@
 			"@/ui/*": [
 				"./src/components/ui/*"
 			],
-			"@/shared/*": [
-				"./src/components/shared/*"
+			"@/brand/*": [
+				"./src/components/brand/*"
+			],
+			"@/forms/*": [
+				"./src/components/forms/*"
 			],
 			"@/layout/*": [
 				"./src/components/layout/*"
 			],
+			"@/public/*": [
+				"./public/*"
+			]
 		}
 	},
 	"include": [

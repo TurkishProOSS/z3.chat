@@ -1,0 +1,18 @@
+{
+	"PromptInput": {
+		"Placeholder": "How can I assist you today?",
+		"Tools": {
+			"Speech_Recognition_Not_Supported": "Your browser does not support speech recognition.",
+			"Enhance_Prompt": "Enhance Prompt",
+			"Start_Dictate": "Click to dictate",
+			"Recording": "Recording...",
+			"Agent_Features": "Agent Features",
+			"Attachment": "Add Attachment",
+			"Agent_Feature_Web_Search": "Web Search"
+		}
+	},
+	"HomePage": {
+		"Evening": "{is_logged_in, plural, =0 {Good evening!} =1 {Good evening, <name-mark>{name}</name-mark>!} other {Good evening!}}",
+		"Warning": "z3.chat may make mistakes, always verify critical information."
+	}
+}
