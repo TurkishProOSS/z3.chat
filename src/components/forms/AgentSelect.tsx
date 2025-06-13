@@ -53,7 +53,7 @@ export default function AgentSelect({
 						return (
 							<Select.Group key={provider} label={provider}>
 								{models
-									.slice(0, 2)
+									.slice(0, SHOW_AGENT_PER_PROVIDER)
 									.map((agent) => (
 										<Select.Item key={agent.id} value={agent.id}>
 											<Model company={provider} modelName={agent.name} version={agent.version} />
