@@ -14,7 +14,15 @@ export default function Chat() {
 	]
 	return (
 		<>
-			<div className="flex flex-col h-full justify-between w-full max-w-2xl mx-auto">
+			<div className="flex flex-col h-full justify-between w-full max-w-2xl mx-auto mt-12">
+				<div className="flex items-center justify-between mb-6">
+					<h1 className="text-2xl font-semibold text-foreground">
+						Sohbet geçmişin
+					</h1>
+					<Link href="/" className="text-sm text-orange-500 hover:underline">
+						Yeni sohbet başlat
+					</Link>
+				</div>
 				<input
 					className={cn(
 						"relative flex items-center justify-center",
@@ -22,7 +30,7 @@ export default function Chat() {
 						"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-secondary",
 						"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 					)}
-					placeholder="Search for a chat..."
+					placeholder="Sohbet başlıkları arasında ara..."
 					type="email"
 				/>
 				<div className="w-full flex flex-1 flex-col space-y-2 mt-6	">
