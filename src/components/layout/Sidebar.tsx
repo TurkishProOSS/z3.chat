@@ -6,6 +6,7 @@ import { Logo } from '@/brand/Logo';
 import { useHover } from "@uidotdev/usehooks";
 import { cn } from '@colidy/ui-utils';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Sidebar() {
 	const [ref, hovering] = useHover();
@@ -46,7 +47,7 @@ export default function Sidebar() {
 						{items.map((item, i) => {
 							const Icon = isActive(item) ? item.icon[1] : item.icon[0];
 							return (
-								<div key={i} className="flex items-center w-60">
+								<Link key={i} className="flex items-center w-60" href={item.path}>
 									<div className={cn(
 										"w-9 aspect-square rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-medium text-foreground cursor-pointer",
 										{
@@ -56,7 +57,7 @@ export default function Sidebar() {
 									)}>
 										<Icon className="w-5 h-5 text-foreground" />
 									</div>
-								</div>
+								</Link>
 							)
 						})}
 					</div>
