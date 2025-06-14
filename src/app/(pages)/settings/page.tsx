@@ -5,19 +5,21 @@ import { RiArrowLeftLine, RiUser3Line, RiBrushLine, RiChatHistoryLine, RiChatSmi
 import { useState, useEffect } from 'react';
 import { cn } from '@colidy/ui-utils';
 import { Logo } from '@/brand/Logo';
+import { useTranslations } from "next-intl";
 
 export default function Settings() {
 	const [mount, setMount] = useState(false);
+
+	const t = useTranslations("SettingsPage");
 
 	useEffect(() => {
 		setMount(true);
 	}, []);
 
 	return (
-		<div>
-
+		<div className="flex">
 			<motion.div
-				className="bg-primary group h-screen flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out"
+				className="bg-primary shrink-0 group h-screen flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out"
 				initial={{ width: 85 }}
 				animate={{ width: '24rem', backgroundColor: 'var(--color-secondary)' }}
 			>
@@ -53,7 +55,7 @@ export default function Settings() {
 							transition={{ delay: 0.5 }}
 							className="text-2xl text-foreground"
 						>
-							Settings
+							{t('Title')}
 						</motion.h1>
 						<motion.p
 							initial={{ opacity: 0, y: 20 }}
@@ -61,16 +63,16 @@ export default function Settings() {
 							transition={{ delay: 0.7 }}
 							className="text-muted max-w-64"
 						>
-							Manage settings related to your account and subscription.
+							{t('Description')}
 						</motion.p>
 					</div>
 					<div className="space-y-3">
 						{[
-							['account', <RiUser3Line size={48} className="text-muted/50" />],
-							['customization', <RiBrushLine size={48} className="text-muted/50" />],
-							['history', <RiChatHistoryLine size={48} className="text-muted/50" />],
-							['models', <RiChatSmileAiLine size={48} className="text-muted/50" />],
-							['apikeys', <RiKeyLine size={48} className="text-muted/50" />],
+							['Account', <RiUser3Line size={48} className="text-muted/50" />],
+							['Customization', <RiBrushLine size={48} className="text-muted/50" />],
+							['History', <RiChatHistoryLine size={48} className="text-muted/50" />],
+							['Models', <RiChatSmileAiLine size={48} className="text-muted/50" />],
+							['ApiKeys', <RiKeyLine size={48} className="text-muted/50" />],
 						].map((item, index) => (
 							<motion.div
 								key={index}
@@ -85,8 +87,8 @@ export default function Settings() {
 										{item[1]}
 									</div>
 									<div className="space-y-1">
-										<h1 className="text-foreground leading-none text-lg">{item[0]}</h1>
-										<p className="text-muted leading-none">{item[0]}</p>
+										<h1 className="text-foreground leading-none text-lg">{t(`Categories.${item[0]}.Title`)}</h1>
+										<p className="text-muted leading-none">{t(`Categories.${item[0]}.Description`)}</p>
 									</div>
 								</div>
 							</motion.div>
@@ -94,6 +96,9 @@ export default function Settings() {
 					</div>
 				</div>
 			</motion.div>
+			<div className="flex-1 w-full max-w-4xl mx-auto bg-red-500">
+				smadk
+			</div>
 		</div>
 	);
 };

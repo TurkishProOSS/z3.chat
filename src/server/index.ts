@@ -5,8 +5,19 @@ import { upload } from "@/server/routes/upload";
 import { chat } from "@/server/routes/chat";
 import { promptEnhancement } from "@/server/routes/prompt-enhancement";
 import { createConversation } from "./routes/create-conversation";
+import { auth } from "@/lib/auth";
 
-const app = new Elysia({ prefix: '/api' })
+const app = new Elysia({ prefix: '/api/v1' })
+	.get("/", () => {
+		return {
+			success: true,
+			message: "API is running",
+			data: {
+				version: '1.0.0',
+				name: 'z3.chat'
+			}
+		};
+	})
 	.use(agents)
 	.use(upload)
 	.use(chat)
@@ -32,6 +43,10 @@ type ResOptions<T> = {
 		remaining: number;
 		reset: number | string;
 	};
+	alert?: {
+		message: string;
+		duration?: number;
+	};
 };
 
 export function res<T = string>(success: boolean, options: ResOptions<T> = {}) {
@@ -42,8 +57,19 @@ export function res<T = string>(success: boolean, options: ResOptions<T> = {}) {
 		success,
 		message: options?.message || (success ? 'OK' : 'ERROR'),
 		[options?.customReturn || 'data']: data,
+		alert: options?.alert,
 		error: error ? { code: error[0], message: error[1] } : undefined,
 		pagination: options?.pagination,
 		rateLimit: options?.rateLimit
 	};
 };
+
+export async function getAuth(headers: any) {
+	const session = await auth.api.getSession({
+		headers
+	}).catch(() => null);
+
+	if (!session) return null;
+
+	return session;
+}

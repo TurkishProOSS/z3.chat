@@ -55,7 +55,10 @@ export const z3Schema = z.object({
 	enhancePrompt: z.function().args().returns(z.void()),
 	enhanceRemaining: z.number().int().min(0).default(0),
 	alert: z.string().nullable().default(null),
-	setAlert: z.function().args(z.string().nullable())
+	setAlert: z.function().args(z.string().nullable()),
+	setAlertDuration: z.function().args(z.number().int().min(0))
+		.returns(z.void()),
+	alertDuration: z.number().int().min(0).default(5000)
 });
 
 export const initZ3Schema = z3Schema.omit({ selectedAgent: true, changeAgent: true });

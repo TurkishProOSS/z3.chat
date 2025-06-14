@@ -2,16 +2,15 @@
 
 import AgentSelect from "@/forms/AgentSelect";
 // import { usePrompt } from "@/states/use-prompt";
-import { RiArrowUpFill, RiArrowUpLine, RiAttachment2, RiAttachmentLine, RiBrain2Fill, RiBrain2Line, RiEqualizer2Line, RiFile2Fill, RiMicFill, RiMicOffFill, RiSettings2Line, RiSettings3Line, RiSparklingFill, RiUpload2Fill, RiUpload2Line } from "@remixicon/react";
-import { useSpeech } from "@uidotdev/usehooks";
+import { RiArrowUpLine, RiAttachmentLine, RiEqualizer2Line, RiMicFill, RiMicOffFill, RiSparklingFill } from "@remixicon/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { useZ3 } from "./use-z3";
+import { useZ3 } from "@/hooks/use-z3";
+import { useChat } from "@/hooks/use-chat";
 
-export const useTools = (
-	submitPrompt: (prompt: string) => void
-) => {
+export const useTools = () => {
+	const { handleSubmit } = useChat();
 	const activeAgent = useZ3((state) => state.selectedAgent);
 	const setFeature = useZ3((state) => state.setFeature);
 	const features = useZ3((state) => state.features);
@@ -100,7 +99,7 @@ export const useTools = (
 					{
 						variant: "primary",
 						icon: RiArrowUpLine,
-						onClick: () => submitPrompt(prompt),
+						onClick: () => handleSubmit(),
 						tooltip: (isEnhancing || !prompt.trim()) ? t("Submit_Disabled") : t("Submit"),
 						disabled: isEnhancing || !prompt.trim()
 					},

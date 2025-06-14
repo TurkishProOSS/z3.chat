@@ -21,5 +21,7 @@ export const emptyZ3: Z3Schema = {
 	setPrompt: (prompt: string) => { },
 	enhanceRemaining: 0,
 	alert: null,
-	setAlert: (alert: string | null) => { }
+	setAlert: (alert: string | null) => { },
+	setAlertDuration: (duration: number) => { },
+	alertDuration: 5000
 };

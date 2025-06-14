@@ -13,6 +13,7 @@ export const Z3Provider = ({ z3, children, }: {
 	children: React.ReactNode;
 }) => {
 	const [alert, setAlert] = useState<string | null>(null);
+	const [alertDuration, setAlertDuration] = useState<number>(5000);
 	const [prompt, setPrompt] = useState<string>('');
 	const [enhanceRemaining, setEnhanceRemaining] = useState<number>(0);
 	const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
@@ -50,7 +51,7 @@ export const Z3Provider = ({ z3, children, }: {
 	const enhancePrompt = useCallback(() => {
 		setIsEnhancing(true);
 
-		api['prompt-enhancement'].post({
+		api.enhancePrompt.post({
 			prompt
 		}).then((response) => {
 			if (!response.data) return;
@@ -58,8 +59,15 @@ export const Z3Provider = ({ z3, children, }: {
 				setAlert(response.data.message || "An error occurred while enhancing the prompt.");
 				return;
 			}
-			if (response.data?.remain) setEnhanceRemaining(response.data?.remain);
-			if (response.data?.prompt) setPrompt(response.data?.prompt);
+
+			if (response.data?.alert) {
+				setAlert(response.data.alert.message);
+				if (response.data.alert.duration) {
+					setAlertDuration(response.data.alert.duration);
+				}
+			};
+			if (response.data?.remain) setEnhanceRemaining(response.data?.rateLimit?.remaining || 0);
+			if (response.data?.prompt) setPrompt(response.data.prompt as string);
 		}).finally(() => {
 			setIsEnhancing(false);
 		});
@@ -69,7 +77,8 @@ export const Z3Provider = ({ z3, children, }: {
 		if (alert) {
 			setTimeout(() => {
 				setAlert(null);
-			}, 5000);
+				if (alertDuration !== 5000) setAlertDuration(5000);
+			}, alertDuration);
 		}
 	}, [alert]);
 
@@ -86,8 +95,10 @@ export const Z3Provider = ({ z3, children, }: {
 		enhancePrompt,
 		enhanceRemaining,
 		alert,
-		setAlert
-	}), [z3, selectedAgent, changeAgent, features, setFeature, prompt, setPrompt, isEnhancing, enhancePrompt, enhanceRemaining]);
+		setAlert,
+		setAlertDuration,
+		alertDuration
+	}), [z3, selectedAgent, changeAgent, features, setFeature, prompt, setPrompt, isEnhancing, enhancePrompt, enhanceRemaining, alert, setAlert, setAlertDuration, alertDuration]);
 
 	return (
 		<Z3Context.Provider

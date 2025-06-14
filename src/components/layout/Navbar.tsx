@@ -4,11 +4,12 @@ import { authClient } from '@/lib/authClient';
 import { Button } from '@/ui/Button';
 import { Dropdown } from '@/ui/Dropdown';
 import { Avatar } from '@/ui/Avatar';
+import Link from 'next/link';
 
 export default function Navbar() {
 	const { data: session, isPending } = authClient.useSession();
 
-	const isAuthenticated = !!session && !isPending;
+	const isAuthenticated = !!session && !isPending && session.user && !session.user.isAnonymous;
 
 	const handleLogout = async () => {
 		await authClient.signOut();
@@ -31,7 +32,9 @@ export default function Navbar() {
 						</Dropdown.Item>
 						<Dropdown.Separator />
 						<Dropdown.Item>
-							Ayarlar
+							<Link href="/settings"> {/* test */}
+								Ayarlar
+							</Link>
 						</Dropdown.Item>
 						<Dropdown.Item>
 							API Anahtarları

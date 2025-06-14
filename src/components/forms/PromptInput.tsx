@@ -7,6 +7,10 @@ import { AnimatePresence, motion } from "motion/react";
 import { ToolButton } from "@/forms/ToolButton";
 import { useId, useState, useRef, useEffect } from "react";
 import { useZ3 } from "@/hooks/use-z3";
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm'
 
 const getAnimationVariants = (groupIndex: number) => ({
 	initial: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 },
@@ -14,14 +18,14 @@ const getAnimationVariants = (groupIndex: number) => ({
 	exit: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 }
 });
 
-export default function PromptInput({ onSubmit }: { onSubmit?: (prompt: string) => void | any }) {
+export default function PromptInput() {
 	const id = useId();
 	const t = useTranslations("PromptInput");
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
 	const [focus, setFocus] = useState(false);
-	const [isAtMaxHeight, setIsAtMaxHeight] = useState(false);
+	const [_, setIsAtMaxHeight] = useState(false);
 
 	const prompt = useZ3(state => state.prompt);
 	const setPrompt = useZ3(state => state.setPrompt);
@@ -51,12 +55,78 @@ export default function PromptInput({ onSubmit }: { onSubmit?: (prompt: string) 
 		autoResize();
 	};
 
+	// useEffect(() => {
+	// 	if (conversationId && searchParams.get('autoStart') === 'true') {
+	// 		handleSubmit();
+	// 	}
+	// }, [conversationId, searchParams]);
 
-	const handleSubmit = () => {
-		window.alert('This feature is not implemented yet.');
-	}
 
-	const tools = useTools(onSubmit || handleSubmit);
+	// const handleSubmit = async () => {
+	// 	if (isEnhancing || !prompt.trim()) return;
+
+	// 	if (conversationId) {
+	// 		const promptReceived = prompt.trim();
+	// 		// if (searchParams.get('autoStart') === 'true') {
+	// 		// 	searchParams.delete('autoStart');
+	// 		// }
+	// 		setPrompt("");
+	// 		const { data } = await api.chat({ conversationId }).post({
+	// 			message: prompt,
+	// 			model: selectedAgent?.id || ""
+	// 		});
+
+	// 		if (!data) {
+	// 			setAlert("No data returned from chat API");
+	// 			setPrompt(promptReceived);
+	// 			return;
+	// 		}
+
+	// 		onSubmit?.(promptReceived);
+
+	// 		for await (const chunk of data as AsyncIterable<string | null>) {
+	// 			if (typeof chunk !== 'string') {
+	// 				setAlert("Received non-string chunk from chat API");
+	// 				setPrompt(promptReceived);
+	// 				return;
+	// 			}
+	// 			if (chunk === "[DONE]") {
+	// 				onStreamEnd?.();
+	// 				return;
+	// 			}
+
+	// 			onStream?.(chunk);
+	// 		}
+	// 	} else {
+	// 		const { data } = await api.createConversation.post({
+	// 			prompt
+	// 		});
+
+	// 		if (!data) {
+	// 			setAlert("No data returned from create conversation API");
+	// 			return;
+	// 		}
+
+	// 		if (!data.success) {
+	// 			setAlert(data.message || "An error occurred while creating the conversation.");
+	// 			return;
+	// 		}
+
+	// 		if (data.alert) {
+	// 			setAlert(data.alert.message);
+	// 			if (data.alert.duration) {
+	// 				setAlertDuration(data.alert.duration);
+	// 			}
+	// 		}
+
+	// 		if (data.data.redirect) {
+	// 			redirect(data.data.redirect + '?autoStart=true');
+	// 		}
+	// 	}
+	// }
+
+	const tools = useTools();
+
 	return (
 		<div className="relative w-full max-w-2xl">
 			<AnimatePresence>
@@ -67,7 +137,12 @@ export default function PromptInput({ onSubmit }: { onSubmit?: (prompt: string) 
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: 20 }}
 					>
-						{alert}
+						<ReactMarkdown
+							children={alert}
+							remarkPlugins={[remarkMath, remarkGfm]}
+							rehypePlugins={[rehypeKatex]}
+
+						/>
 					</motion.div>
 				)}
 			</AnimatePresence>

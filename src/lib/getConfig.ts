@@ -1,9 +1,18 @@
-export const getAIApiKey = (provider: string): string | null => {
-	const envKey = `Z3_${provider.toUpperCase()}_API_KEY`;
-	const apiKey = process.env[envKey];
+export const getConfig = async (): Promise<{
+	[key: string]: string | null
+}> => {
+
+	return {
+		openai: await getApiKey('openai').catch(() => null),
+		llama: await getApiKey('llama').catch(() => null)
+	}
+};
+
+const getApiKey = async (provider: string): Promise<string | null> => {
+	const apiKey = process.env[`Z3_${provider.toUpperCase()}_API_KEY`];
 	if (!apiKey) {
-		console.warn(`API key for ${provider} not found. Please set the environment variable ${envKey}.`);
+		console.warn(`API key for ${provider} is not set.`);
 		return null;
 	}
 	return apiKey;
-};
+}
