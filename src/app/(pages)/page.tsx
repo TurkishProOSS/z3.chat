@@ -1,12 +1,13 @@
 "use client";
 
 import { AnimatedLogo } from "@/brand/Logo";
-import { Popover } from "@/components/ui/Popover";
 import PromptInput from "@/forms/PromptInput";
+import { authClient } from "@/lib/authClient";
 import { useTranslations } from "next-intl";
 import { motion } from "motion/react";
 
 export default function HomePage() {
+    const { data: session, isPending } = authClient.useSession();
 	const t = useTranslations("HomePage");
 
 	return <>
@@ -25,17 +26,17 @@ export default function HomePage() {
 						<AnimatedLogo size={100} loop={true} />
 					</div>
 				</div>
-				<motion.h1
+				{!isPending && <motion.h1
 					className="text-5xl pb-10 font-semibold max-w-2xl text-center text-foreground"
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 				>
 					{t.rich("Evening", {
 						is_logged_in: 1,
-						name: "clqu",
+						name: session?.user?.name || "",
 						"name-mark": (chunks) => <span className="bg-gradient-to-br from-orange-400 via-orange-600 to-orange-500 inline-block text-transparent bg-clip-text">{chunks}</span>
 					})}
-				</motion.h1>
+				</motion.h1>}
 			</div>
 			<PromptInput />
 			<h1 className="text-muted text-sm text-center">{t("Warning")}</h1>

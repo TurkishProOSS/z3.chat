@@ -20,7 +20,7 @@ export default function Input({
 	const id = useId();
 	const [type, setType] = useState(initialType);
 	const [focus, setFocus] = useState(false);
-	const [value, setValue] = useState("");
+	const [value, setValue] = useState(props.value || "");
 	const [isFloating, setIsFloating] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -30,7 +30,7 @@ export default function Input({
 	};
 
 	useEffect(() => {
-		if ((value && value.trim().length > 0) || focus) {
+		if ((value && (value as string).trim().length > 0) || focus) {
 			setIsFloating(true);
 		} else {
 			setIsFloating(false);
