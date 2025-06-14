@@ -1,15 +1,16 @@
 "use client";
 
-import { RiAppsFill, RiAppsLine, RiChat1Fill, RiChat1Line, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiSettings3Fill, RiSettings3Line } from '@remixicon/react';
+import { RiAppsFill, RiAppsLine, RiChat1Fill, RiChat1Line, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiLoginBoxFill, RiSettings3Fill, RiSettings3Line } from '@remixicon/react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '@/brand/Logo';
 import { useHover } from "@uidotdev/usehooks";
 import { cn } from '@colidy/ui-utils';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { authClient } from '@/lib/authClient';
 
 export default function Sidebar() {
-	const [ref, hovering] = useHover();
+	const { data: session, isPending } = authClient.useSession();
 	const pathname = usePathname();
 
 	const isActive = (item: { path: string }) => {
@@ -31,7 +32,7 @@ export default function Sidebar() {
 							<Logo size={36} />
 						</div>
 						<AnimatePresence>
-							{hovering && (
+							{false && (
 								<motion.h1
 									className="text-2xl font-medium text-foreground"
 									initial={{ opacity: 0 }}
@@ -62,7 +63,7 @@ export default function Sidebar() {
 						})}
 					</div>
 				</div>
-				<div className="w-8 flex flex-col gap-4">
+				{/* <div className="w-8 flex flex-col gap-4">
 					<div
 						className={cn(
 							"w-full aspect-square rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-medium text-foreground cursor-pointer hover:bg-secondary"
@@ -70,12 +71,20 @@ export default function Sidebar() {
 					>
 						<RiSettings3Fill className="w-5 h-5 text-foreground" />
 					</div>
-					<img
-						src="https://pbs.twimg.com/profile_images/1872801951995314176/axOtnYW0_400x400.jpg"
-						alt="User Avatar"
-						className="w-full aspect-square rounded-full object-cover shrink-0"
-					/>
-				</div>
+					{session ? (
+						<Link href="/profile" className="w-full aspect-square rounded-full overflow-hidden">
+							<img
+								src={session.user.image || "https://pbs.twimg.com/profile_images/1872801951995314176/axOtnYW0_400x400.jpg"}
+								alt="User Avatar"
+								className="w-full aspect-square rounded-full object-cover shrink-0"
+							/>
+						</Link>
+					) : (
+						<Link href="/auth/signin" className="w-full aspect-square rounded-full overflow-hidden">
+							<RiLoginBoxFill className="w-5 h-5 text-foreground" />
+						</Link>
+					)}
+				</div> */}
 			</div>
 		</>
 	);

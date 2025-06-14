@@ -4,6 +4,7 @@ import { AnimatedLogo } from "@/brand/Logo";
 import { Popover } from "@/components/ui/Popover";
 import PromptInput from "@/forms/PromptInput";
 import { useTranslations } from "next-intl";
+import { motion } from "motion/react";
 
 export default function HomePage() {
 	const t = useTranslations("HomePage");
@@ -24,13 +25,17 @@ export default function HomePage() {
 						<AnimatedLogo size={100} loop={true} />
 					</div>
 				</div>
-				<h1 className="text-5xl pb-10 font-semibold max-w-2xl text-center text-foreground">
+				<motion.h1
+					className="text-5xl pb-10 font-semibold max-w-2xl text-center text-foreground"
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+				>
 					{t.rich("Evening", {
 						is_logged_in: 1,
 						name: "clqu",
 						"name-mark": (chunks) => <span className="bg-gradient-to-br from-orange-400 via-orange-600 to-orange-500 inline-block text-transparent bg-clip-text">{chunks}</span>
 					})}
-				</h1>
+				</motion.h1>
 			</div>
 			<PromptInput />
 			<h1 className="text-muted text-sm text-center">{t("Warning")}</h1>

@@ -6,8 +6,8 @@ const nextConfig: NextConfig = {
 	rewrites: async () => {
 		return [
 			{
-				source: '/storage/public/chat-files/:path*',
-				destination: process.env.VERCEL_BLOB_STORAGE_URL + '/:path*'
+				source: '/storage/public/:dir/:path*',
+				destination: process.env.VERCEL_BLOB_STORAGE_URL + '/:dir/:path*'
 			},
 		];
 	},

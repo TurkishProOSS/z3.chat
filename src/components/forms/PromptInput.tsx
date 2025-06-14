@@ -5,7 +5,7 @@ import { useTools } from "@/hooks/use-tools";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "motion/react";
 import { ToolButton } from "@/forms/ToolButton";
-import { useId, useState } from "react";
+import { useId, useState, useRef, useEffect } from "react";
 import { useZ3 } from "@/hooks/use-z3";
 
 const getAnimationVariants = (groupIndex: number) => ({
@@ -14,85 +14,137 @@ const getAnimationVariants = (groupIndex: number) => ({
 	exit: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 }
 });
 
+export default function PromptInput({ onSubmit }: { onSubmit?: (prompt: string) => void | any }) {
+	const id = useId();
+	const t = useTranslations("PromptInput");
 
-export default function PromptInput({ enableAgents = false }: {
-	enableAgents?: boolean
-}) {
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+	const [focus, setFocus] = useState(false);
+	const [isAtMaxHeight, setIsAtMaxHeight] = useState(false);
+
 	const prompt = useZ3(state => state.prompt);
 	const setPrompt = useZ3(state => state.setPrompt);
 	const isEnhancing = useZ3(state => state.isEnhancing);
-	const id = useId();
-	const t = useTranslations("PromptInput");
-	const tools = useTools(() => { });
-	const [focus, setFocus] = useState(false);
+	const alert = useZ3(state => state.alert);
 
-	return <motion.label
-		className={cn([
-			"relative flex items-center justify-center",
-			"w-full max-w-2xl h-40 bg-input shadow-lg outline-none border rounded-2xl p-4 text-sm text-foreground resize-none",
-			"transition-shadow ease-in-out"
-		], {
-			"cursor-not-allowed opacity-50": isEnhancing,
-			"ring-2 ring-orange-500 ring-offset-2 ring-offset-secondary bg-input": focus,
-			"hover:border-border-hover": !focus
-		})}
-		initial={{ opacity: 0, y: 20 }}
-		animate={{ opacity: 1, y: 0 }}
-		exit={{ opacity: 0, y: 20 }}
-		htmlFor={id}
-	>
-		{isEnhancing && <Shimmer className="absolute inset-0 bg-secondary/50 rounded-lg animate-pulse" />}
-		<textarea
-			placeholder={t("Placeholder")}
-			disabled={isEnhancing}
-			className="w-full h-full bg-transparent outline-none resize-none select-none"
-			id={id}
-			value={prompt}
-			onChange={(e) => setPrompt(e.target.value)}
-			autoFocus
-			onFocus={() => setFocus(true)}
-			onBlur={() => setFocus(false)}
-		/>
-		<div className="absolute bottom-4 inset-x-4 flex justify-between text-xs text-muted-foreground select-none">
-			{tools.map((toolGroup, groupIndex) => (
-				<motion.div
-					key={groupIndex}
-					className="flex items-center gap-2"
-				>
-					<AnimatePresence>
-						{toolGroup
-							.map((tool, index) => (
-								<motion.div
-									key={`${groupIndex}-${index}`}
-									variants={getAnimationVariants(groupIndex)}
-									initial="initial"
-									animate="animate"
-									exit="exit"
-									transition={{ duration: 0.2, delay: index * 0.1 }}
-									className="flex items-center"
-								>
-									<ToolButton
-										key={index}
-										tool={tool}
-									/>
-								</motion.div>
-							))}
-					</AnimatePresence>
-				</motion.div>
-			))}
-		</div>
-	</motion.label >
-}
 
-function Shimmer({ className }: { className?: string }) {
+	const autoResize = () => {
+		if (!textareaRef.current) return;
+		const textarea = textareaRef.current;
+		const maxHeight = 260;
+		textarea.style.height = 'auto';
+		const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), maxHeight);
+		textarea.style.height = `${newHeight}px`;
+		const atMaxHeight = textarea.scrollHeight > maxHeight;
+		setIsAtMaxHeight(atMaxHeight);
+		if (atMaxHeight) textarea.style.overflowY = 'auto';
+		else textarea.style.overflowY = 'hidden';
+	};
+
+	useEffect(() => {
+		autoResize();
+	}, [prompt]);
+
+	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+		setPrompt(e.target.value);
+		autoResize();
+	};
+
+
+	const handleSubmit = () => {
+		window.alert('This feature is not implemented yet.');
+	}
+
+	const tools = useTools(onSubmit || handleSubmit);
 	return (
-		<div
-			className={cn(
-				"absolute inset-0 bg-gradient-to-r from-secondary/20 via-secondary/30 to-secondary/20",
-				"animate-shimmer rounded-lg",
-				className
-			)}
-			suppressHydrationWarning
-		/>
-	);
+		<div className="relative w-full max-w-2xl">
+			<AnimatePresence>
+				{alert && (
+					<motion.div
+						className="absolute bottom-full mb-6 left-0 w-full px-6 py-4 bg-orange-500 text-white rounded-full shadow-lg z-50 text-sm"
+						initial={{ opacity: 0, y: 20 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: 20 }}
+					>
+						{alert}
+					</motion.div>
+				)}
+			</AnimatePresence>
+			<motion.label
+				className={cn([
+					"relative flex flex-col items-center justify-center overflow-hidden",
+					"w-full max-w-2xl max-h-72 bg-input shadow-lg outline-none border rounded-2xl text-sm text-foreground resize-none",
+					"transition-shadow ease-in-out pt-2"
+				], {
+					"cursor-not-allowed opacity-50": isEnhancing,
+					"ring-2 ring-orange-500 ring-offset-2 ring-offset-secondary bg-input": focus,
+					"hover:border-border-hover": !focus
+				})}
+				initial={{ opacity: 0, y: 20 }}
+				animate={{ opacity: 1, y: 0 }}
+				exit={{ opacity: 0, y: 20 }}
+				htmlFor={isEnhancing ? undefined : id}
+			>
+				{isEnhancing && <div className="shimmer !absolute inset-0 z-10" />}
+				<textarea
+					ref={textareaRef}
+					placeholder={t("Placeholder")}
+					disabled={isEnhancing}
+					className={cn([
+						"w-full bg-transparent outline-none select-none px-4 pb-4 pt-2 resize-none",
+						// Custom scrollbar styles
+						"scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
+						"hover:scrollbar-thumb-border-hover"
+					], {
+						"cursor-not-allowed opacity-50": isEnhancing
+					})}
+					id={id}
+					rows={1}
+					value={prompt}
+					onChange={handleChange}
+					autoFocus
+					onFocus={() => setFocus(true)}
+					onBlur={() => setFocus(false)}
+					style={{
+						// Custom scrollbar for browsers that don't support scrollbar-* classes
+						scrollbarWidth: 'thin',
+						scrollbarColor: 'rgb(203 213 225) transparent'
+					}}
+				/>
+				<div
+					className={cn("flex w-full justify-between text-xs text-muted-foreground select-none p-2", {
+						"opacity-50": isEnhancing
+					})}
+				>
+					{tools.map((toolGroup, groupIndex) => (
+						<motion.div
+							key={groupIndex}
+							className="flex items-center gap-2"
+						>
+							<AnimatePresence>
+								{toolGroup
+									.map((tool, index) => (
+										<motion.div
+											key={`${groupIndex}-${index}`}
+											variants={getAnimationVariants(groupIndex)}
+											initial="initial"
+											animate="animate"
+											exit="exit"
+											transition={{ duration: 0.2, delay: index * 0.1 }}
+											className="flex items-center"
+										>
+											<ToolButton
+												key={index}
+												tool={tool}
+											/>
+										</motion.div>
+									))}
+							</AnimatePresence>
+						</motion.div>
+					))}
+				</div>
+			</motion.label>
+		</div>
+	)
 }

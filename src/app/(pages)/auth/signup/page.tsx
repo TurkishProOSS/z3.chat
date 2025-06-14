@@ -14,7 +14,8 @@ import { useState } from 'react';
 export default function Signin() {
 	const [formData, setFormData] = useState({
 		email: '',
-		password: ''
+		password: '',
+		username: ''
 	});
 
 	const [loading, setLoading] = useState(false);
@@ -31,9 +32,12 @@ export default function Signin() {
 		setError(null);
 		setLoading(true);
 
-		const { data, error } = await authClient.signIn.email({
+		const { data, error } = await authClient.signUp.email({
 			email: formData.email,
-			password: formData.password
+			password: formData.password,
+			username: formData.username,
+			name: formData.username,
+			displayUsername: formData.username
 		});
 
 		setLoading(false);
@@ -74,7 +78,7 @@ export default function Signin() {
 			<div className="max-w-md mx-auto col-span-2 h-full w-full flex flex-col  justify-center text-center items-center">
 				<form className="w-full space-y-5" onSubmit={handleSubmit}>
 					<h1 className="text-2xl text-foreground font-bold">
-						Tekrar hoş geldin
+						Bir Z3 Hesabı Oluştur
 					</h1>
 					<div className="flex flex-col gap-2">
 						{error && (
@@ -97,6 +101,14 @@ export default function Signin() {
 							disabled={loading}
 						/>
 						<Input
+							value={formData.username}
+							onChange={handleInputChange}
+							name="username"
+							label="Kullanıcı Adı"
+							type="text"
+							disabled={loading}
+						/>
+						<Input
 							value={formData.password}
 							onChange={handleInputChange}
 							name="password"
@@ -106,13 +118,13 @@ export default function Signin() {
 						/>
 					</div>
 
-					<Button className="block w-full" disabled={((!formData.email || !formData.password) || error !== null) || loading} isLoading={loading} type="submit">
-						Giriş Yap
+					<Button className="block w-full" disabled={((!formData.email || !formData.password || !formData.username) || error !== null) || loading} isLoading={loading} type="submit">
+						Hesap Oluştur
 					</Button>
 				</form>
 
 				<div className="mt-5 text-sm text-muted-foreground text-center">
-					Henüz bir hesabın yok mu? <Button variant="link" href="/auth/signup">Hesap oluştur.</Button>
+					Zaten bir hesabın var mı? <Button variant="link" href="/auth/signin">Oturum aç.</Button>
 				</div>
 			</div>
 		</div>

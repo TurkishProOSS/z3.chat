@@ -10,7 +10,7 @@ import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognitio
 import { useZ3 } from "./use-z3";
 
 export const useTools = (
-	submitPrompt: (prompt: string) => void
+	submitPrompt: () => void
 ) => {
 	const activeAgent = useZ3((state) => state.selectedAgent);
 	const setFeature = useZ3((state) => state.setFeature);
@@ -18,7 +18,6 @@ export const useTools = (
 	const isEnhancing = useZ3(state => state.isEnhancing);
 	const prompt = useZ3(state => state.prompt);
 	const enhancePrompt = useZ3(state => state.enhancePrompt);
-	const enhanceRemaining = useZ3(state => state.enhanceRemaining);
 
 	const {
 		browserSupportsSpeechRecognition,
@@ -89,7 +88,7 @@ export const useTools = (
 						icon: RiSparklingFill,
 						onClick: enhancePrompt,
 						disabled: isEnhancing,
-						tooltip: t("Enhance_Prompt", { remaining: enhanceRemaining }),
+						tooltip: t("Enhance_Prompt")
 					},
 					{
 						icon: listening ? RiMicOffFill : RiMicFill,
@@ -100,7 +99,7 @@ export const useTools = (
 					{
 						variant: "primary",
 						icon: RiArrowUpLine,
-						onClick: () => submitPrompt(prompt),
+						onClick: submitPrompt,
 						tooltip: (isEnhancing || !prompt.trim()) ? t("Submit_Disabled") : t("Submit"),
 						disabled: isEnhancing || !prompt.trim()
 					},

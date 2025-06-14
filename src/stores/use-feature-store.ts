@@ -1,4 +1,3 @@
-import { AgentModel } from '@/lib/definitions';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
