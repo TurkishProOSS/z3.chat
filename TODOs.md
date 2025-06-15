@@ -2,6 +2,9 @@
 
 - Stream Parser
 - MessageBox'lara framer/motion ekle
+- Sidebar genişletme 
+  - Sidebar genişletme ve daraltma animasyonları
+  - Genişletilince son 10 sohbeti göster
 
 ### Zorunlu Özellikler
 
