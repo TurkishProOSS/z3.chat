@@ -2,7 +2,6 @@
 
 import { useZ3 } from '@/hooks/use-z3';
 import { Select } from '@/ui/Select';
-import { motion } from 'motion/react';
 import {
 	Gemini,
 	Anthropic,
@@ -16,7 +15,6 @@ import {
 	Meta,
 	Grok
 } from "@lobehub/icons";
-import { RiExternalLinkLine, RiLink } from '@remixicon/react';
 
 
 export default function AgentSelect({

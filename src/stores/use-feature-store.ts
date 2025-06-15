@@ -26,7 +26,7 @@ export const useAgentFeatureStore = create<AgentFeatureState>()(
 		}),
 		{
 			name: 'agent-feature-storage',
-			storage: createJSONStorage(() => sessionStorage)
+			storage: createJSONStorage(() => localStorage)
 		}
 	)
 );

@@ -24,7 +24,6 @@ export default function Input({
 	const [isFloating, setIsFloating] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		console.log("Input changed:", e.target.value);
 		setValue(e.target.value);
 		onChange?.(e);
 	};

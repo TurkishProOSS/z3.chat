@@ -1,8 +1,8 @@
 import { InitZ3Schema, Z3Schema } from "@/lib/definitions";
-import { api } from "@/server/client";
+import { api } from "./api";
 
 export const initZ3 = async (): Promise<InitZ3Schema> => {
-	const result = await api.agents.get();
+	const result = await api.get("/agents");
 	return result.data as InitZ3Schema;
 }
 

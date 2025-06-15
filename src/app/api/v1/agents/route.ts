@@ -1,10 +1,11 @@
-import { AgentModel, agentModelSchema } from "@/lib/definitions";
-import Elysia, { t } from "elysia";
-import { version } from "os";
+import { AgentModel } from "@/lib/definitions";
+import { withAuth } from "@/middleware/withAuth";
+import { type NextRequest } from 'next/server';
 
-export const agents = new Elysia({ prefix: "/agents" })
-	.get("/", () => {
-
+export const GET = async (
+	request: NextRequest
+) => {
+	return await withAuth(async (session) => {
 		const OpenAI = [
 			{
 				id: "gpt-4o-mini",
@@ -51,13 +52,12 @@ export const agents = new Elysia({ prefix: "/agents" })
 			Meta
 		};
 
-		return {
+		return Response.json({
 			defaultAgent: Meta.at(0) as AgentModel,
 			agents: agentMap
-		};
+		});
 	}, {
-		response: t.Object({
-			defaultAgent: t.Any(),
-			agents: t.Any()
-		})
+		forceAuth: false,
+		headers: request.headers
 	});
+};

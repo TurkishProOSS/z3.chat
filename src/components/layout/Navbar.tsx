@@ -5,9 +5,11 @@ import { Button } from '@/ui/Button';
 import { Dropdown } from '@/ui/Dropdown';
 import { Avatar } from '@/ui/Avatar';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navbar() {
 	const { data: session, isPending } = authClient.useSession();
+	const pathname = usePathname();
 
 	const isAuthenticated = !!session && !isPending && session.user && !session.user.isAnonymous;
 
@@ -15,8 +17,9 @@ export default function Navbar() {
 		await authClient.signOut();
 	};
 
+
 	return (
-		<nav className="flex justify-end items-center">
+		<nav className="sticky top-0 flex justify-end items-center gap-2">
 			{!isAuthenticated ? (
 				<Button href="/auth/signin" className="rounded-full">Giriş Yap</Button>
 			) : (

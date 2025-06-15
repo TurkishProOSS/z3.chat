@@ -1,7 +1,7 @@
 import { Schema, Types, model, models } from "mongoose";
 
 type MessageDocument = {
-	id: string;
+	_id: string;
 	chatId: Types.ObjectId;
 	role: 'user' | 'assistant' | 'system';
 	content: string;
@@ -10,16 +10,16 @@ type MessageDocument = {
 };
 
 const messageSchema = new Schema({
-	id: { type: String, required: true, unique: true },
 	chatId: {
 		type: Types.ObjectId,
 		ref: "Conversation",
 		required: true
 	},
 	role: { type: String, required: true },
-	content: { type: String, required: true },
-	createdAt: { type: Date, default: Date.now },
+	content: { type: String, required: false },
 	agentId: { type: String, required: false },
+	experimental_attachments: { type: Array, default: [] },
+	resume: { type: Boolean, default: false }
 }, {
 	timestamps: true,
 	versionKey: false

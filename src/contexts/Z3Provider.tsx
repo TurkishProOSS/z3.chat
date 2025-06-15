@@ -1,11 +1,11 @@
 "use client";
-import { agentModelSchema, InitZ3Schema, Z3Schema } from '@/lib/definitions';
+import { api } from '@/lib/api';
+import { InitZ3Schema, Z3Schema } from '@/lib/definitions';
 import { emptyZ3 } from '@/lib/init-z3';
-import { api } from '@/server/client';
 import { useAgentSelectionStore } from '@/stores/use-agent-selection';
 import { useAgentFeatureStore } from '@/stores/use-feature-store';
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { z } from 'zod';
+import { ChatProvider } from '@/contexts/ChatProvder';
 
 export const Z3Context = createContext<Z3Schema>(emptyZ3);
 export const Z3Provider = ({ z3, children, }: {
@@ -17,14 +17,12 @@ export const Z3Provider = ({ z3, children, }: {
 	const [prompt, setPrompt] = useState<string>('');
 	const [enhanceRemaining, setEnhanceRemaining] = useState<number>(0);
 	const [isEnhancing, setIsEnhancing] = useState<boolean>(false);
-
-	const defaultAgent = z3.defaultAgent || null;
 	const selectedAgent = useAgentSelectionStore((state) => state.selectedAgent);
 	const setSelectedAgent = useAgentSelectionStore((state) => state.setSelectedAgent);
 	const setFeature = useAgentFeatureStore((state) => state.setFeature);
 	const features = useAgentFeatureStore((state) => state.features);
 
-	if (!z3) throw new Error('Z3Provider requires a z3 prop');
+	const defaultAgent = z3.defaultAgent || null;
 
 	const changeAgent = (agentId: string | null) => {
 		if (agentId === null) {
@@ -40,7 +38,6 @@ export const Z3Provider = ({ z3, children, }: {
 		const agent = Object.values(z3.agents)
 			.flat().find((a) => a.id === agentId);
 		if (agent) setSelectedAgent(agent);
-		console.log(`Changed agent to: ${agent?.name || 'None'}`);
 		if (!agent) console.warn(`Agent with id ${agentId} not found`);
 	};
 
@@ -51,26 +48,25 @@ export const Z3Provider = ({ z3, children, }: {
 	const enhancePrompt = useCallback(() => {
 		setIsEnhancing(true);
 
-		api.enhancePrompt.post({
-			prompt
-		}).then((response) => {
-			if (!response.data) return;
-			if (!response.data.success) {
-				setAlert(response.data.message || "An error occurred while enhancing the prompt.");
-				return;
-			}
-
-			if (response.data?.alert) {
-				setAlert(response.data.alert.message);
-				if (response.data.alert.duration) {
-					setAlertDuration(response.data.alert.duration);
+		api.post('/prompt-enhancement', { prompt })
+			.then((response) => {
+				if (!response.data) return;
+				if (!response.data.success) {
+					setAlert(response.data.message || "An error occurred while enhancing the prompt.");
+					return;
 				}
-			};
-			if (response.data?.remain) setEnhanceRemaining(response.data?.rateLimit?.remaining || 0);
-			if (response.data?.prompt) setPrompt(response.data.prompt as string);
-		}).finally(() => {
-			setIsEnhancing(false);
-		});
+
+				if (response.data?.alert) {
+					setAlert(response.data.alert.message);
+					if (response.data.alert.duration) {
+						setAlertDuration(response.data.alert.duration);
+					}
+				};
+				if (response.data?.remain) setEnhanceRemaining(response.data?.rateLimit?.remaining || 0);
+				if (response.data?.prompt) setPrompt(response.data.prompt as string);
+			}).finally(() => {
+				setIsEnhancing(false);
+			});
 	}, [prompt, setIsEnhancing]);
 
 	useEffect(() => {
@@ -104,7 +100,9 @@ export const Z3Provider = ({ z3, children, }: {
 		<Z3Context.Provider
 			value={z3ContextValue}
 		>
-			{children}
+			<ChatProvider>
+				{children}
+			</ChatProvider>
 		</Z3Context.Provider>
 	)
 };

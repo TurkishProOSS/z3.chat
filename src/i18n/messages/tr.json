@@ -15,7 +15,8 @@
 		}
 	},
 	"HomePage": {
-		"Evening": "{is_logged_in, plural, =0 {İyi günler!} =1 {İyi günler, <name-mark>{name}</name-mark>!} other {İyi günler!}}",
+		"Morning": "{is_logged_in, plural, =0 {İyi günler!} =1 {İyi günler, <name-mark>{name}</name-mark>!} other {İyi günler!}}",
+		"Evening": "{is_logged_in, plural, =0 {İyi akşamlar!} =1 {İyi akşamlar, <name-mark>{name}</name-mark>!} other {İyi akşamlar!}}",
 		"Warning": "z3.chat hata yapabilir, yanıtları kontrol edin."
 	},
 	"SettingsPage": {

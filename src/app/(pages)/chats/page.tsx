@@ -1,17 +1,26 @@
+"use client";
+
 import PromptInput from "@/forms/PromptInput";
 import { Logo } from '@/brand/Logo';
 import { cn } from "@colidy/ui-utils";
 import Link from "next/link";
+import { useSWRApi } from "@/hooks/use-swr-api";
+import { useState } from "react";
 
 export default function Chat() {
-	const chats = [
-		"What is the capital of France?",
-		"How do I make a cake?",
-		"What is the meaning of life?",
-		"Can you explain quantum physics?",
-		"Tell me a joke.",
-		"What is the weather like today?",
-	]
+	const {
+		data: {
+			conversations = []
+		} = {},
+		isLoading
+	} = useSWRApi("/conversations", {}, {
+		revalidateOnFocus: false,
+		revalidateOnReconnect: false,
+		refreshInterval: 10000
+	});
+
+	const [search, setSearch] = useState("");
+
 	return (
 		<>
 			<div className="flex flex-col h-full justify-between w-full max-w-2xl mx-auto mt-12">
@@ -31,19 +40,40 @@ export default function Chat() {
 						"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 					)}
 					placeholder="Sohbet başlıkları arasında ara..."
-					type="email"
+					type="text"
+					value={search}
+					onChange={(e) => setSearch(e.target.value)}
 				/>
-				<div className="w-full flex flex-1 flex-col space-y-2 mt-6	">
-					{chats.map(chat => (
-						<Link
-							key={chat}
-							className="bg-secondary hover:bg-tertiary text-foreground w-full rounded-2xl p-4 transition-all cursor-pointer"
-							href={"/chats/5ef70e57-ad8c-4d86-9100-3092450d8bde"}
-						>
-							{chat}
-							< p className="text-muted text-xs mt-1">Last message: {new Date().toLocaleTimeString()}</p>
-						</Link>
-					))}
+				<div className="w-full flex flex-1 flex-col space-y-2 mt-6">
+					{isLoading ? (
+						<p className="text-muted text-sm">Yükleniyor...</p>
+					) : !conversations || conversations.length === 0 ? (
+						<p className="text-muted text-sm">Henüz sohbet geçmişin yok.</p>
+					) : (
+						conversations
+							.filter((conversation: any) => {
+								if (!search) return true;
+								return conversation.title?.toLowerCase().includes(search.toLowerCase());
+							})
+							.map((conversation: any, index: number) => (
+								<Link
+									key={conversation?._id || index}
+									className="bg-secondary hover:bg-tertiary text-foreground w-full rounded-2xl p-4 transition-all cursor-pointer"
+									href={`/chats/${conversation?._id}`}
+								>
+									{conversation.title || "Yeni Sohbet"}
+									< p className="text-muted text-xs mt-1">Last message: {
+										new Date(conversation.updatedAt).toLocaleDateString("tr-TR", {
+											year: "numeric",
+											month: "2-digit",
+											day: "2-digit",
+											hour: "2-digit",
+											minute: "2-digit"
+										})
+									}</p>
+								</Link>
+							))
+					)}
 				</div>
 			</div >
 		</>

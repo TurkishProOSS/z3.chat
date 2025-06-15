@@ -2,7 +2,17 @@ import type { NextConfig } from "next";
 import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
+	reactStrictMode: false,
 	devIndicators: false,
+	redirects: async () => {
+		return [
+			{
+				source: '/settings',
+				destination: '/settings/account',
+				permanent: true
+			},
+		]
+	},
 	rewrites: async () => {
 		return [
 			{
@@ -11,7 +21,10 @@ const nextConfig: NextConfig = {
 			},
 		];
 	},
-	transpilePackages: ['@lobehub/icons']
+	transpilePackages: ['@lobehub/icons'],
+	experimental: {
+		nodeMiddleware: true
+	}
 };
 
 const withNextIntl = createNextIntlPlugin();

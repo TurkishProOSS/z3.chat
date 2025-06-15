@@ -1,4 +1,4 @@
-import { set, z } from 'zod';
+import { z } from 'zod';
 
 export const useThemeSchema = z.object({
 	theme: z.string(),

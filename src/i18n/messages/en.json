@@ -15,6 +15,7 @@
 		}
 	},
 	"HomePage": {
+		"Morning": "{is_logged_in, plural, =0 {Have a nice day!} =1 {Have a nice day, <name-mark>{name}</name-mark>!} other {Have a nice day!}}",
 		"Evening": "{is_logged_in, plural, =0 {Good evening!} =1 {Good evening, <name-mark>{name}</name-mark>!} other {Good evening!}}",
 		"Warning": "z3.chat may make mistakes, always verify critical information."
 	}

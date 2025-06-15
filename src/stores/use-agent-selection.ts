@@ -14,8 +14,8 @@ export const useAgentSelectionStore = create<AgentSelectionState>()(
 			setSelectedAgent: (agent) => set({ selectedAgent: agent }),
 		}),
 		{
-			name: 'agent-selection-storage',
-			storage: createJSONStorage(() => sessionStorage)
+			name: 'agent-selection',
+			storage: createJSONStorage(() => localStorage)
 		}
 	)
 );

@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { motion } from "motion/react";
 
 export default function HomePage() {
-    const { data: session, isPending } = authClient.useSession();
+	const { data: session, isPending } = authClient.useSession();
 	const t = useTranslations("HomePage");
 
 	return <>
@@ -31,8 +31,8 @@ export default function HomePage() {
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 				>
-					{t.rich("Evening", {
-						is_logged_in: 1,
+					{t.rich((new Date().getHours() >= 18 || new Date().getHours() < 6) ? "Evening" : "Morning", {
+						is_logged_in: session ? (session?.user?.isAnonymous ? 0 : 1) : 0,
 						name: session?.user?.name || "",
 						"name-mark": (chunks) => <span className="bg-gradient-to-br from-orange-400 via-orange-600 to-orange-500 inline-block text-transparent bg-clip-text">{chunks}</span>
 					})}

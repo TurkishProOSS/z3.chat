@@ -18,7 +18,11 @@ const getAnimationVariants = (groupIndex: number) => ({
 	exit: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 }
 });
 
-export default function PromptInput() {
+export default function PromptInput({
+	className
+}: {
+	className?: string;
+}) {
 	const id = useId();
 	const t = useTranslations("PromptInput");
 
@@ -128,7 +132,7 @@ export default function PromptInput() {
 	const tools = useTools();
 
 	return (
-		<div className="relative w-full max-w-2xl">
+		<div className={cn("relative w-full max-w-2xl", className)}>
 			<AnimatePresence>
 				{alert && (
 					<motion.div
@@ -149,7 +153,7 @@ export default function PromptInput() {
 			<motion.label
 				className={cn([
 					"relative flex flex-col items-center justify-center overflow-hidden",
-					"w-full max-w-2xl max-h-72 bg-input shadow-lg outline-none border rounded-2xl text-sm text-foreground resize-none",
+					"w-full max-h-72 bg-input shadow-lg outline-none border rounded-2xl text-sm text-foreground resize-none",
 					"transition-shadow ease-in-out pt-2"
 				], {
 					"cursor-not-allowed opacity-50": isEnhancing,

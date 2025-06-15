@@ -68,7 +68,7 @@ const Button = forwardRef<HTMLElement, ButtonProps>(
 
 				{isLoading && (
 					<div className="absolute inset-0 flex items-center justify-center">
-						<svg
+						{/*<svg
 							className="animate-spin h-4 w-4"
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
@@ -87,7 +87,12 @@ const Button = forwardRef<HTMLElement, ButtonProps>(
 								fill="currentColor"
 								d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
 							/>
-						</svg>
+						</svg> */}
+						<div className="w-4 h-4 border border-primary rounded-full">
+							<div className="w-full h-full animate-spin relative flex justify-center">
+								<span className="w-1 h-1 bg-primary block rounded-full -translate-y-1/2" />
+							</div>
+						</div>
 					</div>
 				)}
 

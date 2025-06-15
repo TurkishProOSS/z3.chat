@@ -47,7 +47,8 @@
 	--color-colored: hsl(var(--colored));
 	--color-border-hover: hsl(var(--border-hover));
 	--animate-slow-spin: spin 10s linear infinite;
-	--animate-mid-spin: spin 6s linear infinite
+	--animate-mid-spin: spin 6s linear infinite;
+	--animate-spin-2: spin 2s linear infinite
 }
 
 @layer components {

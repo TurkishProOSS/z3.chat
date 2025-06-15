@@ -48,7 +48,7 @@ export default function Sidebar() {
 						{items.map((item, i) => {
 							const Icon = isActive(item) ? item.icon[1] : item.icon[0];
 							return (
-								<Link key={i} className="flex items-center w-60" href={item.path}>
+								<Link key={i} className="flex items-center" href={item.path}>
 									<div className={cn(
 										"w-9 aspect-square rounded-xl transition-all flex items-center justify-center gap-2 text-sm font-medium text-foreground cursor-pointer",
 										{
