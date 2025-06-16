@@ -1,136 +1,125 @@
 "use client";
 
 import { cn } from "@colidy/ui-utils";
-import { useTools } from "@/hooks/use-tools";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "motion/react";
-import { ToolButton } from "@/forms/ToolButton";
-import { useId, useState, useRef, useEffect } from "react";
-import { useZ3 } from "@/hooks/use-z3";
-import ReactMarkdown from 'react-markdown';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
-import remarkGfm from 'remark-gfm'
+import { useId, useRef, useCallback, useMemo } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import remarkGfm from "remark-gfm";
+import { useSWRApi } from "@/hooks/use-swr-api";
+import { useChat } from "@/hooks/use-chat";
+import { useMessages } from "@/hooks/use-messages";
+import { AttachmentUploader } from "./AttachmentUploader";
+import { Toolbar } from "./Toolbar";
+import TextareaAutosize from "react-textarea-autosize";
+import { usePromptStore } from "@/stores/use-prompt";
+import { useEnhanceStore } from "@/stores/use-enhance";
+import { useAlertStore } from "@/stores/use-alert";
 
 const getAnimationVariants = (groupIndex: number) => ({
 	initial: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 },
 	animate: { opacity: 1, x: 0 },
-	exit: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 }
+	exit: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 },
 });
 
 export default function PromptInput({
-	className
+	className,
+	isResponding = false,
+	setIsResponding = (value: boolean) => { },
 }: {
 	className?: string;
+	isResponding?: boolean;
+	setIsResponding?: (value: boolean) => void;
 }) {
+	const {
+		data: usages,
+		isLoading,
+		error,
+		mutate,
+	} = useSWRApi("/usages", {}, {
+		revalidateOnFocus: false,
+		revalidateOnReconnect: false,
+		refreshInterval: 30000,
+		dedupingInterval: 5000,
+	});
+
 	const id = useId();
 	const t = useTranslations("PromptInput");
 
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	const uploadRef = useRef<HTMLInputElement | null>(null);
 
-	const [focus, setFocus] = useState(false);
-	const [_, setIsAtMaxHeight] = useState(false);
+	const prompt = usePromptStore((state) => state.prompt);
+	const setPrompt = usePromptStore((state) => state.setPrompt);
 
-	const prompt = useZ3(state => state.prompt);
-	const setPrompt = useZ3(state => state.setPrompt);
-	const isEnhancing = useZ3(state => state.isEnhancing);
-	const alert = useZ3(state => state.alert);
+	const isEnhancing = useEnhanceStore((state) => state.isEnhancing);
+	const alert = useAlertStore((state) => state.alert);
 
+	const { handleSubmit, isCreatingConversation } = useChat({
+		isResponding,
+		setIsResponding,
+	});
 
-	const autoResize = () => {
-		if (!textareaRef.current) return;
-		const textarea = textareaRef.current;
-		const maxHeight = 260;
-		textarea.style.height = 'auto';
-		const newHeight = Math.min(Math.max(textarea.scrollHeight, 60), maxHeight);
-		textarea.style.height = `${newHeight}px`;
-		const atMaxHeight = textarea.scrollHeight > maxHeight;
-		setIsAtMaxHeight(atMaxHeight);
-		if (atMaxHeight) textarea.style.overflowY = 'auto';
-		else textarea.style.overflowY = 'hidden';
-	};
+	const handleChange = useCallback(
+		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+			setPrompt(e.target.value);
+		},
+		[setPrompt]
+	);
 
-	useEffect(() => {
-		autoResize();
-	}, [prompt]);
+	const { messages: allMessages } = useMessages();
 
-	const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-		setPrompt(e.target.value);
-		autoResize();
-	};
+	const labelClassName = useMemo(
+		() =>
+			cn([
+				"relative flex flex-col items-center justify-center overflow-hidden",
+				"w-full max-h-72 bg-input shadow-lg outline-none border rounded-2xl text-sm text-foreground resize-none",
+				"transition-all ease-in-out duration-200 pt-2",
+				"focus-within:ring-2 focus-within:ring-orange-500 focus-within:ring-offset-2 focus-within:ring-offset-secondary focus-within:bg-input",
+				"hover:border-border-hover focus-within:hover:border-orange-500",
+			], {
+				"cursor-not-allowed opacity-50": isEnhancing,
+			}),
+		[isEnhancing]
+	);
 
-	// useEffect(() => {
-	// 	if (conversationId && searchParams.get('autoStart') === 'true') {
-	// 		handleSubmit();
-	// 	}
-	// }, [conversationId, searchParams]);
+	const textareaClassName = useMemo(
+		() =>
+			cn([
+				"w-full bg-transparent outline-none select-none px-4 pb-4 pt-2 resize-none",
+				"scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
+				"hover:scrollbar-thumb-border-hover",
+			], {
+				"cursor-not-allowed opacity-50": isEnhancing,
+			}),
+		[isEnhancing]
+	);
 
+	const textareaStyles = useMemo(
+		() => ({
+			scrollbarWidth: "thin" as const,
+			scrollbarColor: "rgb(203 213 225) transparent",
+		}),
+		[]
+	);
 
-	// const handleSubmit = async () => {
-	// 	if (isEnhancing || !prompt.trim()) return;
-
-	// 	if (conversationId) {
-	// 		const promptReceived = prompt.trim();
-	// 		// if (searchParams.get('autoStart') === 'true') {
-	// 		// 	searchParams.delete('autoStart');
-	// 		// }
-	// 		setPrompt("");
-	// 		const { data } = await api.chat({ conversationId }).post({
-	// 			message: prompt,
-	// 			model: selectedAgent?.id || ""
-	// 		});
-
-	// 		if (!data) {
-	// 			setAlert("No data returned from chat API");
-	// 			setPrompt(promptReceived);
-	// 			return;
-	// 		}
-
-	// 		onSubmit?.(promptReceived);
-
-	// 		for await (const chunk of data as AsyncIterable<string | null>) {
-	// 			if (typeof chunk !== 'string') {
-	// 				setAlert("Received non-string chunk from chat API");
-	// 				setPrompt(promptReceived);
-	// 				return;
-	// 			}
-	// 			if (chunk === "[DONE]") {
-	// 				onStreamEnd?.();
-	// 				return;
-	// 			}
-
-	// 			onStream?.(chunk);
-	// 		}
-	// 	} else {
-	// 		const { data } = await api.createConversation.post({
-	// 			prompt
-	// 		});
-
-	// 		if (!data) {
-	// 			setAlert("No data returned from create conversation API");
-	// 			return;
-	// 		}
-
-	// 		if (!data.success) {
-	// 			setAlert(data.message || "An error occurred while creating the conversation.");
-	// 			return;
-	// 		}
-
-	// 		if (data.alert) {
-	// 			setAlert(data.alert.message);
-	// 			if (data.alert.duration) {
-	// 				setAlertDuration(data.alert.duration);
-	// 			}
-	// 		}
-
-	// 		if (data.data.redirect) {
-	// 			redirect(data.data.redirect + '?autoStart=true');
-	// 		}
-	// 	}
-	// }
-
-	const tools = useTools();
-
+	const handleKeyDown = useCallback(
+		(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+			if (e.key === "Enter") {
+				if (e.shiftKey) {
+					return;
+				} else {
+					e.preventDefault();
+					if (!isEnhancing && prompt.trim()) {
+						handleSubmit();
+					}
+				}
+			}
+		},
+		[isEnhancing, prompt, handleSubmit]
+	);
 	return (
 		<div className={cn("relative w-full max-w-2xl", className)}>
 			<AnimatePresence>
@@ -145,85 +134,49 @@ export default function PromptInput({
 							children={alert}
 							remarkPlugins={[remarkMath, remarkGfm]}
 							rehypePlugins={[rehypeKatex]}
-
 						/>
 					</motion.div>
 				)}
 			</AnimatePresence>
+
 			<motion.label
-				className={cn([
-					"relative flex flex-col items-center justify-center overflow-hidden",
-					"w-full max-h-72 bg-input shadow-lg outline-none border rounded-2xl text-sm text-foreground resize-none",
-					"transition-shadow ease-in-out pt-2"
-				], {
-					"cursor-not-allowed opacity-50": isEnhancing,
-					"ring-2 ring-orange-500 ring-offset-2 ring-offset-secondary bg-input": focus,
-					"hover:border-border-hover": !focus
-				})}
+				className={labelClassName}
 				initial={{ opacity: 0, y: 20 }}
 				animate={{ opacity: 1, y: 0 }}
 				exit={{ opacity: 0, y: 20 }}
 				htmlFor={isEnhancing ? undefined : id}
 			>
+				<AnimatePresence>
+					<AttachmentUploader uploadRef={uploadRef} />
+				</AnimatePresence>
+
 				{isEnhancing && <div className="shimmer !absolute inset-0 z-10" />}
-				<textarea
+
+				<TextareaAutosize
 					ref={textareaRef}
 					placeholder={t("Placeholder")}
 					disabled={isEnhancing}
-					className={cn([
-						"w-full bg-transparent outline-none select-none px-4 pb-4 pt-2 resize-none",
-						// Custom scrollbar styles
-						"scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border",
-						"hover:scrollbar-thumb-border-hover"
-					], {
-						"cursor-not-allowed opacity-50": isEnhancing
-					})}
+					className={textareaClassName}
 					id={id}
-					rows={1}
+					minRows={1}
+					maxRows={10}
 					value={prompt}
 					onChange={handleChange}
+					onKeyDown={handleKeyDown}
 					autoFocus
-					onFocus={() => setFocus(true)}
-					onBlur={() => setFocus(false)}
-					style={{
-						// Custom scrollbar for browsers that don't support scrollbar-* classes
-						scrollbarWidth: 'thin',
-						scrollbarColor: 'rgb(203 213 225) transparent'
+					style={textareaStyles}
+				/>
+
+				<Toolbar
+					{...{
+						handleSubmit,
+						isResponding,
+						isCreatingConversation,
+						setIsResponding,
+						uploadRef,
 					}}
 				/>
-				<div
-					className={cn("flex w-full justify-between text-xs text-muted-foreground select-none p-2", {
-						"opacity-50": isEnhancing
-					})}
-				>
-					{tools.map((toolGroup, groupIndex) => (
-						<motion.div
-							key={groupIndex}
-							className="flex items-center gap-2"
-						>
-							<AnimatePresence>
-								{toolGroup
-									.map((tool, index) => (
-										<motion.div
-											key={`${groupIndex}-${index}`}
-											variants={getAnimationVariants(groupIndex)}
-											initial="initial"
-											animate="animate"
-											exit="exit"
-											transition={{ duration: 0.2, delay: index * 0.1 }}
-											className="flex items-center"
-										>
-											<ToolButton
-												key={index}
-												tool={tool}
-											/>
-										</motion.div>
-									))}
-							</AnimatePresence>
-						</motion.div>
-					))}
-				</div>
 			</motion.label>
 		</div>
-	)
+	);
 }

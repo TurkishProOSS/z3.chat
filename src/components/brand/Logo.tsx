@@ -1,6 +1,7 @@
-import * as React from "react";
 import logoAnimation from "@/constants/logo.json";
+import { useTheme } from 'next-themes';
 import Lottie from "lottie-react";
+import * as React from "react";
 
 const Logo = (props: {
 	size?: number | string;
@@ -47,7 +48,11 @@ const AnimatedLogo = ({
 }: {
 	size?: number | string;
 	loop?: boolean;
-}) => (
-	<Lottie style={{ width: size + "px", height: size + "px" }} animationData={logoAnimation} loop={loop} />
-);
+}) => {
+	const { theme } = useTheme();
+
+	return (
+		<Lottie style={{ width: size + "px", height: size + "px", filter: theme === 'pixel' ? 'hue-rotate(83deg)' : '' }} animationData={logoAnimation} loop={loop} />
+	);
+};
 export { Logo, AnimatedLogo };

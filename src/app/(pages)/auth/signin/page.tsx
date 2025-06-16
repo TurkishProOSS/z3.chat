@@ -63,7 +63,7 @@ export default function Signin() {
 							<Logo size={36} />
 						</div>
 						<h1 className="text-2xl font-medium text-foreground">
-							z3<span className="font-normal opacity-50">.chat</span>
+							z3c<span className="font-normal opacity-50">.dev</span>
 						</h1>
 					</Link>
 					<div className="flex items-center flex-1 w-full">

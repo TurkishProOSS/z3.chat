@@ -6,18 +6,24 @@ export const POST = async (
 	request: NextRequest
 ) => {
 	return await withAuth(async (session) => {
-		const filename = request.nextUrl.searchParams.get('filename') || '';
-		const { image } = await request.json();
+		try {
+			const filename = request.nextUrl.searchParams.get('filename') || '';
+			const form = await request.formData();
+			const file = form.get('file') as File;
 
-		if (!image) throw new Error('Image is required');
-		if (!filename) throw new Error('Filename is required');
+			if (!file) throw new Error('Image is required');
+			if (!filename) throw new Error('Filename is required');
 
-		const blob = await put('chat-files', filename, await image.arrayBuffer(), {
-			access: 'public',
-			addRandomSuffix: true
-		});
+			const blob = await put('chat-files', filename, file, {
+				access: 'public',
+				addRandomSuffix: true
+			});
 
-		return blob;
+			return blob;
+		} catch (error) {
+			console.error(error);
+			return new Response('Internal Server Error', { status: 500 });
+		}
 	}, {
 		forceAuth: true,
 		headers: request.headers

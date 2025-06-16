@@ -2,7 +2,7 @@ import { cn } from "@colidy/ui-utils";
 import { useEffect, useId, useMemo, useState } from "react";
 import Ink from "react-ink";
 
-export default function Input({
+function Input({
 	className,
 	label,
 	onChange,
@@ -101,7 +101,7 @@ export default function Input({
 					className={cn([
 						"w-full h-full bg-transparent outline-none text-sm text-foreground px-4",
 						"transition-all duration-200 ease-in-out",
-						"pt-6 pb-2"
+						label && "pt-6 pb-2"
 					])}
 					onChange={handleChange}
 					onFocus={(e) => {
@@ -124,3 +124,6 @@ export default function Input({
 		</label>
 	);
 }
+
+export { Input };
+export default Input;

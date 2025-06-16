@@ -67,7 +67,7 @@ export default function Signin() {
 							<Logo size={36} />
 						</div>
 						<h1 className="text-2xl font-medium text-foreground">
-							z3<span className="font-normal opacity-50">.chat</span>
+							z3c<span className="font-normal opacity-50">.dev</span>
 						</h1>
 					</Link>
 					<div className="flex items-center flex-1 w-full">
@@ -78,7 +78,7 @@ export default function Signin() {
 			<div className="max-w-md mx-auto col-span-2 h-full w-full flex flex-col  justify-center text-center items-center">
 				<form className="w-full space-y-5" onSubmit={handleSubmit}>
 					<h1 className="text-2xl text-foreground font-bold">
-						Bir Z3 Hesabı Oluştur
+						Bir Z3C Hesabı Oluştur
 					</h1>
 					<div className="flex flex-col gap-2">
 						{error && (

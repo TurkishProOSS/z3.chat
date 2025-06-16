@@ -1,11 +1,3 @@
-## Notlar
-
-- Stream Parser
-- MessageBox'lara framer/motion ekle
-- Sidebar genişletme 
-  - Sidebar genişletme ve daraltma animasyonları
-  - Genişletilince son 10 sohbeti göster
-
 ### Zorunlu Özellikler
 
 - [x] Çeşitli LLM'lerle sohbet edin 
@@ -22,25 +14,26 @@
 
 ### Bonus Özellikler
 
-- [ ] Ek Desteği
+- [x] Ek Desteği
 - - Kullanıcıların dosya (resim ve pdf) yüklemesine izin ver
 
 - [ ] Resim Oluşturma Desteği
 - - AI destekli resim oluşturma yetenekleri
 
-- [ ] Sözdizimi Vurgulama
+- [x] Sözdizimi Vurgulama
 - - Güzel kod biçimlendirme ve vurgulama
 
 - [x] Devam Edilebilir Akışlar
 - - Sayfa yenilemesinden sonra oluşturmaya devam et
 
-- [ ] Sohbet Dallanması
+- [x] Sohbet Dallanması
 - - Alternatif konuşma yolları oluştur
 
-- [ ] Sohbet Paylaşımı
+- [x] Sohbet Paylaşımı
+- - [x] Sohbet Paylaşımını İptal Et
 - - Sohbetleri başkalarıyla paylaş
 
-- [ ] Web Araması
+- [x] Web Araması
 - - Gerçek zamanlı web aramasını entegre et
 
 - [ ] Kendi Anahtarını Getir

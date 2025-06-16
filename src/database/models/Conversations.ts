@@ -1,8 +1,13 @@
 import { Schema, Types, model, models } from "mongoose";
 
 const conversationSchema = new Schema({
-	createdAt: { type: Date, default: Date.now },
-	updatedAt: { type: Date, default: Date.now },
+	shared: {
+		type: new Schema({
+			enabled: { type: Boolean, default: false },
+			lastMessageId: { type: Types.ObjectId, ref: "Message", default: null }
+		}),
+		default: { enabled: false, lastMessageId: null }
+	},
 	messages: [{
 		type: Types.ObjectId,
 		ref: "Message"
@@ -10,7 +15,17 @@ const conversationSchema = new Schema({
 	title: { type: String, default: "New Conversation" },
 	userId: { type: String, required: true },
 	originalPrompt: { type: String, default: "" },
-	fromAnonymousAccount: { type: Boolean, default: false }
+	fromAnonymousAccount: { type: Boolean, default: false },
+	forkedFrom: {
+		type: Types.ObjectId,
+		ref: "Conversation",
+		default: null,
+		required: false
+	},
+	votes: {
+		ups: { type: Array, default: [] },
+		downs: { type: Array, default: [] }
+	}
 }, {
 	timestamps: true,
 	versionKey: false

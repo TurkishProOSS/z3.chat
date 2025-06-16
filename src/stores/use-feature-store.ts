@@ -5,6 +5,7 @@ interface AgentFeatureState {
 	setFeature: (feature: string, value: any) => void;
 	features: {
 		search: boolean;
+		reasoning: boolean;
 	};
 }
 
@@ -21,7 +22,8 @@ export const useAgentFeatureStore = create<AgentFeatureState>()(
 				}));
 			},
 			features: {
-				search: false
+				search: false,
+				reasoning: false
 			}
 		}),
 		{

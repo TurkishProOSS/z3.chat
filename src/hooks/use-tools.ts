@@ -1,56 +1,37 @@
 "use client";
 
 import AgentSelect from "@/forms/AgentSelect";
-// import { usePrompt } from "@/states/use-prompt";
-import { RiArrowUpLine, RiAttachmentLine, RiEqualizer2Line, RiMicFill, RiMicOffFill, RiSparklingFill } from "@remixicon/react";
+import { RiArrowUpLine, RiAttachmentLine, RiEqualizer2Line, RiSparklingFill, RiSquareFill } from "@remixicon/react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
-import SpeechRecognition, { useSpeechRecognition } from "react-speech-recognition";
-import { useZ3 } from "@/hooks/use-z3";
-import { useChat } from "@/hooks/use-chat";
+import { useMemo } from "react";
+import { useAgentFeatureStore } from "@/stores/use-feature-store";
+import { useAgentSelectionStore } from "@/stores/use-agent-selection";
+import { useEnhanceStore } from "@/stores/use-enhance";
+import { usePromptStore } from "@/stores/use-prompt";
 
-export const useTools = () => {
-	const { handleSubmit } = useChat();
-	const activeAgent = useZ3((state) => state.selectedAgent);
-	const setFeature = useZ3((state) => state.setFeature);
-	const features = useZ3((state) => state.features);
-	const isEnhancing = useZ3(state => state.isEnhancing);
-	const prompt = useZ3(state => state.prompt);
-	const enhancePrompt = useZ3(state => state.enhancePrompt);
-	const enhanceRemaining = useZ3(state => state.enhanceRemaining);
+export const useTools = ({
+	isResponding = false,
+	setIsResponding = (value: boolean) => { /* no-op */ },
+	uploadRef,
+	handleSubmit
+}: {
+	isResponding?: boolean;
+	setIsResponding?: (value: boolean) => void;
+	uploadRef?: React.RefObject<HTMLInputElement>;
+	handleSubmit: () => void;
+}) => {
+	const setFeature = useAgentFeatureStore((state) => state.setFeature);
+	const features = useAgentFeatureStore((state) => state.features);
 
-	const {
-		browserSupportsSpeechRecognition,
-		listening,
-		isMicrophoneAvailable,
-		interimTranscript,
-		transcript
-	} = useSpeechRecognition();
+	const activeAgent = useAgentSelectionStore((state) => state.selectedAgent);
+	const isEnhancing = useEnhanceStore((state) => state.isEnhancing);
+	const prompt = usePromptStore((state) => state.prompt);
+	const enhancePrompt = useEnhanceStore((state) => state.enhancePrompt);
+	const enhanceRemaining = useEnhanceStore((state) => state.enhanceRemaining);
 
-	const [inserting, setInserting] = useState(false);
 	const t = useTranslations("PromptInput.Tools");
 
-
-	const toggleListening = useCallback(() => {
-		if (!browserSupportsSpeechRecognition) {
-			alert(t("Speech_Recognition_Not_Supported"));
-			return;
-		}
-
-		if (listening) {
-			SpeechRecognition.stopListening();
-		} else {
-			SpeechRecognition.startListening();
-		}
-	}, []);
-
-	// useEffect(() => {
-	// 	if (listening) {
-	// 		handleTranscript();
-	// 	}
-	// }, [listening, transcript, handleTranscript]);
-
-	const fileTypes = [activeAgent?.features?.vision ? "Image" : "", activeAgent?.features?.pdfSupport ? "PDF Document" : ""].filter(Boolean).join(", ");
+	const fileTypes = [activeAgent?.features?.vision ? "image" : "", activeAgent?.features?.pdfSupport ? "pdf" : ""].filter(Boolean).join(", ");
 	const agentFeatures = [
 		{
 			type: "menu",
@@ -61,15 +42,27 @@ export const useTools = () => {
 					label: t("Agent_Feature_Web_Search"),
 					value: features.search,
 					onValueChange: () => setFeature("search", !features.search),
-					hidden: false
+					hidden: !activeAgent?.features?.search
+				},
+				{
+					type: 'switch',
+					label: t("Agent_Feature_Reasoning"),
+					value: features.reasoning,
+					onValueChange: () => setFeature("reasoning", !features.reasoning),
+					hidden: !activeAgent?.features?.reasoning
 				}
 			].filter((option) => !option.hidden),
 			tooltip: t("Agent_Features"),
+			disabled: !activeAgent?.features.search && !activeAgent?.features?.reasoning,
 		},
 		{
 			icon: RiAttachmentLine,
-			onClick: () => { },
-			disabled: !activeAgent?.features?.vision || !activeAgent?.features?.pdfSupport,
+			onClick: () => {
+				if (uploadRef?.current) {
+					uploadRef.current.click();
+				};
+			},
+			disabled: !activeAgent?.features?.vision && !activeAgent?.features?.pdfSupport,
 			tooltip: fileTypes.length > 0 ? t("Attachment", { types: fileTypes }) : t("Attachment_Not_Available")
 		}
 	]
@@ -91,22 +84,16 @@ export const useTools = () => {
 						tooltip: t("Enhance_Prompt", { remaining: enhanceRemaining }),
 					},
 					{
-						icon: listening ? RiMicOffFill : RiMicFill,
-						disabled: !isMicrophoneAvailable || !SpeechRecognition.browserSupportsSpeechRecognition,
-						onClick: toggleListening,
-						tooltip: listening ? t("Recording") : t("Start_Dictate"),
-					},
-					{
 						variant: "primary",
-						icon: RiArrowUpLine,
-						onClick: () => handleSubmit(),
+						icon: isResponding ? RiSquareFill : RiArrowUpLine,
+						onClick: handleSubmit,
 						tooltip: (isEnhancing || !prompt.trim()) ? t("Submit_Disabled") : t("Submit"),
-						disabled: isEnhancing || !prompt.trim()
+						disabled: isResponding ? true : (isEnhancing || !prompt.trim())
 					},
 				]
 			])
 		),
-		[t, SpeechRecognition.browserSupportsSpeechRecognition, listening, activeAgent, isMicrophoneAvailable, features, isEnhancing, enhancePrompt]
+		[t, activeAgent, features, isEnhancing, enhancePrompt, enhanceRemaining, prompt, handleSubmit, agentFeatures, isResponding]
 	);
 
 	return tools;

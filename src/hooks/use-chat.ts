@@ -1,47 +1,75 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useZ3 } from "@/hooks/use-z3";
 import { api } from "@/lib/api";
 import { useCallback, useEffect, useState } from "react";
 import { useAutoSubmit } from "@/stores/use-auto-submit";
 import { useMessages } from "@/hooks/use-messages";
 import { AxiosResponse } from "axios";
+import { UseChatOptions } from '@/lib/definitions';
+import { useScrollDown } from "@/hooks/use-scroll-down";
+import { processDataStream } from "ai";
+import { fillMessageParts } from "@ai-sdk/ui-utils";
+import { toast } from "sonner";
+import { usePromptStore } from "@/stores/use-prompt";
+import { useEnhanceStore } from "@/stores/use-enhance";
+import { useAgentSelectionStore } from "@/stores/use-agent-selection";
+import { useAlertStore } from "@/stores/use-alert";
+import { useAgentFeatureStore } from "@/stores/use-feature-store";
+import { useAttachmentsStore } from "@/stores/use-attachments";
 
-type UseChatOptions = {
-	initialMessages?: string[];
-	disableSubmittion?: boolean;
-};
-
-export const useChat = (options: UseChatOptions) => {
+export const useChat = (options?: UseChatOptions) => {
 	const router = useRouter();
 	const params = useParams();
-	const prompt = useZ3(state => state.prompt);
-	const setPrompt = useZ3(state => state.setPrompt);
-	const isEnhancing = useZ3(state => state.isEnhancing);
-	const model = useZ3(state => state.selectedAgent);
-	const setAlert = useZ3(state => state.setAlert);
+
+	const prompt = usePromptStore((state) => state.prompt);
+	const setPrompt = usePromptStore((state) => state.setPrompt);
+	const isEnhancing = useEnhanceStore((state) => state.isEnhancing);
+	const model = useAgentSelectionStore((state) => state.selectedAgent);
+	const setAlert = useAlertStore((state) => state.setAlert);
+	const features = useAgentFeatureStore((state) => state.features);
+	const attachments = useAttachmentsStore((state) => state.attachments);
+	const setAttachments = useAttachmentsStore((state) => state.setAttachments);
+
 	const autoSubmit = useAutoSubmit(state => state.autoSubmit);
 	const setAutoSubmit = useAutoSubmit(state => state.setAutoSubmit);
-	const { messages, setMessages, streamMesage, addUserMessage } = useMessages();
+	const { scrollToBottom, autoScroll } = useScrollDown();
+	const { messages, setMessages, streamMessage, addUserMessage, setToolResult, endStreaming, continueStreaming } = useMessages();
+
+	const [isCreatingConversation, setIsCreatingConversation] = useState(false);
 
 	async function handleStreamMessage(response: AxiosResponse<any, any>, $prompt: string) {
-		const reader = response.data.getReader();
-		const decoder = new TextDecoder("utf-8");
-		let done = false;
-		let streamContent = "";
+		continueStreaming();
+		options?.setIsResponding?.(true);
 
-		addUserMessage($prompt);
-
-		while (!done) {
-			const { value, done: streamDone } = await reader.read();
-			done = streamDone;
-			if (value) {
-				const chunk = decoder.decode(value, { stream: true });
-				streamContent += chunk;
-				streamMesage(chunk);
-			}
+		const processPart = (partKey: string, partValue: any) => {
+			streamMessage({
+				type: partKey,
+				value: partValue
+			}, {
+				agentId: model?.id as string,
+				agentOptions: features,
+				chatId: params?.conversationId as string
+			});
 		}
+
+		processDataStream({
+			stream: response.data,
+			onFinishMessagePart: () => {
+				endStreaming();
+				options?.setIsResponding?.(false);
+				if (autoScroll) scrollToBottom();
+			},
+			onReasoningPart: (reasoning) => processPart('reasoning', reasoning),
+			onTextPart: (text) => processPart('text', text),
+			onDataPart: (data) => processPart('data', data),
+			onFilePart: (file) => processPart('file', file),
+			onMessageAnnotationsPart: (annotations) => processPart('annotations', annotations),
+			onSourcePart: (source) => processPart('source', source),
+			onErrorPart: (error) => processPart('error', error),
+			onToolCallPart: (toolCall) => processPart('tool-invocation', toolCall),
+			onToolResultPart: (toolResult) => setToolResult(toolResult.toolCallId, toolResult.result),
+		});
 	}
 
 	const sendMessage = useCallback(async (cId?: string) => {
@@ -51,38 +79,54 @@ export const useChat = (options: UseChatOptions) => {
 		const $prompt = prompt;
 
 		setPrompt("");
+		setAttachments([]);
 
 		const conversationId = cId || params?.conversationId as string;
-		const response = await api.post("/conversation/" + conversationId, {
-			model: model?.id as string,
-			prompt
-		}, {
-			adapter: 'fetch',
-			responseType: "stream"
-		});
 
+		addUserMessage($prompt);
 
-		if (!response || !response.data) {
-			setAlert("Failed to send message");
-			return;
+		try {
+			const response = await api.post("/conversation/" + conversationId, {
+				model: model?.id as string,
+				prompt,
+				modelOptions: features,
+				attachments
+			}, {
+				adapter: 'fetch',
+				responseType: "stream"
+			});
+
+			if (!response || !response.data) {
+				setAlert("Failed to send message");
+				return;
+			}
+
+			await handleStreamMessage(response, $prompt);
+		} catch (error) {
+			console.error('Send message error:', error);
+			setAlert("Failed to send message. Please check your connection and try again.");
+			options?.setIsResponding?.(false);
 		}
-
-		await handleStreamMessage(response, $prompt);
 	}, [params, prompt, isEnhancing, setPrompt, model, messages, setMessages, options?.disableSubmittion, handleStreamMessage]);
 
 	const createNewConversation = async () => {
-		const response = await api.post("/create-conversation", {
+		setIsCreatingConversation(true);
+
+		const createPromise = await api.post("/create-conversation", {
 			prompt
 		})
 			.then((res) => res.data)
-			.catch(() => null);
+			.then((response) => {
+				if (!response || !response.success) {
+					throw new Error(response?.message || "Failed to create conversation");
+				}
+				return response.data;
+			})
+			.finally(() => {
+				setIsCreatingConversation(false);
+			});
 
-		if (!response || !response.success) {
-			setAlert(response?.message || "Failed to create conversation");
-			return;
-		}
-
-		return response.data;
+		return createPromise;
 	};
 
 	const handleSubmit = useCallback(async () => {
@@ -91,19 +135,21 @@ export const useChat = (options: UseChatOptions) => {
 
 		const conversationId = params?.conversationId as string;
 		if (!conversationId) {
-			const newConversation = await createNewConversation();
-			if (!newConversation) return;
-
-			setMessages([]);
-			setAutoSubmit(true);
-			router.push(newConversation.redirect, {
-				scroll: true
-			});
+			try {
+				const newConversation = await createNewConversation();
+				setMessages([]);
+				setAutoSubmit(true);
+				router.push(newConversation.redirect, {
+					scroll: true
+				});
+			} catch (error) {
+				return;
+			}
 		} else {
 			setAutoSubmit(false);
 			sendMessage();
 		}
-	}, [params, isEnhancing, sendMessage, setMessages, setAutoSubmit, options?.disableSubmittion, router, createNewConversation]);
+	}, [params, isEnhancing, sendMessage, setMessages, setAutoSubmit, options?.disableSubmittion, router, createNewConversation, setAttachments]);
 
 	useEffect(() => {
 		if (autoSubmit && params?.conversationId)
@@ -112,7 +158,8 @@ export const useChat = (options: UseChatOptions) => {
 
 	useEffect(() => {
 		(async () => {
-			if (params?.conversationId) {
+			const isHaveRespondingValue = options?.isResponding || false;
+			if (params?.conversationId && isHaveRespondingValue) {
 				const resumeResponse = await api.post(`/conversation/${params.conversationId}/resume`, {}, {
 					adapter: 'fetch',
 					responseType: "stream"
@@ -127,7 +174,8 @@ export const useChat = (options: UseChatOptions) => {
 
 	return {
 		handleSubmit,
-		messages: (options?.initialMessages || []).concat(messages),
-		setMessages
+		messages: (options?.initialMessages || []).concat(messages as any),
+		setMessages,
+		isCreatingConversation
 	};
 };

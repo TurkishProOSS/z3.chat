@@ -1,13 +1,5 @@
 import { Schema, Types, model, models } from "mongoose";
-
-type MessageDocument = {
-	_id: string;
-	chatId: Types.ObjectId;
-	role: 'user' | 'assistant' | 'system';
-	content: string;
-	createdAt: Date;
-	agentId?: string;
-};
+import { MessageDocument } from '@/lib/definitions';
 
 const messageSchema = new Schema({
 	chatId: {
@@ -16,8 +8,12 @@ const messageSchema = new Schema({
 		required: true
 	},
 	role: { type: String, required: true },
-	content: { type: String, required: false },
+	parts: {
+		type: Array,
+		default: []
+	},
 	agentId: { type: String, required: false },
+	agentOptions: { type: Object, default: {} },
 	experimental_attachments: { type: Array, default: [] },
 	resume: { type: Boolean, default: false }
 }, {

@@ -10,7 +10,7 @@ export const POST = async (
 	return await withAuth(async (session) => {
 		const { prompt } = await request.json();
 		const response = await generateText({
-			model: (await ai()).languageModel("llama-3.1-8b-instruct"),
+			model: (await ai()).languageModel("title-0"),
 			messages: [
 				{
 					role: 'user',
@@ -40,9 +40,7 @@ ${prompt}
 			title: response.text.trim(),
 			originalPrompt: prompt,
 			userId: session.user.id,
-			createdAt: new Date(),
-			updatedAt: new Date()
-		})
+		});
 
 		const savedConversation = await conversation.save().catch(() => null);
 

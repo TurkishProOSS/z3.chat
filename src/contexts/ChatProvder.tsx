@@ -1,47 +1,42 @@
 "use client";
-import { MessageDocument } from '@/database/models/Messages';
-import { usePathname } from 'next/navigation';
-import { createContext, Dispatch, SetStateAction, useMemo, useState } from 'react';
 
-type Message = {
-	_id?: string;
-	agentId?: string;
-	role: 'user' | 'assistant';
-	content: string;
-	chatId?: string;
-	createdAt?: Date;
-};
-
-type ChatContextType = {
-	messages: Message[];
-	setMessages: Dispatch<SetStateAction<Message[]>>;
-};
+import { ChatProviderMessage as Message, ChatProviderChatContext as ChatContextType } from '@/lib/definitions';
+import { createContext, useMemo, useState, useEffect } from 'react';
 
 export const ChatContext = createContext<ChatContextType>({
 	messages: [],
-	setMessages: () => { },
+	// @ts-ignore
+	setMessages: () => { }
 });
 
-export const ChatProvider = ({ children, }: {
+export const ChatProvider = ({ children, initialMessages }: {
 	children: React.ReactNode;
+	initialMessages?: Message[];
 }) => {
-	const [messages, setMessages] = useState<Message[]>([]);
-	const pathname = usePathname();
+	const [messages, setMessages] = useState<Message[]>(() => {
+		// SSR uyumlu initial state - always use initialMessages
+		return initialMessages || [];
+	});
+	const [isHydrated, setIsHydrated] = useState(false);
+
+	// Client-side hydration kontrolü
+	useEffect(() => {
+		setIsHydrated(true);
+
+		// Hydration sonrası initialMessages kontrolü
+		if (initialMessages && initialMessages.length > 0) {
+			setMessages(initialMessages);
+		}
+	}, [initialMessages]);
 
 	const ChatValue = useMemo(() => ({
 		messages,
 		setMessages,
-	}), [messages, setMessages]);
-
-	useMemo(() => {
-		setMessages([]);
-	}, [pathname]);
+	}), [messages]);
 
 	return (
-		<ChatContext.Provider
-			value={ChatValue}
-		>
+		<ChatContext.Provider value={ChatValue as any}>
 			{children}
 		</ChatContext.Provider>
-	)
+	);
 };

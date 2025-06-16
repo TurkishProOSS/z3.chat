@@ -1,40 +1,41 @@
-import { customProvider } from "ai"
+import { customProvider, tool } from "ai"
 import { createOpenAI } from "@ai-sdk/openai"
+import { createAnthropic } from "@ai-sdk/anthropic"
+import { createXai } from "@ai-sdk/xai"
+import { createDeepSeek } from '@ai-sdk/deepseek';
+
 import { createGoogleGenerativeAI } from "@ai-sdk/google"
 import { getConfig } from "./getConfig";
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { getAgents } from "./get-agents";
 
 export const ai = async () => {
 	return customProvider({
 		languageModels: await getLanguageModels(),
-		imageModels: await getImageModels()
+		imageModels: await getImageModels(),
 	})
 };
-
 export const getLanguageModels = async () => {
-	const apiKeys = await getConfig();
-
-	const openai = createOpenAI({
-		apiKey: apiKeys.openai || ""
+	const z3c = createOpenRouter({
+		apiKey: process.env.Z3_OPENROUTER_API_KEY || ""
 	});
 
-	const llama = createOpenAI({
-		baseURL: process.env.Z3_LLAMA_API_URL || "https://api.llama3.ai",
-		apiKey: apiKeys.llama || ""
-	});
+	const agents = await getAgents();
+	const models = agents.map(agent => agent.models).flat();
+	const languageModels = models.reduce((acc: any, model: any) => {
+		acc[model.id] = z3c.chat(model.orId);
+		return acc;
+	}, {});
 
-	const google = createGoogleGenerativeAI({
-		apiKey: apiKeys.gemini || ""
-	});
-
-	return {
-		"gpt-4o-mini": openai("gpt-4o-mini", { structuredOutputs: true }),
-		"llama-3.1-8b-instruct": llama("llama-3.1-8b-instruct"),
-		"gemini-2.5-flash-preview": google("gemini-2.5-flash-preview-04-17")
-	}
-}
-
+	return Object.assign({
+		"title-0": z3c.chat("google/gemma-3n-e4b-it:free"),
+		"enhancment-0": z3c.chat("google/gemma-3n-e4b-it:free")
+	}, languageModels);
+};
 export const getImageModels = async () => {
-	const apiKeys = await getConfig();
+	const z3c = createOpenRouter({
+		apiKey: process.env.Z3_OPENROUTER_API_KEY || "",
+	});
 
 	return {};
 };
