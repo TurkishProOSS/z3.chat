@@ -184,32 +184,15 @@ export const POST = async (
 			return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
 		}
 
-		let validFeatures: Set<string> | string[] = new Set<string>();
-		const modelOptionsOverride = modelOptions;
-
-
-		validAgents.map((agent) => Object.entries(agent.features || {}))
-			.forEach(([feature, value]) => {
-				if (typeof value === 'boolean' && value) {
-					if (typeof validFeatures === 'object' && validFeatures instanceof Set) validFeatures.add(feature as any);
-				}
-			});
-
-		const inValidOptions = Object.entries(modelOptions || {}).filter(([key, value]) => {
-			if (typeof value === 'boolean' && !value) return false;
-			if (typeof value === 'string' && value.trim() === '') return false;
-			if (validFeatures instanceof Set && !validFeatures.has(key)) return false;
-			modelOptionsOverride[key] = !value;
-			return true;
-		});
-
-		if (inValidOptions.length > 0) {
-			return Response.json({
-				success: false,
-				message: 'Invalid model options',
-				options: inValidOptions
-			}, { status: 400 });
+		const selectedAgent = validAgents.find(m => m.id === model);
+		if (!selectedAgent) {
+			return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
 		}
+
+		const tools = {
+			webSearch: selectedAgent.features.search ? (modelOptions.search ? webSearch : undefined) : undefined
+		} as any;
+
 
 		if (!conversationId) return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
 		if (isValidObjectId(conversationId) === false) {
@@ -286,7 +269,7 @@ export const POST = async (
 			parts: [],
 			resume: true,
 			agentId: requestModel,
-			agentOptions: modelOptionsOverride || {},
+			agentOptions: modelOptions || {},
 			experimental_attachments: experimentalAttachments
 		});
 
@@ -320,12 +303,10 @@ export const POST = async (
 					messages,
 					providerOptions: {
 						openai: {
-							reasoningEffort: (modelOptionsOverride.reasoning ? 'low' : undefined) as any
+							reasoningEffort: (modelOptions.reasoning ? 'low' : undefined) as any
 						},
 					},
-					tools: {
-						webSearch: modelOptionsOverride.search ? webSearch : undefined
-					},
+					tools,
 					maxSteps: 2,
 					onFinish: async ({ response }) => {
 						const [, assistantMessage] = appendResponseMessages({
@@ -395,8 +376,8 @@ export const POST = async (
 				result.consumeStream();
 
 				return result.mergeIntoDataStream(dataStream, {
-					sendReasoning: modelOptionsOverride.reasoning || false,
-					sendSources: modelOptionsOverride.sources || false
+					sendReasoning: modelOptions.reasoning || false,
+					sendSources: modelOptions.sources || false
 				});
 			}
 		});

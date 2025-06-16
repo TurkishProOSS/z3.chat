@@ -6,7 +6,7 @@ export const getAgents = () => {
 	models.push([
 		{
 			provider: "Gemini",
-			orId: "google/gemma-3n-e4b-it:free",
+			orId: "google/gemini-2.0-flash-exp:free",
 			id: "gemini-2.0-flash-exp",
 			name: "Gemini 2.0 Flash",
 			available: true,

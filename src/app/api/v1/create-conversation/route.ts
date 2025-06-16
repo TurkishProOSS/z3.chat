@@ -19,6 +19,8 @@ export const POST = async (
 - ensure it is not more than 80 characters long
 - the title should be a summary of the user's message
 - do not use quotes or colons
+- use input language of the user for the title
+- do not use any special characters or emojis
 
 Here is the original prompt:
 ${prompt}
