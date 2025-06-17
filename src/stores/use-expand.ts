@@ -1,15 +1,11 @@
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { AgentModel } from '@/lib/definitions';
 import { create } from 'zustand';
 
-interface FontSelectionState {
-	mainFont: string | null;
-	codeFont: string | null;
-	setMainFont: (font: string | null) => void;
-	setCodeFont: (font: string | null) => void;
+interface ExpandState {
+	expand: boolean | null;
+	setExpand: (expand: boolean | null) => void;
 }
 
-// Storage availability kontrolü
 const createSafeStorage = () => {
 	const isStorageAvailable = () => {
 		try {
@@ -35,21 +31,19 @@ const createSafeStorage = () => {
 		: fallbackStorage;
 };
 
-export const useFontStore = create<FontSelectionState>()(
+export const useExpandStore = create<ExpandState>()(
 	persist(
 		(set) => ({
-			mainFont: 'lufga',
-			codeFont: 'JetBrains Mono',
-			setMainFont: (font) => set({ mainFont: font }),
-			setCodeFont: (font) => set({ codeFont: font }),
+			expand: false,
+			setExpand: (expand) => set({ expand: expand }),
 		}),
 		{
-			name: 'font-selection',
-			storage: createJSONStorage(() => createSafeStorage()),
+			name: 'expand-sidebar',
+            storage: createJSONStorage(() => createSafeStorage()),
 			skipHydration: typeof window === 'undefined',
 			onRehydrateStorage: () => (state, error) => {
 				if (error) {
-					console.warn('Font selection rehydration failed:', error);
+					console.warn('Expand sidebar rehydration failed:', error);
 				}
 			},
 		}

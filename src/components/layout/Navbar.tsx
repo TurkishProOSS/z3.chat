@@ -3,6 +3,7 @@
 import { useParams, usePathname } from 'next/navigation';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { authClient } from '@/lib/authClient';
+import { RiMenuLine } from '@remixicon/react';
 import { Dropdown } from '@/ui/Dropdown';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '@/ui/Button';
@@ -11,8 +12,8 @@ import { useState } from 'react';
 import { api } from '@/lib/api';
 import Input from '../ui/Input';
 import Link from 'next/link';
-import { useMounted } from '@/hooks/use-mounted';
 
+import { useMounted } from '@/hooks/use-mounted';
 import { useSession } from "@/hooks/use-session";
 
 export default function Navbar({
@@ -30,12 +31,15 @@ export default function Navbar({
 	return (!showChat && pathname === ('/chats/' + params?.conversationId)) ? null : (
 		<nav className="sticky top-0 flex justify-between items-center gap-2">
 			<div className="flex items-center gap-2">
+				<div className="lg:hidden w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+					<SidebarMenu />
+				</div>
 				{leftContent}
 			</div>
 			<div className="flex items-center gap-4">
 				{rightContent || (
 					<>
-						<div className="w-8 h-8 flex items-center justify-center">
+						<div className="w-8 h-8 hidden lg:flex items-center justify-center">
 							<span className="font-mono shadow-[inset_0_-2px_4px_var(--color-primary)] text-sm bg-secondary border border-b-4 rounded-md py-1 px-3">P</span>
 						</div>
 						<UserMenu />
@@ -44,6 +48,25 @@ export default function Navbar({
 			</div>
 		</nav>
 	);
+};
+
+export const SidebarMenu = () => {
+	const [open, setOpen] = useState(false);
+
+	return (
+		<Dropdown open={open} onOpenChange={setOpen}>
+			<Dropdown.Trigger asChild>
+				<button className="!outline-none !ring-0 !border-0 !bg-transparent cursor-pointer select-none text-foreground">
+					<RiMenuLine size={20} />
+				</button>
+			</Dropdown.Trigger>
+			<Dropdown.Content sideOffset={5} align="end">
+				<Dropdown.Item>
+					item
+				</Dropdown.Item>
+			</Dropdown.Content>
+		</Dropdown>
+	)
 };
 
 export const UserMenu = () => {

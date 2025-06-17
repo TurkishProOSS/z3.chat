@@ -1,27 +1,29 @@
 "use client";
 
 import { RiAppsFill, RiAppsLine, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiExpandRightLine } from '@remixicon/react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useHotkeys } from 'react-hotkeys-hook';
+import { useClientFunctions } from '@/hooks/use-client-functions';
 import { redirect, usePathname } from 'next/navigation';
-import { cn } from '@colidy/ui-utils';
-import { Logo } from '@/brand/Logo';
-import { useEffect, useId, useState } from 'react';
-import Link from 'next/link';
-import { useSWRApi } from '@/hooks/use-swr-api';
 import { Delete01Icon, PinIcon } from 'hugeicons-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { useExpandStore } from '@/stores/use-expand';
+import { useEffect, useId, useState } from 'react';
+import { useHotkeys } from 'react-hotkeys-hook';
+import { useSWRApi } from '@/hooks/use-swr-api';
 import { pin, unpin } from '@/app/actions';
 import { RotatingLines } from '@/ui/Spinner';
+import { cn } from '@colidy/ui-utils';
 import { Button } from '@/ui/Button';
 import { Dialog } from '@/ui/Dialog';
-import { useClientFunctions } from '@/hooks/use-client-functions';
+import { Logo } from '@/brand/Logo';
+import Link from 'next/link';
 
 export default function Sidebar() {
 	const [conversations, setConversations] = useState({
 		pinnedConversations: [],
 		conversations: []
 	});
-	const [expand, setExpand] = useState(false);
+
+	const { expand, setExpand } = useExpandStore();
 	const pathname = usePathname();
 
 	const {
@@ -106,9 +108,9 @@ export default function Sidebar() {
 
 	return (
 		<>
-			<motion.div animate={{ width: expand ? '15rem' : 89 }} className="shrink-0 w-[89px] min-h-screen" />
+			<motion.div animate={{ width: expand ? '15rem' : 89 }} className="shrink-0 w-[89px] min-h-screen hidden lg:block" />
 			<motion.div
-				className={cn("fixed z-50 bg-primary group top-0 left-0 bottom-0 flex flex-col justify-between p-6 border-r", {
+				className={cn("fixed z-50 bg-primary group top-0 left-0 bottom-0 flex-col justify-between p-6 border-r hidden lg:flex", {
 					"w-[15rem]": expand,
 					"w-[89px]": !expand
 				})}

@@ -17,6 +17,7 @@ import { useTheme } from 'next-themes';
 import { cn } from '@colidy/ui-utils';
 import { Logo } from '@/brand/Logo';
 import Link from 'next/link';
+import { useAPI } from '../../../../../hooks/use-api';
 
 type IProps = {
 	session?: ReturnType<typeof useSession>['data'];
@@ -84,7 +85,7 @@ export default function Settings() {
 	return (
 		<div className="flex">
 			<motion.div
-				className={cn("bg-primary sticky top-0 shrink-0 group h-screen flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out", {
+				className={cn("bg-primary hidden sticky top-0 shrink-0 group h-screen lg:flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out", {
 					'bg-secondary': a,
 				})}
 				initial={a ? { width: '24rem' } : { width: 85 }}
@@ -140,8 +141,6 @@ export default function Settings() {
 						{[
 							['Account', <RiUser3Line size={48} />],
 							['Customization', <RiBrushLine size={48} />],
-							['History', <RiChatHistoryLine size={48} />],
-							['Models', <RiChatSmileAiLine size={48} />],
 							['ApiKeys', <RiKeyLine size={48} />],
 						].map((item, index) => (
 							<motion.div
@@ -169,12 +168,21 @@ export default function Settings() {
 					</div>
 				</div>
 			</motion.div >
-			<div className="w-full flex-1 h-full min-h-screen flex flex-col justify-between px-5 py-20 space-y-10">
-				{category === 'account' && <AccountSettings {...props} />}
-				{category === 'customization' && <CustomizationSettings {...props} />}
-				{category === 'history' && <HistorySettings {...props} />}
-				{category === 'models' && <ModelsSettings {...props} />}
-				{category === 'apikeys' && <ApiKeysSettings {...props} />}
+			<div className="w-full flex-1 h-full min-h-screen flex flex-col">
+                <div className="lg:hidden bg-secondary border-b py-3 px-4 flex items-center space-x-2">
+                    <button
+                        className="text-muted cursor-pointer flex items-center space-x-2"
+                        onClick={() => router.back()}
+                    >
+                        <RiArrowLeftLine size={20} />
+                    </button>
+                    <h1 className="text-lg text-foreground leading-none">{t("Title")}</h1>
+                </div>
+				<div className="flex-1 flex flex-col justify-between px-2 lg:px-5 py-5 lg:py-20 space-y-10">
+                    {category === 'account' && <AccountSettings {...props} />}
+                    {category === 'customization' && <CustomizationSettings {...props} />}
+                    {category === 'apikeys' && <ApiKeysSettings {...props} />}
+                </div>
 			</div>
 		</div >
 	);
@@ -420,7 +428,7 @@ function CustomizationSettings({ session }: IProps) {
 					<p className="text-muted text-sm pt-3">Kod Yazı Tipi</p>
 					<Select
 						placeholder="Yazı tipi seçin"
-						value={codeFont || 'jetbrains-mono'}
+						value={(codeFont || 'jetbrains-mono').toLowerCase().replace(/ /g, '-')}
 						onValueChange={v => setCodeFont(v.toLowerCase().replace(/ /g, '-'))}
 					>
 						{['JetBrains Mono', 'Geist Mono', 'Roboto Mono', 'Source Code Pro'].map((font, i) => (
@@ -498,79 +506,50 @@ function CustomizationSettings({ session }: IProps) {
 	);
 };
 
-function HistorySettings({ session }: IProps) {
-	return (
-		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">Geçmişi Temizle</h1>
-					<p className="text-muted text-sm">Kullanım geçmişini temizle.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					<Button>Temizle</Button>
-					<p className="text-muted text-sm">Temizleme işlemi geri alınamaz!</p>
-				</div>
-			</div>
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">Geçmiş</h1>
-					<p className="text-muted text-sm">Kullanım geçmişiniz.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					list
-				</div>
-			</div>
-		</div>
-	);
-};
-
-function ModelsSettings({ session }: IProps) {
-	return (
-		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">bilmem</h1>
-					<p className="text-muted text-sm">tasarım bulamadım.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					öyle
-				</div>
-			</div>
-		</div>
-	);
-};
-
 function ApiKeysSettings({ session }: IProps) {
+    // TODO: culku
+    // useAPI patlak ne kullancaz aq
+
 	return (
-		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">OpenAI</h1>
-					<p className="text-muted text-sm">OpenAI API anahtarınız.</p>
+        <>
+            <div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
+                <div className="w-full grid grid-cols-3">
+                    <div className="border-r flex flex-col items-end pr-5 py-5 text-right">
+                        <h1 className="text-lg text-foreground font-medium">OpenAI</h1>
+                        <p className="text-muted text-sm">OpenAI API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 py-5 pl-5 space-y-3">
+                        <Input label='Anahtar' value="dassak" />
+                    </div>
+                </div>
+                <div className="w-full grid grid-cols-3">
+                    <div className="border-r flex flex-col items-end pr-5 py-5 text-right">
+                        <h1 className="text-lg text-foreground font-medium">Gemini</h1>
+                        <p className="text-muted text-sm">Gemini API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 py-5 pl-5 space-y-3">
+                        <Input label='Anahtar' value="dassak" />
+                    </div>
+                </div>
+                <div className="w-full grid grid-cols-3">
+                    <div className="border-r flex flex-col items-end pr-5 py-5 text-right">
+                        <h1 className="text-lg text-foreground font-medium">Anthropic</h1>
+                        <p className="text-muted text-sm">Claude API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 py-5 pl-5 space-y-3">
+                        <Input label='Anahtar' value="dassak" />
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
+				<div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
+					<Button variant="link" className="text-muted">Sıfırla</Button>
 				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					<Input label='Anahtar' value="dassak" />
+				<div className="rounded-2xl bg-primary">
+					<Button>Kaydet</Button>
 				</div>
 			</div>
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">Gemini</h1>
-					<p className="text-muted text-sm">Gemini API anahtarınız.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					<Input label='Anahtar' value="dassak" />
-				</div>
-			</div>
-			<div className="w-full grid grid-cols-3">
-				<div className="border-r flex flex-col items-end pr-5 py-5 text-right">
-					<h1 className="text-lg text-foreground font-medium">Claude</h1>
-					<p className="text-muted text-sm">Claude API anahtarınız.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-3">
-					<Input label='Anahtar' value="dassak" />
-				</div>
-			</div>
-		</div>
+        </>
 	);
 };
 

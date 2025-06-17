@@ -31,7 +31,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<div className={`flex min-h-screen main-font-${mainFont} code-font-${codeFont}`}>
 			<Sidebar />
-			<main className="flex-1 p-9 flex flex-col h-screen overflow-y-auto">
+			<main className="flex-1 lg:p-9 p-3 pb-0 flex flex-col h-screen overflow-y-auto">
 				<Navbar />
 				{children}
 				<HotkeysHelp />
