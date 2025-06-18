@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { Session, User } from "better-auth";
 import { UserWithAnonymous } from "better-auth/plugins";
+import { ObjectId } from "mongoose";
 import { cache } from "react";
 
 export type WithAuthOptions = {
@@ -13,10 +14,13 @@ export type SessionData = {
 	user: UserWithAnonymous & {
 		usage_enhance?: number
 		usage_models?: number
+		usage_image_generation?: number
 		username?: string;
 		interests?: string;
 		tone?: string;
 		bio?: string;
+		is_premium?: boolean;
+		pinned_agents?: ObjectId[] | string[];
 	};
 }
 
@@ -55,6 +59,7 @@ export async function withAuth<T>(
 		if (result instanceof Response) return result;
 		return new Response(JSON.stringify(result), { status: 200 });
 	} catch (error) {
+		console.error("Error in withAuth middleware:", error);
 		return new Response(JSON.stringify({ error: "Internal Server Error" }), {
 			status: 500,
 		});

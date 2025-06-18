@@ -13,8 +13,6 @@ export const POST = async (
 		const { conversationId } = await params;
 		const { vote, messageId, findBy } = await request.json();
 
-		console.log('Debug - Request data:', { vote, messageId, findBy, conversationId });
-
 		const validVotes = ['up', 'down'];
 		if (!vote || !validVotes.includes(vote)) {
 			return Response.json({ success: false, message: 'Invalid vote value. Use "up" or "down".' }, { status: 400 });
@@ -44,10 +42,6 @@ export const POST = async (
 			chatId: conversationId
 		}).select('_id').lean();
 
-		console.log('Debug - All messages found:', messages);
-		console.log('Debug - messageId:', messageId);
-		console.log('Debug - findBy:', findBy);
-
 		let message: {
 			_id: string;
 		} & any | null = null;
@@ -69,8 +63,6 @@ export const POST = async (
 				}
 			}
 		}
-
-		console.log('Debug - Selected message:', message);
 
 		if (!message) return Response.json({
 			success: false,

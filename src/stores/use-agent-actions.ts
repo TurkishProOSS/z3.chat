@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AgentModel, InitZ3Schema } from '@/lib/definitions';
 import { useAgentSelectionStore } from './use-agent-selection';
+import { reduceAgents } from '@/lib/get-agents';
 
 interface AgentActionsState {
 	changeAgent: (agentId: string | null, z3: InitZ3Schema) => void;
@@ -20,7 +21,9 @@ export const useAgentActionsStore = create<AgentActionsState>()((set) => ({
 			return;
 		}
 
-		const agent = Object.values(z3.agents)
+		const agents = reduceAgents(z3.agents);
+
+		const agent = Object.values(agents)
 			.flatMap((agent) => agent.models)
 			.find((a) => a.id === agentId);
 

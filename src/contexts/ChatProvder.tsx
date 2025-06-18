@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatProviderMessage as Message, ChatProviderChatContext as ChatContextType } from '@/lib/definitions';
+import { useChatDataStore } from '@/stores/use-chat-data';
 import { createContext, useMemo, useState, useEffect } from 'react';
 
 export const ChatContext = createContext<ChatContextType>({
@@ -9,10 +10,12 @@ export const ChatContext = createContext<ChatContextType>({
 	setMessages: () => { }
 });
 
-export const ChatProvider = ({ children, initialMessages }: {
+export const ChatProvider = ({ children, initialMessages, response }: {
 	children: React.ReactNode;
 	initialMessages?: Message[];
+	response?: string;
 }) => {
+	const setResponse = useChatDataStore((state) => state.setResponse);
 	const [messages, setMessages] = useState<Message[]>(() => {
 		// SSR uyumlu initial state - always use initialMessages
 		return initialMessages || [];
@@ -29,13 +32,15 @@ export const ChatProvider = ({ children, initialMessages }: {
 		}
 	}, [initialMessages]);
 
-	const ChatValue = useMemo(() => ({
-		messages,
-		setMessages,
-	}), [messages]);
+	useEffect(() => {
+		setResponse(response);
+	}, [messages, response]);
 
 	return (
-		<ChatContext.Provider value={ChatValue as any}>
+		<ChatContext.Provider value={{
+			messages,
+			setMessages
+		} as any}>
 			{children}
 		</ChatContext.Provider>
 	);

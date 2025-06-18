@@ -26,14 +26,14 @@ function SelectComp({
 			{SelectTriggerComponent ? SelectTriggerComponent : (
 				<Select.Trigger {...triggerProps} className={cn("cursor-pointer hover:bg-tertiary transition-all bg-secondary border p-3 text-sm min-w-48 justify-between rounded-xl outline-none flex items-center space-x-2", triggerProps.className || '')}>
 					<Select.Value placeholder={placeholder} />
-					<Select.Icon className="text-muted data-[state=open]:rotate-180 transition-transform">
+					<Select.Icon className="text-muted data-[state=open]:rotate-180 transition-transform ml-auto">
 						<RiArrowDownSLine />
 					</Select.Icon>
 				</Select.Trigger>
 			)}
 			<Select.Portal>
 				<Select.Content
-					className={cn("bg-secondary border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl", [
+					className={cn("bg-popover border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl", [
 
 						"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 						"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2",
@@ -75,7 +75,7 @@ const SelectItem = React.forwardRef(
 	({ children, className, ...props }: any, forwardedRef) => {
 		return (
 			<Select.Item
-				className={cn("flex items-center text-muted hover:text-foreground relative px-3 py-2 hover:bg-border cursor-pointer rounded-lg justify-between space-x-2 text-sm transition-all !outline-none", className || '')}
+				className={cn("flex items-center text-muted hover:text-foreground relative px-3 py-2 hover:bg-popover-hover cursor-pointer rounded-lg justify-between space-x-2 text-sm transition-all !outline-none", className || '')}
 				{...props}
 				ref={forwardedRef}
 			>

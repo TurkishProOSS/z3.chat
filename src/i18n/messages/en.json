@@ -13,7 +13,9 @@
 			"Agent_Feature_Reasoning": "Reasoning",
 			"Submit_Disabled": "You must write something to submit",
 			"Submit": "Submit"
-		}
+		},
+		"Usage_Warning": "Your prompt enhancement and model usage limits are approaching. Please check your usage.",
+		"Check_Usage": "Check Usage"
 	},
 	"HomePage": {
 		"Morning": "{is_logged_in, plural, =0 {Have a nice day!} =1 {Have a nice day, <name-mark>{name}</name-mark>!} other {Have a nice day!}}",

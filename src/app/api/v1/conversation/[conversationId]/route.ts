@@ -2,44 +2,23 @@ import { Conversation } from "@/database/models/Conversations";
 import { Message } from "@/database/models/Messages";
 import { ai, getAllModelsArray } from "@/lib/ai";
 import { withAuth } from "@/middleware/withAuth";
-import { appendResponseMessages, createDataStream, smoothStream, streamText, tool } from "ai";
+import { appendResponseMessages, createDataStream, experimental_generateImage, GeneratedFile, smoothStream, streamText } from "ai";
 import { isValidObjectId } from "mongoose";
 import { type NextRequest } from 'next/server'
 import { createResumableStreamContext } from "resumable-stream";
 import { after } from "next/server";
-import { getAgents } from "@/lib/get-agents";
 import { systemPrompt } from "@/lib/system-prompt";
 import { geolocation } from '@vercel/functions';
 import { Ratelimit } from "@upstash/ratelimit";
 import { ipAddress } from "@vercel/functions";
 import { kv } from "@vercel/kv";
 import md5 from "md5";
+import { getAgentTools } from "@/lib/createTools";
 import { z } from "zod";
-
-import Exa from 'exa-js';
-
-export const exa = new Exa(process.env.EXA_API_KEY);
-
-export const webSearch = tool({
-	description: 'Search the web for up-to-date information',
-	parameters: z.object({
-		query: z.string().min(1).max(100).describe('The search query'),
-	}),
-	execute: async ({ query }) => {
-		const { results } = await exa.searchAndContents(query, {
-			livecrawl: 'always',
-			numResults: 10,
-		});
-		return results.map(result => ({
-			title: result.title,
-			url: result.url,
-			content: result.text.slice(0, 1000), // take just the first 1000 characters
-			publishedDate: result.publishedDate,
-			favicon: result.favicon,
-			image: result.image,
-		}));
-	},
-});
+import { AgentModel } from "@/database/models/Models";
+import { AgentModel as TAgentModel } from "@/lib/definitions";
+import { put } from "@/lib/blob";
+import { v4 as uuidv4 } from 'uuid';
 
 
 const streamContext = createResumableStreamContext({
@@ -77,7 +56,6 @@ export const GET = async (
 			if (!isShared) return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
 			isSharedState = true;
 		}
-
 
 		const conversation: any = await Conversation.findOne(isSharedState ? {
 			'shared._id': conversationId
@@ -134,259 +112,380 @@ export const GET = async (
 	});
 };
 
+type AMT = TAgentModel & any;
 export const POST = async (
 	request: NextRequest,
 	{ params }: { params: { conversationId: string } }
 ) => {
 	return await withAuth(async (session) => {
-		const ip = ipAddress(request) || (!session?.user?.isAnonymous ? session?.user?.id : (process.env.NODE_ENV === 'development' ? '127.0.0.1' : ''));
-		if (!ip) {
-			return Response.json({
-				success: false,
-				message: "Unable to determine your IP address.",
-			}, { status: 400 });
-		}
+		try {
+			const { conversationId } = await params;
+			const { prompt, model, modelOptions, attachments } = await request.json();
+			if (!prompt) return Response.json({ success: false, message: 'Message is required' }, { status: 400 });
+			if (!model) return Response.json({ success: false, message: 'Model is required' }, { status: 400 });
+			const agent: AMT & any = await AgentModel.findOne({ id: model }).lean();
+			if (!agent) return Response.json({ success: false, message: 'Invalid model' }, { status: 400 })
+			const ip = ipAddress(request) || (!session?.user?.isAnonymous ? session?.user?.id : (process.env.NODE_ENV === 'development' ? '127.0.0.1' : ''));
+			if (!ip) {
+				return Response.json({
+					success: false,
+					message: "Unable to determine your IP address.",
+				}, { status: 400 });
+			}
 
-		const ratelimit = new Ratelimit({
-			redis: kv,
-			limiter: Ratelimit.slidingWindow(session?.user?.usage_models || 20, '24 h')
-		});
+			const ratelimit = new Ratelimit({
+				redis: kv,
+				limiter: Ratelimit.slidingWindow((agent?.features?.imageGeneration ? session?.user?.usage_image_generation : session?.user?.usage_models) || 20, '24 h')
+			});
 
-		const { success, remaining, limit, reset } = await ratelimit.limit(`models:${md5(ip)}`);
+			const { success, remaining, limit, reset } = await ratelimit.limit(`models:${md5(ip)}`);
 
-		if (!success) {
-			return Response.json({
-				success: false,
-				message: `You have reached of your conversation limit. You can try again after ${new Date(reset * 1000).toLocaleString('en-US', {
-					timeZone: 'UTC',
-					year: 'numeric',
-					month: '2-digit',
-					day: '2-digit',
-					hour: '2-digit',
-					minute: '2-digit'
-				})}.`,
-				rateLimit: {
-					remaining,
-					limit,
-					reset
-				}
-			}, { status: 429 });
-		}
+			if (!success) {
+				return Response.json({
+					success: false,
+					message: `You have reached of your conversation limit. You can try again after ${new Date(reset * 1000).toLocaleString('en-US', {
+						timeZone: 'UTC',
+						year: 'numeric',
+						month: '2-digit',
+						day: '2-digit',
+						hour: '2-digit',
+						minute: '2-digit'
+					})}.`,
+					rateLimit: {
+						remaining,
+						limit,
+						reset
+					}
+				}, { status: 429 });
+			}
 
-		const { conversationId } = await params;
-		const { prompt, model, modelOptions, attachments } = await request.json();
-		if (!prompt) return Response.json({ success: false, message: 'Message is required' }, { status: 400 });
-		if (!model) return Response.json({ success: false, message: 'Model is required' }, { status: 400 });
-		const agents = await getAgents();
-		const validAgents = agents.flatMap(agent => agent.models);
+			const tools = getAgentTools(agent as any, modelOptions);
 
-		if (validAgents.find(m => m.id === model) === undefined) {
-			return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
-		}
+			if (!conversationId) return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
+			if (isValidObjectId(conversationId) === false) {
+				return Response.json({ success: false, message: 'Invalid conversation ID' }, { status: 400 });
+			}
 
-		const selectedAgent = validAgents.find(m => m.id === model);
-		if (!selectedAgent) {
-			return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
-		}
+			const models = await getAllModelsArray();
+			const requestModel = models.find(m => m === model);
+			if (!requestModel) return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
 
-		const tools = {
-			webSearch: selectedAgent.features.search ? (modelOptions.search ? webSearch : undefined) : undefined
-		} as any;
+			const conversation = await Conversation.findOne({
+				_id: conversationId,
+				userId: session.user.id
+			}).select('-messages').lean();
+			if (!conversation) return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
+
+			const existingRespond = await Message.findOne({
+				chatId: conversationId,
+				role: 'assistant',
+				resume: true
+			}).lean();
+
+			if (existingRespond) {
+				return Response.json({
+					success: false,
+					message: 'There is already an ongoing response for this conversation. Please wait for it to finish or delete the conversation.',
+					conversationId
+				}, { status: 400 });
+			}
 
 
-		if (!conversationId) return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
-		if (isValidObjectId(conversationId) === false) {
-			return Response.json({ success: false, message: 'Invalid conversation ID' }, { status: 400 });
-		}
+			const attachmentsSchema = z.array(z.object({
+				name: z.string().min(1, 'Attachment name is required'),
+				preview: z.string().url('Invalid attachment URL'),
+				type: z.string().min(1, 'Attachment type is required')
+			})).safeParse(attachments);
 
-		const models = await getAllModelsArray();
-		const requestModel = models.find(m => m === model);
-		if (!requestModel) return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
+			if (!attachmentsSchema.success) {
+				return Response.json({
+					success: false,
+					message: 'Invalid attachments',
+					errors: attachmentsSchema.error.errors
+				}, { status: 400 });
+			}
 
-		const conversation = await Conversation.findOne({
-			_id: conversationId,
-			userId: session.user.id
-		}).select('-messages').lean();
-		if (!conversation) return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
+			const experimentalAttachments = attachments.map((attachment: any) => ({
+				name: attachment.name,
+				url: attachment.preview,
+				contentType: attachment.type
+			}));
 
-		const existingRespond = await Message.findOne({
-			chatId: conversationId,
-			role: 'assistant',
-			resume: true
-		}).lean();
+			const newMessage = new Message({
+				chatId: conversationId,
+				role: 'user',
+				parts: [
+					{
+						type: 'text',
+						text: prompt as string
+					}
+				],
+				experimental_attachments: experimentalAttachments,
+				createdAt: new Date()
+			});
 
-		if (existingRespond) {
-			return Response.json({
-				success: false,
-				message: 'There is already an ongoing response for this conversation. Please wait for it to finish or delete the conversation.',
-				conversationId
-			}, { status: 400 });
-		}
+			await newMessage.save();
 
-		const experimentalAttachments = attachments.map((attachment: any) => ({
-			name: attachment.name,
-			url: attachment.preview,
-			contentType: attachment.type
-		}));
-
-		const newMessage = new Message({
-			chatId: conversationId,
-			role: 'user',
-			parts: [
+			await Conversation.updateOne(
+				{ _id: conversationId, userId: session.user.id },
 				{
-					type: 'text',
-					text: prompt as string
+					$push: { messages: newMessage._id }
 				}
-			],
-			experimental_attachments: experimentalAttachments,
-			createdAt: new Date()
-		});
+			);
 
-		await newMessage.save();
+			const messages = (await Message.find({
+				chatId: conversationId
+			}).sort({ createdAt: 1 }).lean()).map((m) => ({
+				role: m.role as 'user' | 'assistant' | 'system',
+				content: m.parts.filter((part: any) => part.type === 'text').map((part: any) => part.content).join(' '),
+				experimental_attachments: m.experimental_attachments
+			})).concat([{
+				role: 'user',
+				content: prompt as string,
+				experimental_attachments: experimentalAttachments
+			}]);
 
-		await Conversation.updateOne(
-			{ _id: conversationId, userId: session.user.id },
-			{
-				$push: { messages: newMessage._id }
-			}
-		);
+			const responseMessage = new Message({
+				chatId: conversationId,
+				role: 'assistant',
+				parts: [],
+				resume: true,
+				agentId: requestModel,
+				agentOptions: modelOptions || {},
+				experimental_attachments: experimentalAttachments
+			});
 
-		const messages = (await Message.find({
-			chatId: conversationId
-		}).sort({ createdAt: 1 }).lean()).map((m) => ({
-			role: m.role as 'user' | 'assistant' | 'system',
-			content: m.parts.filter((part: any) => part.type === 'text').map((part: any) => part.content).join(' '),
-			experimental_attachments: m.experimental_attachments
-		})).concat([{
-			role: 'user',
-			content: prompt as string,
-			experimental_attachments: experimentalAttachments
-		}]);
+			await Conversation.updateOne(
+				{ _id: conversationId, userId: session.user.id },
+				{
+					$push: { messages: responseMessage._id }
+				}
+			);
 
-		const responseMessage = new Message({
-			chatId: conversationId,
-			role: 'assistant',
-			parts: [],
-			resume: true,
-			agentId: requestModel,
-			agentOptions: modelOptions || {},
-			experimental_attachments: experimentalAttachments
-		});
+			await responseMessage.save();
 
-		await Conversation.updateOne(
-			{ _id: conversationId, userId: session.user.id },
-			{
-				$push: { messages: responseMessage._id }
-			}
-		);
+			const d = await ai({ session });
+			const details = geolocation(request);
 
-		await responseMessage.save();
-
-		const d = await ai();
-		const details = geolocation(request);
-
-		const stream = createDataStream({
-			execute: dataStream => {
-				const result = streamText({
-					model: d.languageModel(requestModel),
-					system: systemPrompt({
-						extensions: [
-							""
-						],
-						preferences: {
-							interests: session?.user?.interests || "",
-							tone: session?.user?.tone || "neutral",
-							bio: session?.user?.bio || "",
-						},
-						geolocation: details
-					}),
-					messages,
-					providerOptions: {
-						openai: {
-							reasoningEffort: (modelOptions.reasoning ? 'low' : undefined) as any
-						},
-					},
-					tools,
-					maxSteps: 2,
-					onFinish: async ({ response }) => {
-						const [, assistantMessage] = appendResponseMessages({
-							messages: [prompt],
-							responseMessages: response.messages,
-						});
-
-						const dbData = await Message.findOne({ chatId: conversationId, role: 'assistant', resume: true })
-							.catch((err) => null);
-
-						if (!dbData) {
-							console.error('No assistant message found in database');
-							return;
-						}
-
-						await Message.updateOne(
-							{ _id: dbData._id },
-							{
-								role: assistantMessage.role,
-								parts: assistantMessage.parts,
-								experimental_attachments: assistantMessage.experimental_attachments,
-								resume: false
-							}
-						).catch((err) => {
-							console.error('Error updating assistant message:', err);
-						});
-					},
-					experimental_transform: smoothStream({ chunking: 'word', delayInMs: 50 }),
-					onError: async ({ error }) => {
+			if ((agent as any)?.features?.imageGeneration) {
+				const imageStream = createDataStream({
+					execute: async (dataStream) => {
 						try {
-							console.error('Error in stream:', error);
-							const dbData = await Message.findOne({ chatId: conversationId, role: 'assistant', resume: true })
-								.catch((err) => null);
+							dataStream.writeData({
+								type: 'image',
+								state: 'generating',
+								text: '',
+								experimental_attachments: []
+							});
 
-							if (!dbData) {
-								console.error('No assistant message found in database');
+							const { images } = await experimental_generateImage({
+								model: d.imageModel(requestModel),
+								prompt: prompt as string
+							});
+
+							if (!images || images.length === 0) {
+								dataStream.writeData({
+									type: 'error',
+									text: 'No images generated.'
+								});
+
+								await Message.updateOne(
+									{ _id: responseMessage._id },
+									{
+										type: 'error',
+										role: 'assistant',
+										parts: [
+											{
+												type: 'error',
+												content: 'No images generated.'
+											}
+										],
+										resume: false
+									}
+								);
+
 								return;
 							}
 
+							const uploadedImages = await Promise.all(images.map(async (image: any) => {
+								const arr = new Uint8Array(Object.values(image.uint8ArrayData));
+								const buffer = Buffer.from(arr);
+								const randomId = uuidv4();
+								const extension = image?.mimeType?.split?.('/')?.[1];
+								const fileName = `${randomId}-generated-z3c-dev.${extension || 'png'}`;
+								const file = new File([buffer], fileName, {
+									type: image.mimeType
+								});
+								const upload = await put("chat-files", fileName, file, {
+									access: 'public',
+									addRandomSuffix: true
+								});
+
+								if (!upload) {
+									throw new Error('Failed to upload image');
+								}
+
+								return {
+									name: file.name,
+									url: upload.url,
+									downloadUrl: upload.downloadUrl,
+									contentType: file.type
+								};
+							}));
+
 							await Message.updateOne(
-								{ _id: dbData._id },
+								{ _id: responseMessage._id },
 								{
-									type: 'error',
 									role: 'assistant',
 									parts: [
 										{
-											type: 'error',
-											content: (error as any).message || 'An error occurred while processing your request.'
+											type: 'image',
+											state: 'generated',
+											experimental_attachments: uploadedImages,
 										}
 									],
+									experimental_attachments: uploadedImages,
 									resume: false
 								}
-							).catch((err) => {
-								console.error('Error updating assistant message:', err);
-							});
+							);
 
+							dataStream.writeData({
+								type: 'image',
+								state: 'generated',
+								text: '',
+								experimental_attachments: uploadedImages
+							} as any);
+						} catch (error) {
 							dataStream.writeData({
 								type: 'error',
 								text: (error as any)?.message || 'An error occurred while processing your request.'
 							});
-						} catch (err) {
-							console.error('Error handling error in stream:', err);
 						}
 					}
 				});
 
-				result.consumeStream();
+				return new Response(
+					await streamContext.createNewResumableStream(conversationId, () => imageStream),
+					{
+						status: 200,
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					}
+				);
 
-				return result.mergeIntoDataStream(dataStream, {
-					sendReasoning: modelOptions.reasoning || false,
-					sendSources: modelOptions.sources || false
+			} else {
+				const stream = createDataStream({
+					execute: dataStream => {
+						const result = streamText({
+							model: d.languageModel(requestModel),
+							system: systemPrompt({
+								extensions: [
+									""
+								],
+								preferences: {
+									interests: session?.user?.interests || "",
+									tone: session?.user?.tone || "neutral",
+									bio: session?.user?.bio || "",
+								},
+								geolocation: details
+							}),
+							messages,
+							providerOptions: {
+								openai: {
+									reasoningEffort: (modelOptions.reasoning ? 'low' : undefined) as any
+								}
+							},
+							tools,
+							onFinish: async ({ response }) => {
+								const [, assistantMessage] = appendResponseMessages({
+									messages: [prompt],
+									responseMessages: response.messages,
+								});
+
+								const dbData = await Message.findOne({ chatId: conversationId, role: 'assistant', resume: true })
+									.catch((err) => null);
+
+								if (!dbData) {
+									console.error('No assistant message found in database');
+									return;
+								}
+
+								await Message.updateOne(
+									{ _id: dbData._id },
+									{
+										role: assistantMessage.role,
+										parts: assistantMessage.parts,
+										experimental_attachments: assistantMessage.experimental_attachments,
+										resume: false
+									}
+								).catch((err) => {
+									console.error('Error updating assistant message:', err);
+								});
+							},
+							experimental_transform: smoothStream({ chunking: 'word' }),
+							onError: async ({ error }) => {
+								try {
+									dataStream.writeData({
+										type: 'error',
+										text: (error as any)?.message || 'An error occurred while processing your request.'
+									});
+
+									const dbData = await Message.findOne({ chatId: conversationId, role: 'assistant', resume: true })
+										.catch((err) => null);
+
+									if (!dbData) {
+										return;
+									}
+
+									await Message.updateOne(
+										{ _id: dbData._id },
+										{
+											type: 'error',
+											role: 'assistant',
+											parts: [
+												{
+													type: 'error',
+													content: (error as any).message || 'An error occurred while processing your request.'
+												}
+											],
+											resume: false
+										}
+									).catch((err) => {
+										console.error('Error updating assistant message:', err);
+									});
+								} catch (err) {
+									dataStream.writeData({
+										type: 'error',
+										text: (err as any)?.message || 'An error occurred while processing your request.'
+									});
+									console.error('Error handling error in stream:', err);
+								}
+							}
+						})
+
+						result.consumeStream();
+						return result.mergeIntoDataStream(dataStream, {
+							sendReasoning: true,
+							sendSources: true
+						});
+					}
+				});
+
+				const str = await streamContext.createNewResumableStream(conversationId, () => stream);
+
+				return new Response(str, {
+					status: 200
 				});
 			}
-		});
-
-		const str = await streamContext.createNewResumableStream(conversationId, () => stream);
-
-		return new Response(str, {
-			status: 200
-		});
+		} catch (error) {
+			console.error('Error occurred while processing request:', error);
+			return Response.json({
+				success: false,
+				message: 'An error occurred while processing your request. Please try again later.',
+				error: (error as Error).message || 'Unknown error'
+			}, { status: 500 });
+		}
 	}, {
 		forceAuth: true,
 		headers: request.headers

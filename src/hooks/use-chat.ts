@@ -17,6 +17,7 @@ import { useAgentSelectionStore } from "@/stores/use-agent-selection";
 import { useAlertStore } from "@/stores/use-alert";
 import { useAgentFeatureStore } from "@/stores/use-feature-store";
 import { useAttachmentsStore } from "@/stores/use-attachments";
+import { useIsConversationCreating } from "@/stores/use-is-conversation-creating";
 
 export const useChat = (options?: UseChatOptions) => {
 	const router = useRouter();
@@ -36,7 +37,8 @@ export const useChat = (options?: UseChatOptions) => {
 	const { scrollToBottom, autoScroll } = useScrollDown();
 	const { messages, setMessages, streamMessage, addUserMessage, setToolResult, endStreaming, continueStreaming } = useMessages();
 
-	const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+	const isCreatingConversation = useIsConversationCreating((state) => state.isCreatingConversation);
+	const setIsCreatingConversation = useIsConversationCreating((state) => state.setIsCreatingConversation);
 
 	async function handleStreamMessage(response: AxiosResponse<any, any>, $prompt: string) {
 		continueStreaming();
@@ -62,13 +64,39 @@ export const useChat = (options?: UseChatOptions) => {
 			},
 			onReasoningPart: (reasoning) => processPart('reasoning', reasoning),
 			onTextPart: (text) => processPart('text', text),
-			onDataPart: (data) => processPart('data', data),
+			onDataPart: (data: any) => {
+				data.map((part: any) => {
+					if (part.type === 'image') {
+						processPart('image', part);
+						if (part.state === 'generated') {
+							endStreaming();
+							options?.setIsResponding?.(false);
+							if (autoScroll) scrollToBottom();
+						}
+					}
+					if (part.type === 'error') {
+						streamMessage({
+							type: 'error',
+							value: part.text || 'An error occurred while processing your request.'
+						}, {
+							agentId: model?.id as string,
+							agentOptions: features,
+							chatId: params?.conversationId as string,
+							text: part.text || 'An error occurred while processing your request.'
+						});
+
+
+						endStreaming();
+						options?.setIsResponding?.(false);
+						if (autoScroll) scrollToBottom();
+					}
+				});
+			},
 			onFilePart: (file) => processPart('file', file),
 			onMessageAnnotationsPart: (annotations) => processPart('annotations', annotations),
 			onSourcePart: (source) => processPart('source', source),
-			onErrorPart: (error) => processPart('error', error),
 			onToolCallPart: (toolCall) => processPart('tool-invocation', toolCall),
-			onToolResultPart: (toolResult) => setToolResult(toolResult.toolCallId, toolResult.result),
+			onToolResultPart: (toolResult) => setToolResult(toolResult.toolCallId, toolResult.result)
 		});
 	}
 
@@ -121,9 +149,6 @@ export const useChat = (options?: UseChatOptions) => {
 					throw new Error(response?.message || "Failed to create conversation");
 				}
 				return response.data;
-			})
-			.finally(() => {
-				setIsCreatingConversation(false);
 			});
 
 		return createPromise;
@@ -152,9 +177,11 @@ export const useChat = (options?: UseChatOptions) => {
 	}, [params, isEnhancing, sendMessage, setMessages, setAutoSubmit, options?.disableSubmittion, router, createNewConversation, setAttachments]);
 
 	useEffect(() => {
-		if (autoSubmit && params?.conversationId)
+		if (autoSubmit && params?.conversationId && isCreatingConversation) {
+			setIsCreatingConversation(false);
 			handleSubmit();
-	}, [autoSubmit, params, handleSubmit]);
+		}
+	}, [autoSubmit, params, handleSubmit, isCreatingConversation, setIsCreatingConversation]);
 
 	useEffect(() => {
 		(async () => {

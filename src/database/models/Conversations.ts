@@ -25,6 +25,11 @@ const conversationSchema = new Schema({
 	votes: {
 		ups: { type: Array, default: [] },
 		downs: { type: Array, default: [] }
+	},
+	z3cs: {
+		type: [Types.ObjectId],
+		ref: "Z3Cs",
+		default: []
 	}
 }, {
 	timestamps: true,

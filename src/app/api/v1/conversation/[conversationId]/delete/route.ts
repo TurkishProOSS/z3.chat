@@ -3,6 +3,9 @@ import { Message } from "@/database/models/Messages";
 import { withAuth } from "@/middleware/withAuth";
 import { isValidObjectId } from "mongoose";
 import { type NextRequest } from 'next/server';
+import {
+	del
+} from "@vercel/blob";
 
 export const DELETE = async (
 	request: NextRequest,
@@ -20,7 +23,7 @@ export const DELETE = async (
 		if (!isExists) return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
 
 		await Conversation.deleteOne({ _id: conversationId, userId: session.user.id });
-		const thisConversationMessages = await Message.find({ chatId: conversationId }).select('_id').lean();
+		const thisConversationMessages = await Message.find({ chatId: conversationId }).select('_id experimental_attachments').lean();
 
 		if (thisConversationMessages.length > 0) {
 			const forkedConversations = await Conversation.find({ forkedFrom: conversationId });
@@ -98,6 +101,13 @@ export const DELETE = async (
 					}
 				}
 			}
+		}
+
+		const attachments = thisConversationMessages.map(msg => msg.experimental_attachments || []).flat();
+		if (attachments.length > 0) {
+			await del(attachments.map((attachment: any) => attachment.url)).catch((e) => {
+				console.error('Error deleting attachments:', e);
+			});
 		}
 
 		await Message.deleteMany({

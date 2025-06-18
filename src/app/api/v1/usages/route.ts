@@ -40,7 +40,7 @@ export const GET = async (
 				models: {
 					remaining: modelsRemaning.remaining,
 					limit: session?.user?.usage_models || 20,
-					reset: new Date(modelsRemaning.reset * 1000).toLocaleString('en-US', {
+					reset: new Date(modelsRemaning.reset).toLocaleString('en-US', {
 						timeZone: 'UTC',
 						year: 'numeric',
 						month: '2-digit',
@@ -53,7 +53,7 @@ export const GET = async (
 				promptEnhancement: {
 					remaining: enhanceRemaning.remaining,
 					limit: session?.user?.usage_enhance || 20,
-					reset: new Date(enhanceRemaning.reset * 1000).toLocaleString('en-US', {
+					reset: new Date(enhanceRemaning.reset).toLocaleString('en-US', {
 						timeZone: 'UTC',
 						year: 'numeric',
 						month: '2-digit',

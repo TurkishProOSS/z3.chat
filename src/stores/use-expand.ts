@@ -34,12 +34,12 @@ const createSafeStorage = () => {
 export const useExpandStore = create<ExpandState>()(
 	persist(
 		(set) => ({
-			expand: false,
+			expand: true,
 			setExpand: (expand) => set({ expand: expand }),
 		}),
 		{
 			name: 'expand-sidebar',
-            storage: createJSONStorage(() => createSafeStorage()),
+			storage: createJSONStorage(() => createSafeStorage()),
 			skipHydration: typeof window === 'undefined',
 			onRehydrateStorage: () => (state, error) => {
 				if (error) {

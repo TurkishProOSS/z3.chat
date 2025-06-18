@@ -39,16 +39,12 @@ export const auth = betterAuth({
 						{ $set: { userId: newUser.user.id, fromAnonymousAccount: true } }
 					);
 				}
-
-				console.log(
-					`Anonymous user ${anonymousUser.user.id} linked to new user ${newUser.user.id} with ${anonymousUserConversations.length} conversations`
-				);
 			}
 		})
 	],
 	user: {
 		additionalFields: {
-			pro: {
+			is_premium: {
 				type: 'boolean',
 				input: false,
 				default: false
@@ -63,21 +59,32 @@ export const auth = betterAuth({
 				input: false,
 				default: 20
 			},
+			usage_image_generation: {
+				type: 'number',
+				input: false,
+				default: 5
+			},
 			interests: {
 				type: 'string',
-				input: false,
-				default: ''
+				input: false
 			},
 			tone: {
 				type: 'string',
-				input: false,
-				default: ''
+				input: false
 			},
 			bio: {
 				type: 'string',
+				input: false
+			},
+			pinned_agents: {
+				type: 'string[]',
+				references: {
+					model: 'agentmodels',
+					field: 'id'
+				},
 				input: false,
-				default: ''
-			}
+				default: []
+			},
 		}
 	},
 	databaseHooks: {
@@ -89,7 +96,12 @@ export const auth = betterAuth({
 
 						return Object.assign(user, {
 							image: avatar,
-							username: user.name || generateUsername()
+							username: user.name || generateUsername(),
+							usage_models: 10,
+							usage_enhance: 5,
+							bio: "",
+							interests: "",
+							tone: ""
 						});
 					}
 
@@ -112,7 +124,12 @@ export const auth = betterAuth({
 
 					return {
 						data: Object.assign(user, {
-							image: upload.url
+							image: upload.url,
+							usage_models: 10,
+							usage_enhance: 20,
+							bio: "",
+							interests: "",
+							tone: ""
 						}),
 					};
 				}

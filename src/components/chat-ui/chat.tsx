@@ -15,152 +15,104 @@ import { app_url } from "@/../z3c.config.json";
 
 export default function Chat({
 	response,
-	conversationId
+	conversationId,
+	isTemporary = false
 }: {
-	response: any;
-	conversationId: string;
+	response?: any;
+	conversationId?: string;
+	isTemporary?: boolean;
 }) {
-	const [isResponding, setIsResponding] = useState(response.isResponding || false);
+	const [isResponding, setIsResponding] = useState(response?.isResponding || false);
 	const { scrollToBottom, autoScroll, isNeedScroll } = useScrollDown();
-	const isShared = response.is_shared || false;
-	const [shareId, setShareId] = useState<string | null>(isShared ? app_url + "/chats/" + response.shared?._id || null : null);
-	const [copied, setCopied] = useState(false);
+	const isShared = response?.is_shared || false;
+
+	return (
+		<div className="flex flex-col h-full w-full">
+			{/* Messages Container with Custom Scroll */}
+			<div className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border-hover">
+				<div className="w-full max-w-3xl mx-auto">
+					<Messages isShared={isShared} />
+				</div>
+			</div>
+
+			{/* Bottom Input Area */}
+			<div className="flex-shrink-0 w-full">
+				<div className="w-full max-w-3xl mx-auto">
+					<PromptBase
+						isNeedScroll={isNeedScroll}
+						scrollToBottom={scrollToBottom}
+						autoScroll={autoScroll}
+						isShared={isShared}
+						response={response}
+						conversationId={conversationId}
+						isResponding={isResponding}
+						setIsResponding={setIsResponding}
+					/>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+function PromptBase({
+	isNeedScroll,
+	scrollToBottom,
+	autoScroll,
+	isShared,
+	response,
+	conversationId,
+	isResponding,
+	setIsResponding
+}: any) {
 	const {
 		fork: {
 			handleFork,
 			isForking
-		},
-		share: {
-			handleShare,
-			isSharing
-		},
-		unshare: {
-			handleUnshare,
-			isUnsharing
 		}
 	} = useClientFunctions();
 
-
-
 	return (
-		<>
-			<Navbar
-				showChat
-				rightContent={
-					<div className="flex items-center gap-2">
-						{!isShared && (
-							<Dialog>
-								<Dialog.Trigger asChild>
-									<Button className="rounded-full">
-										Paylaş
-									</Button>
-								</Dialog.Trigger>
-								<Dialog.Content
-									titleChildren="Sohbeti Paylaş"
-									descriptionChildren="Bu sohbeti paylaşmak için aşağıdaki bilgileri kullanabilirsiniz."
-								>
-									<Input
-										readOnly
-										value={shareId || app_url + "/chats/..."}
-										endContent={
-											shareId ? (
-												<button
-													onClick={() => {
-														navigator.clipboard.writeText(shareId);
-														setCopied(true);
-														setTimeout(() => setCopied(false), 2000);
-													}}
-													className="text-orange-500 hover:underline cursor-pointer"
-													disabled={!shareId}
-												>
-													{copied ? "Kopyalandı!" : "Kopyala"}
-												</button>
-											) : null
-										}
-									/>
+		<div className="flex flex-col gap-2">
+			{isNeedScroll && (
+				<button
+					onClick={scrollToBottom}
+					disabled={autoScroll}
+					className="cursor-pointer flex items-center gap-2 bg-border/10 backdrop-brightness-110 backdrop-blur-lg w-fit px-4 py-2 rounded-full text-sm text-muted-foreground hover:bg-zinc-500/20 transition-colors duration-200 ease-in-out mx-auto"
+				>
+					<ArrowDown01Icon size={16} />
+					En alta kaydır
+				</button>
+			)}
 
-									<div className="flex items-center gap-2">
-										{shareId && (
-											<Button
-												onClick={() => handleUnshare(conversationId, setShareId)}
-												variant="destructive"
-												className="w-full mt-4"
-												disabled={isUnsharing}
-											>
-												{isUnsharing ? (
-													<>
-														<RotatingLines size={16} color="currentColor" />
-														<span className="ml-2">Sonlandırılıyor...</span>
-													</>
-												) : (
-													"Paylaşımı Sonlandır"
-												)}
-											</Button>
-										)}
-										<Button
-											onClick={() => handleShare(conversationId, setShareId)}
-											className="w-full mt-4"
-											disabled={isSharing}
-										>
-											{isSharing ? (
-												<>
-													<RotatingLines size={16} color="currentColor" />
-													<span className="ml-2">{shareId ? "Güncelleniyor..." : "Paylaşılıyor..."}</span>
-												</>
-											) : (
-												shareId ? "Güncelle" : "Paylaş"
-											)}
-										</Button>
-									</div>
-								</Dialog.Content>
-							</Dialog>
-						)}
-						<UserMenu />
-					</div>
-				}
-			/>
-			<div className="flex flex-col max-w-3xl w-full mx-auto relative mb-40">
-				<Messages isShared={isShared} />
-				<div className="fixed max-w-3xl w-full mx-auto bottom-0 flex flex-col justify-center gap-2">
-					{isNeedScroll && (
+			{(!isShared) ? (
+				<PromptInput
+					className="max-w-3xl w-full !rounded-b-none"
+					isResponding={isResponding || false}
+					setIsResponding={setIsResponding}
+				/>
+			) : (
+				conversationId && (
+					<div className="w-full bg-secondary rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+						<p className="text-sm text-muted-foreground">
+							Bu sohbet paylaşılmış. Sadece mesajları görüntüleyebilirsiniz.
+						</p>
 						<button
-							onClick={scrollToBottom}
-							disabled={autoScroll}
-							className="cursor-pointer flex items-center gap-2 bg-border/10 backdrop-brightness-110 backdrop-blur-lg w-fit px-4 py-2 rounded-full text-sm text-muted-foreground hover:bg-zinc-500/20 transition-colors duration-200 ease-in-out mx-auto mb-2"
+							onClick={() => handleFork(conversationId, response?.lastMessage || null)}
+							className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+							disabled={isForking}
 						>
-							<ArrowDown01Icon size={16} />
-							Scroll to bottom
+							{isForking ? (
+								<>
+									<RotatingLines size={16} color="currentColor" />
+									<span>Kopyalanıyor...</span>
+								</>
+							) : (
+								"Sohbeti Kopyala"
+							)}
 						</button>
-					)}
-					{!isShared ? (
-						<PromptInput
-							className="max-w-3xl w-full  pb-4 rounded-t-3xl bg-primary"
-							isResponding={isResponding || false}
-							setIsResponding={setIsResponding}
-						/>
-					) : (
-						<div className="bg-secondary rounded-t-3xl p-4 flex justify-between items-center">
-							<p className="text-sm text-muted-foreground">
-								This conversation is shared. You can only view messages.
-							</p>
-							<button
-								onClick={() => handleFork(conversationId, response?.lastMessage || null)}
-								className="bg-orange-500 text-white px-4 py-2 rounded-full hover:bg-orange-600 transition-colors duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-								disabled={isForking}
-							>
-								{isForking ? (
-									<>
-										<RotatingLines size={16} color="currentColor" />
-										<span>Forking...</span>
-									</>
-								) : (
-									"Fork Conversation"
-								)}
-							</button>
-						</div>
-					)}
-				</div>
-			</div>
-		</>
+					</div>
+				)
+			)}
+		</div>
 	);
 }

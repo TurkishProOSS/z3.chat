@@ -1,8 +1,8 @@
 "use client";
 
-import { ArrowDown01Icon, BrainIcon, GitBranchIcon, Globe02Icon, GlobeIcon, ThumbsDownIcon, ThumbsUpIcon } from "hugeicons-react";
+import { ArrowDown01Icon, ArrowRight01Icon, ArrowRight02Icon, BrainIcon, GitBranchIcon, Globe02Icon, GlobeIcon, ThumbsDownIcon, ThumbsUpIcon } from "hugeicons-react";
 import { useClientFunctions } from "@/hooks/use-client-functions";
-import { RiErrorWarningFill, RiFileLine } from "@remixicon/react";
+import { RiDownload2Fill, RiErrorWarningFill, RiFileLine } from "@remixicon/react";
 import { redirect, useParams } from "next/navigation";
 import { useMessages } from "@/hooks/use-messages";
 import { useId, useMemo, useState, useContext } from "react";
@@ -15,7 +15,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@colidy/ui-utils";
 import rehypeKatex from "rehype-katex";
 import { Z3Context } from "@/contexts/Z3Provider";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Tooltip } from "../ui/Tooltip";
 import { Accordion } from "radix-ui";
 import remarkMath from "remark-math";
@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Link from "next/link";
+import { TextShimmer } from "@/ui/TextShimmer";
 
 type AdditionalParts = {
 	_id?: string;
@@ -40,21 +41,25 @@ type AdditionalParts = {
 		url: string;
 		contentType: string;
 	}[];
+	createdAt?: Date;
+	updatedAt?: Date;
 };
 
 export default function Messages({ isShared }: { isShared: boolean }) {
 	const { messages } = useMessages();
 
 	return (
-		<div className="flex flex-col gap-4">
-			{messages.map((message: any, index: number) =>
-				<MessageBox
-					key={index}
-					message={message}
-					messageIndex={index}
-					isShared={isShared}
-				/>
-			)}
+		<div className="w-full h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border-hover">
+			<div className="flex flex-col gap-4 p-4">
+				{messages.map((message: any, index: number) =>
+					<MessageBox
+						key={index}
+						message={message}
+						messageIndex={index}
+						isShared={isShared}
+					/>
+				)}
+			</div>
 		</div>
 	);
 }
@@ -103,10 +108,13 @@ function AssistantMessage({
 	const id = useId();
 	const z3Context = useContext(Z3Context);
 	const agents = z3Context?.agents || [];
-	const messageAgent = agents.flatMap(agent => agent.models).find(model => model.id === message.agentId) || null;
+	const messageAgent = agents.find(model => model.id === message.agentId) || null;
 	const messageId = message?._id || (messageIndex || undefined);
 	const isStreaming = message.streaming || isShared;
 	const isLoading = message.is_waiting;
+	const createdAt = new Date(message.createdAt || new Date());
+	const endAt = new Date(message.updatedAt || new Date());
+	const seconds = Math.floor((endAt.getTime() - createdAt.getTime()) / 1000);
 
 	return (
 		<motion.div className={cn("mt-6 prose prose-md dark:prose-invert my-12 !max-w-none")}>
@@ -116,102 +124,119 @@ function AssistantMessage({
 				</div>
 			)}
 
-			{message.parts.map((part, partIndex) => {
-				if (part.type === 'reasoning') {
-					return (
-						<ReasoningMessage
-							key={id + partIndex}
-							content={part.reasoning}
-							nextElement={message.parts[partIndex + 1]}
-						/>
-					);
-				}
-
-				if (part.type === 'text') {
-					return (
-						<ReactMarkdown
-							key={id + partIndex}
-							children={part.text}
-							remarkPlugins={[remarkMath, remarkGfm]}
-							rehypePlugins={[rehypeKatex]}
-							components={{
-								code({ node, className, children, inline, ...props }: any) {
-									if (typeof inline === 'undefined') inline = false;
-									const match = /language-(\w+)/.exec(className || '');
-
-									return !inline && match ? (
-										<div className="relative dark !bg-secondary !rounded-xl border w-full">
-											<div className="border-b border-accent px-3 py-0.5 font-sans">
-												<span className="text-sm text-muted">
-													<code>{match[1]}</code>
-												</span>
-											</div>
-											<SyntaxHighlighter
-												style={dracula as any}
-												language={match[1]}
-												PreTag="div"
-												{...(props as any)}
-												className="!bg-transparent !py-2 !px-4 !w-full"
-												wrapLines
-											>
-												{String(children).replace(/\n$/, '')}
-											</SyntaxHighlighter>
-										</div>
-									) : (
-										<code className={className} {...props}>
-											{children}
-										</code>
-									);
-								},
-								pre: ({ children }) => (
-									<pre className="not-prose">{children}</pre>
-								),
-							}}
-						/>
-					);
-				}
-
-				if (part.type === 'tool-invocation') {
-					return (
-						<div key={id + partIndex} className="flex items-center justify-center my-4">
-							<ToolInvocation
-								toolName={part.toolInvocation.toolName}
-								args={part.toolInvocation.args}
-								data={(part.toolInvocation as any)[part.toolInvocation.state] as any}
-								nextElement={message.parts[partIndex + 1] as any}
+			{
+				message.parts.map((part: any, partIndex) => {
+					if (part.type === 'reasoning') {
+						return (
+							<ReasoningMessage
+								key={id + partIndex}
+								content={part.reasoning}
+								nextElement={message.parts[partIndex + 1]}
 							/>
-						</div>
-					);
-				}
+						);
+					}
 
-				// @ts-ignore
-				if (part.type === 'error') {
-					return (
-						// @ts-ignore
-						<ErrorMessage error={part.content} />
-					);
-				}
+					if (part.type === 'image') {
+						return <ImageGeneration
+							key={id + partIndex}
+							state={part.state}
+							experimental_attachments={part.experimental_attachments}
+						/>;
+					}
 
-				return null;
-			})}
+					if (part.type === 'text') {
+						return (
+							<ReactMarkdown
+								key={id + partIndex}
+								children={part.text}
+								remarkPlugins={[remarkMath, remarkGfm]}
+								rehypePlugins={[rehypeKatex]}
+								components={{
+									code({ node, className, children, inline, ...props }: any) {
+										if (typeof inline === 'undefined') inline = false;
+										const match = /language-(\w+)/.exec(className || '');
 
-			{!isStreaming && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
-				<AssistantActions
-					messageId={messageId}
-					messageIndex={messageIndex}
+										return !inline && match ? (
+											<div className="relative dark !bg-secondary !rounded-xl border w-full">
+												<div className="border-b border-accent px-3 py-0.5 font-sans">
+													<span className="text-sm text-muted">
+														<code>{match[1]}</code>
+													</span>
+												</div>
+												<SyntaxHighlighter
+													style={dracula as any}
+													language={match[1]}
+													PreTag="div"
+													{...(props as any)}
+													className="!bg-transparent !py-2 !px-4 !w-full"
+													wrapLines
+												>
+													{String(children).replace(/\n$/, '')}
+												</SyntaxHighlighter>
+											</div>
+										) : (
+											<code className={className} {...props}>
+												{children}
+											</code>
+										);
+									},
+									pre: ({ children }) => (
+										<pre className="not-prose">{children}</pre>
+									),
+								}}
+							/>
+						);
+					}
 
-					actionKey={messageId}
-					actionBy={message?._id ? 'object_id' : 'index'}
+					if (part.type === 'tool-invocation') {
+						return (
+							<div key={id + partIndex} className="flex items-center justify-center my-4">
+								<ToolInvocation
+									toolName={part.toolInvocation.toolName}
+									args={part.toolInvocation.args}
+									data={(part.toolInvocation as any)[part.toolInvocation.state] as any}
+									nextElement={message.parts[partIndex + 1] as any}
+								/>
+							</div>
+						);
+					}
 
-					messageAgent={messageAgent}
-					vote={message.vote}
-				/>
-			</motion.div>}
-		</motion.div>
+					// @ts-ignore
+					if (part.type === 'error') {
+						return (
+							// @ts-ignore
+							<ErrorMessage error={part.content} />
+						);
+					}
+
+					return null;
+				})
+			}
+
+			{
+				!isStreaming && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-2">
+					<AssistantActions
+						messageId={messageId}
+						messageIndex={messageIndex}
+
+						actionKey={messageId}
+						actionBy={message?._id ? 'object_id' : 'index'}
+
+						messageAgent={messageAgent}
+						vote={message.vote}
+
+						duration={seconds}
+					/>
+				</motion.div>
+			}
+		</motion.div >
 	);
 }
 
-function ReasoningMessage({ content, nextElement }: { content: string, nextElement?: UIMessage['parts'][number] }) {
+function ReasoningMessage({ content, nextElement }: {
+	content: string,
+	nextElement?: UIMessage['parts'][number],
+}) {
 	const isReasoningEnd = useMemo(() => {
 		if (!nextElement) return false;
 		const nextElementValue = (nextElement as any)?.[nextElement.type];
@@ -219,6 +244,12 @@ function ReasoningMessage({ content, nextElement }: { content: string, nextEleme
 		return false;
 	}, [nextElement]);
 
+	function Icon() {
+		return <div className="w-4 h-4 mr-2 relative">
+			<ArrowRight01Icon className="w-4 h-4 ml-auto tgroup-[data-state=open]:rotate-180 absolute opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out" />
+			<BrainIcon className="w-4 h-4 absolute opacity-100 group-hover:opacity-0 transition-opacity duration-200 ease-in-out" />
+		</div>
+	}
 
 	return (
 		<Accordion.Root
@@ -229,10 +260,26 @@ function ReasoningMessage({ content, nextElement }: { content: string, nextEleme
 		>
 			<Accordion.Item value="reasoning">
 				<Accordion.Header>
-					<Accordion.Trigger className="text-muted text-sm flex items-center font-medium group hover:bg-secondary px-2 py-1 -ml-2 rounded-xl cursor-pointer">
-						<BrainIcon className="w-4 h-4" />
-						<span className="ml-2">Reasoning</span>
-						<ArrowDown01Icon className="w-4 h-4 ml-auto transition-transform duration-200 ease-in-out group-[data-state=open]:rotate-180" />
+					<Accordion.Trigger
+						className={cn("group text-muted text-sm flex items-center font-medium rounded-xl cursor-pointer h-6", {
+							"hover:bg-secondary px-2 py-1 -ml-2": isReasoningEnd
+						})}
+					>
+						{isReasoningEnd ? (
+							<>
+								<Icon />
+								<span className="ml-2">
+									Thoughts
+								</span>
+							</>
+						) : (
+							<>
+								<BrainIcon className="w-4 h-4 mr-2" />
+								<TextShimmer duration={1} spread={2}>
+									Dediklerini düşünüyorum...
+								</TextShimmer>
+							</>
+						)}
 					</Accordion.Trigger>
 				</Accordion.Header>
 				<Accordion.Content className={cn("!m-0", [
@@ -240,7 +287,7 @@ function ReasoningMessage({ content, nextElement }: { content: string, nextEleme
 					"data-[state=open]:animate-accordion-down",
 					"data-[state=closed]:animate-accordion-up",
 				])}>
-					<div className="border-l pl-6">
+					<div className="border-l pl-6 text-muted prose prose-sm !max-w-none dark:prose-invert">
 						<ReactMarkdown
 							children={content}
 							remarkPlugins={[remarkMath, remarkGfm]}
@@ -253,14 +300,16 @@ function ReasoningMessage({ content, nextElement }: { content: string, nextEleme
 	);
 }
 
-function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messageAgent, vote }: {
+function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messageAgent, vote, duration }: {
 	messageId?: string | number;
 	messageIndex?: number;
 	actionKey?: string | number;
 	actionBy?: 'object_id' | 'index';
 	messageAgent: AgentModel | null;
 	vote?: 'up' | 'down' | 'neutral';
+	duration?: number;
 }) {
+
 	const { conversationId }: { conversationId: string } = useParams();
 	const {
 		fork: {
@@ -339,6 +388,11 @@ function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messag
 					{messageAgent.name}
 				</span>
 			)}
+			{duration && (
+				<span className="text-xs text-muted">
+					{duration} seconds
+				</span>
+			)}
 		</div>
 	);
 };
@@ -383,6 +437,102 @@ function ErrorMessage({ error }: { error: string }) {
 		</div>
 	);
 }
+
+function ImageGeneration({
+	state,
+	experimental_attachments
+}: {
+	state: 'generating' | 'generated';
+	experimental_attachments?: AdditionalParts['experimental_attachments'];
+}) {
+	const isMounted = useMounted();
+	const [view, setView] = useState('');
+
+	if (state === 'generating') {
+		return (
+			<div className="h-96 aspect-square rounded-2xl bg-gradient-to-br from-border via-secondary to-border p-px">
+				<div className="w-full h-full p-2 flex items-center bg-secondary justify-center rounded-2xl shimmer">
+					<AnimatedLogo loop size={48} />
+				</div>
+			</div>
+		);
+	}
+
+	if (state === 'generated' && experimental_attachments && experimental_attachments.length > 0) {
+		return (
+			experimental_attachments.length > 0 && isMounted && (
+				<div className={cn(
+					"grid grid-cols-1 gap-2"
+				)}>
+					<AnimatePresence>
+						{view && (
+							<motion.div className="fixed inset-0 p-10 z-[101] flex items-center justify-center">
+								<motion.span
+									onClick={() => setView('')}
+									className="absolute bg-primary/80 w-full h-full -z-[1]"
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+								/>
+								<motion.div layoutId={`fp-${view}`} className="max-w-screen-md h-auto relative">
+									<div className="p-2 absolute top-0 right-0 flex items-center justify-end">
+										<a href={view + '?download=1'} className="cursor-pointer bg-foreground/20 backdrop-blur text-primary rounded-xl p-3">
+											<RiDownload2Fill className="w-6 h-6" />
+										</a>
+									</div>
+									<img
+										src={view}
+										alt={'Full Image'}
+										className={cn(
+											"h-auto w-auto !m-0 rounded-2xl bg-secondary"
+										)}
+										onError={(e) => {
+											// Hatalı image'leri gizle
+											(e.target as HTMLElement).style.display = 'none';
+										}}
+									/>
+								</motion.div>
+							</motion.div>
+						)}
+					</AnimatePresence>
+					{experimental_attachments.map((attachment, index) => (
+						<div
+							key={index}
+							className={cn("w-fit h-fit", {
+								"h-96 overflow-hidden": !!view
+							})}
+						>
+							{attachment.url && attachment.url.trim() && attachment.url.trim().length > 0 && (
+								<motion.div
+									className="h-full w-full relative"
+									layoutId={`fp-${attachment.url.trim()}`}
+								>
+									<motion.img
+										src={attachment.url}
+										onClick={() => setView(attachment.url.trim())}
+										alt={attachment.name || 'Image'}
+										className={cn(
+											"h-96 w-auto !m-0 rounded-2xl bg-secondary"
+										)}
+										onError={(e) => {
+											// Hatalı image'leri gizle
+											(e.target as HTMLElement).style.display = 'none';
+										}}
+									/>
+									<div className="p-2 absolute top-0 right-0 flex items-center justify-end">
+										<a href={attachment.url + '?download=1'} className="cursor-pointer bg-foreground/20 backdrop-blur text-primary rounded-xl p-3">
+											<RiDownload2Fill className="w-4 h-4" />
+										</a>
+									</div>
+								</motion.div>
+							)}
+						</div>
+					))}
+				</div>
+			)
+		);
+	}
+};
 
 function FileMessage({ attachments }: { attachments: AdditionalParts['experimental_attachments'] }) {
 	if (!attachments) return null;
@@ -486,6 +636,13 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 	};
 
 
+	const Icon = () => {
+		return <div className="w-4 h-4 mr-2 relative">
+			<ArrowRight01Icon className="w-4 h-4 ml-auto tgroup-[data-state=open]:rotate-180 absolute opacity-0 group-hover:opacity-100 transition-all duration-200 ease-in-out" />
+			<Globe02Icon className="w-4 h-4 absolute opacity-100 group-hover:opacity-0 transition-opacity duration-200 ease-in-out" />
+		</div>
+	}
+
 	return (
 
 		<Accordion.Root
@@ -496,15 +653,29 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 		>
 			<Accordion.Item value="query">
 				<Accordion.Header>
-					<Accordion.Trigger className="text-muted text-sm flex items-center font-medium group hover:bg-secondary px-2 py-1 -ml-2 rounded-xl cursor-pointer">
-						<Globe02Icon className="w-4 h-4" />
-						<span className="ml-2">
-							{toolName}<span className="text-muted mx-2">&bull;</span>{
-								// @ts-ignore
-								data ? (Array.isArray(data) ? `${data.length} results` : 'Result') : 'No data'
-							}
+					<Accordion.Trigger className={cn("text-muted text-sm flex items-center font-medium group h-6 rounded-xl cursor-pointer", {
+						"hover:bg-secondary px-2 py-1 -ml-2": (data && Object.keys(data).length > 0)
+					})}>
+						{(data && Object.keys(data).length > 0) ? (
+							<Icon />
+						) : (
+							<Globe02Icon className="w-4 h-4 opacity-100 mr-2" />
+						)}
+						<span>
+							{(data && Object.keys(data).length > 0) ? (
+								<>
+									{
+										// @ts-ignore
+										data ? (Array.isArray(data) ? `${data.length}` : '0') : '0'
+									}
+									{" "}results found in the web
+								</>
+							) : (
+								<TextShimmer duration={1} spread={2}>
+									Searching in the web...
+								</TextShimmer>
+							)}
 						</span>
-						<ArrowDown01Icon className="w-4 h-4 ml-auto transition-transform duration-200 ease-in-out group-[data-state=open]:rotate-180" />
 					</Accordion.Trigger>
 				</Accordion.Header>
 				<Accordion.Content className={cn("!m-0", [
@@ -513,7 +684,7 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 					"data-[state=closed]:animate-accordion-up",
 				])}>
 					<div className="border-l pl-6">
-						{Object.keys(args).length > 0 && (
+						{/* {Object.keys(args).length > 0 && (
 							<div className="mb-4">
 								<h3 className="text-sm font-medium mb-2">Arguments:</h3>
 								<ul className="list-disc pl-6">
@@ -524,7 +695,7 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 									))}
 								</ul>
 							</div>
-						)}
+						)} */}
 
 						<div className="space-y-4">
 							{data && Object.keys(data).length > 0 && (
@@ -573,13 +744,13 @@ function WebSearchResult({ result }: {
 					</Link>
 				</div>
 			</div>
-			<p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+			<div className="text-sm text-muted-foreground mt-2 line-clamp-2">
 				<ReactMarkdown
-					children={result.content}
+					children={result.content.replace(/\n/g, ' ')}
 					remarkPlugins={[remarkMath, remarkGfm]}
 					rehypePlugins={[rehypeKatex]}
 				/>
-			</p>
+			</div>
 
 		</div>
 	);

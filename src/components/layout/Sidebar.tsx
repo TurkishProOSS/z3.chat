@@ -1,12 +1,12 @@
 "use client";
 
-import { RiAppsFill, RiAppsLine, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiExpandRightLine } from '@remixicon/react';
+import { RiAppsFill, RiAppsLine, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiExpandRightLine, RiImage2Line, RiImage2Fill, RiSearch2Line, RiSearch2Fill } from '@remixicon/react';
 import { useClientFunctions } from '@/hooks/use-client-functions';
 import { redirect, usePathname } from 'next/navigation';
-import { Delete01Icon, PinIcon } from 'hugeicons-react';
+import { CustomizeIcon, Delete01Icon, FolderLibraryIcon, Home01Icon, PinIcon, WorkHistoryIcon } from 'hugeicons-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useExpandStore } from '@/stores/use-expand';
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { useSWRApi } from '@/hooks/use-swr-api';
 import { pin, unpin } from '@/app/actions';
@@ -16,6 +16,15 @@ import { Button } from '@/ui/Button';
 import { Dialog } from '@/ui/Dialog';
 import { Logo } from '@/brand/Logo';
 import Link from 'next/link';
+import { useSidebarStore } from '@/stores/use-sidebar';
+
+const useSearchChats = () => {
+	const openSearchChatsHandler = () => {
+		alert("This feature is not implemented yet. Please check back later.");
+	};
+
+	return { openSearchChats: openSearchChatsHandler };
+}
 
 export default function Sidebar() {
 	const [conversations, setConversations] = useState({
@@ -25,6 +34,10 @@ export default function Sidebar() {
 
 	const { expand, setExpand } = useExpandStore();
 	const pathname = usePathname();
+	const { openSearchChats } = useSearchChats();
+	const isOpen = useSidebarStore((state) => state.isOpen);
+	const setIsOpen = useSidebarStore((state) => state.setIsOpen);
+
 
 	const {
 		data,
@@ -36,20 +49,28 @@ export default function Sidebar() {
 		revalidateOnReconnect: true,
 		revalidateIfStale: true,
 		revalidateOnMount: true,
-		refreshInterval: 5000
+		refreshInterval: 2 * 60 * 1000
 	});
 
 	useHotkeys('e', () => setExpand(!expand));
 
-	const isActive = (item: { path: string }) => {
+	useMemo(() => {
+		if (expand) mutate();
+	}, [expand, mutate]);
+
+	const isActive = (item?: typeof items[number]) => {
+		if (!item) return false;
+		// if (item.onClick) return false;
 		return pathname === item.path;
 	};
 
 
 	const items = [
-		{ icon: [RiHome3Line, RiHome3Fill], label: 'New Chat', path: '/' },
-		{ icon: [RiAppsLine, RiAppsFill], label: "Explore", path: '/explore' },
-		{ icon: [RiHistoryLine, RiHistoryFill], label: 'Chat History', path: '/chats' }
+		{ icon: Home01Icon, label: 'New Chat', path: '/' },
+		{ icon: FolderLibraryIcon, label: "Library", path: '/library' },
+		// { type: 'spacer' },
+		{ icon: WorkHistoryIcon, label: 'Chat History', path: '/chats' },
+		{ icon: CustomizeIcon, label: "Z3Cs", path: '/z3cs', badge: 'NEW' }
 	];
 
 	const itemAnimationVariants = {
@@ -106,19 +127,37 @@ export default function Sidebar() {
 		}
 	}, [data]);
 
+	const isExpanded = useMemo(() => {
+		if (expand) return true;
+		return isOpen;
+	}, [expand, isOpen]);
+
 	return (
 		<>
-			<motion.div animate={{ width: expand ? '15rem' : 89 }} className="shrink-0 w-[89px] min-h-screen hidden lg:block" />
+			{isOpen && (
+				<motion.div
+					initial={{ opacity: 0 }}
+					animate={{ opacity: 1 }}
+					exit={{ opacity: 0 }}
+					className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm cursor-pointer lg:hidden"
+					onClick={() => {
+						setIsOpen(false);
+					}}
+				/>
+			)}
 			<motion.div
-				className={cn("fixed z-50 bg-primary group top-0 left-0 bottom-0 flex-col justify-between p-6 border-r hidden lg:flex", {
-					"w-[15rem]": expand,
-					"w-[89px]": !expand
+				className={cn("fixed lg:sticky h-screen z-50 bg-primary group top-0 left-0 bottom-0 flex-col justify-between p-6 border-r flex max-w-[18rem] transition-all duration-200", {
+					"w-full lg:w-[18rem]": expand,
+					"w-full lg:w-[89px]": !expand,
+					"translate-x-0 lg:translate-x-0": isOpen,
+					"-translate-x-full lg:translate-x-0": !isOpen
 				})}
 				layout
 				initial="hidden"
 				animate="visible"
 				exit="exit"
 				transition={{ staggerChildren: 0.2, duration: 0.2 }}
+				suppressHydrationWarning
 			>
 				<motion.div className="w-full space-y-6">
 					<motion.div className="flex items-center gap-2 grayscale-100">
@@ -126,20 +165,25 @@ export default function Sidebar() {
 							<Logo size={36} />
 						</motion.div>
 						<AnimatePresence>
-							{expand && (
+							{isExpanded && (
 								<motion.h1
 									className="text-2xl font-medium text-foreground"
 									layout
 									variants={itemAnimationVariants}
 								>
 									z3c<span className="font-normal opacity-50">.dev</span>
+									<span className="ml-2 bg-orange-500/10 text-orange-500 text-xs px-2 py-1 rounded-full">
+										beta
+									</span>
 								</motion.h1>
 							)}
 						</AnimatePresence>
 					</motion.div>
 					<motion.div className="space-y-1">
-						{items.map((item, i) => {
-							const Icon = isActive(item) ? item.icon[1] : item.icon[0];
+						{items.map((item: any, i) => {
+							if (item.type === 'spacer') {
+								return <div key={i} className="h-4" />;
+							}
 							return (
 								<Link key={i} className="flex items-center" href={item.path}>
 									<motion.div
@@ -157,15 +201,20 @@ export default function Sidebar() {
 											)}
 											layout
 										>
-											<Icon className="text-foreground aspect-square" size={16} />
+											<item.icon fill={isActive(item) ? "currentColor" : "none"} className="text-foreground aspect-square" size={16} />
 										</motion.div>
-										{expand && (
+										{isExpanded && (
 											<motion.span
 												className="text-foreground line-clamp-1 text-sm"
 												layout
 												variants={itemAnimationVariants}
 											>
 												{item.label}
+												{item.badge && (
+													<span className="ml-2 bg-orange-500/10 text-orange-500 text-xs px-2 py-1 rounded-full">
+														{item.badge}
+													</span>
+												)}
 											</motion.span>
 										)}
 									</motion.div>
@@ -175,7 +224,7 @@ export default function Sidebar() {
 					</motion.div>
 				</motion.div>
 
-				{expand && (
+				{isExpanded && (
 					<motion.div
 						className={cn("flex-1 overflow-y-auto overflow-x-hidden")}
 						layout
@@ -263,7 +312,7 @@ export default function Sidebar() {
 					</motion.div>
 				)}
 
-				<motion.div className="w-full flex flex-col items-start space-y-2" layout>
+				<motion.div className="w-full flex flex-col items-start space-y-2 mt-auto" layout>
 					<motion.div layout className="w-9 h-9 flex items-center justify-center">
 						<span className="font-mono shadow-[inset_0_-2px_4px_var(--color-primary)] text-sm bg-secondary border border-b-4 rounded-md py-1 px-3">E</span>
 					</motion.div>
@@ -271,7 +320,12 @@ export default function Sidebar() {
 						className={cn("flex items-center gap-2 h-10 w-full transition-colors hover:bg-secondary cursor-pointer")}
 						animate={{ borderRadius: 12 }}
 						layout
-						onClick={() => setExpand(!expand)}
+						onClick={() => {
+							setExpand(!expand);
+							if (isOpen) {
+								setIsOpen(false);
+							}
+						}}
 					>
 						<motion.div
 							className={cn(
@@ -279,9 +333,9 @@ export default function Sidebar() {
 							)}
 							layout
 						>
-							<RiExpandRightLine className={cn("w-5 h-5 text-foreground transition-all", { 'rotate-180': expand })} size={16} />
+							<RiExpandRightLine className={cn("w-5 h-5 text-foreground transition-all", { 'rotate-180': isExpanded })} size={16} />
 						</motion.div>
-						{expand && (
+						{isExpanded && (
 							<motion.span
 								className="text-foreground line-clamp-1 text-sm"
 								layout
@@ -308,7 +362,7 @@ function ConversationCard({
 }: {
 	conversation: any;
 	pinnedConversations: string[];
-	isActive: (item: { path: string }) => boolean;
+	isActive: (item: any) => boolean;
 	pinClient: (conversationId: string) => void;
 	unpinClient: (conversationId: string) => void;
 	isPinned?: boolean;
@@ -320,7 +374,6 @@ function ConversationCard({
 }) {
 	const id = useId();
 	const { deleteConversation: { deleteConversation, isDeleting } } = useClientFunctions();
-
 	return (
 		<motion.div className="relative group/conversation-card w-full" key={conversation._id + id} {...motionProps}>
 			<Link

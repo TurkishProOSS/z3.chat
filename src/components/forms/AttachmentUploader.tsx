@@ -8,6 +8,7 @@ import { RotatingLines } from "../ui/Spinner";
 import { motion } from "framer-motion";
 import { memo } from "react";
 import { useAttachmentsStore } from "@/stores/use-attachments";
+import { toast } from "sonner";
 
 interface AttachmentUploaderProps {
 	uploadRef: React.RefObject<HTMLInputElement | null>;
@@ -17,87 +18,90 @@ export const AttachmentUploader = ({
 	uploadRef,
 }: AttachmentUploaderProps) => {
 	const attachments = useAttachmentsStore(state => state.attachments);
-	const setAttachments = useAttachmentsStore(state => state.setAttachments);
+	const addAttachment = useAttachmentsStore(state => state.addAttachment);
+	const updateAttachment = useAttachmentsStore(state => state.updateAttachment);
+	const removeAttachment = useAttachmentsStore(state => state.removeAttachment);
+
+	const uploadToServer = async (attachment: any) => {
+		try {
+			const formData = new FormData();
+			formData.append('file', attachment.file);
+			formData.append('name', attachment.name);
+
+			const response = await api.post('/upload?filename=' + attachment.name, formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+
+			if (response.data) {
+				updateAttachment(attachment.id, {
+					uploading: false,
+					preview: response.data.url || attachment.preview
+				});
+				toast.success(`${attachment.name} başarıyla yüklendi`);
+			}
+		} catch (error) {
+			console.error('Upload error:', error);
+			updateAttachment(attachment.id, {
+				uploading: false
+			});
+			toast.error(`${attachment.name} yüklenirken hata oluştu`);
+		}
+	};
 
 	const handleUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
 		e.preventDefault();
-		const files = e.target.files;
-		if (!files || files.length === 0) return;
-
-		const fileArray = Array.from(files);
-		const attachments = fileArray.map((file, index) => ({
-			id: `${Date.now()}-${index}`,
-			name: file.name,
-			type: file.type,
-			size: file.size,
-			preview: URL.createObjectURL(file),
-			extension: file.name.split(".").pop(),
-			uploading: true,
-			file
-		}));
-
-		// @ts-ignore
-		setAttachments((prev) => [...prev, ...attachments]);
-
 		try {
-			const uploadedUrls = await Promise.all(
-				attachments.map(async (attachment, index) => {
-					const formData = new FormData();
-					formData.append("file", fileArray[index]);
+			const files = e.target.files;
+			if (!files || files.length === 0) return;
 
-					const response = await api.post(
-						`/upload?filename=${encodeURIComponent(attachment.name)}`,
-						formData,
-						{
-							adapter: "fetch",
-							headers: {
-								"Content-Type": "multipart/form-data"
-							}
-						}
-					);
-					return response.data.url;
-				})
-			);
+			const fileArray = Array.from(files);
 
-			// @ts-ignore
-			setAttachments((prev) =>
-				prev.map((att: any, index: number) => {
-					if (att.preview?.startsWith("blob:")) {
-						URL.revokeObjectURL(att.preview);
-					}
-					return {
-						...att,
-						uploading: false,
-						preview: uploadedUrls[index]
-					};
-				})
-			);
+			// Validate file types and sizes
+			const maxSize = 10 * 1024 * 1024; // 10MB
+			const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'text/plain', 'application/pdf'];
+
+			for (const file of fileArray) {
+				if (file.size > maxSize) {
+					toast.error(`${file.name} çok büyük (maksimum 10MB)`);
+					continue;
+				}
+
+				if (!allowedTypes.includes(file.type)) {
+					toast.error(`${file.name} desteklenmeyen dosya türü`);
+					continue;
+				}
+
+				const id = `${Date.now()}-${Math.random()}`;
+				const newAttachment = {
+					id,
+					name: file.name,
+					type: file.type,
+					size: file.size,
+					preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+					extension: file.name.split(".").pop() || '',
+					uploading: true,
+					file
+				};
+				addAttachment(newAttachment);
+
+				// Upload to server
+				uploadToServer(newAttachment);
+			}
+
+			if (uploadRef.current) {
+				uploadRef.current.value = "";
+			}
 		} catch (error) {
-			console.error("Upload failed:", error);
-
-			// @ts-ignore
-			setAttachments((prev) => {
-				const failed = prev.filter((att: any) =>
-					attachments.some((a) => a.id === att.id)
-				);
-				failed.forEach((att: any) => {
-					if (att.preview?.startsWith("blob:")) {
-						URL.revokeObjectURL(att.preview);
-					}
-				});
-				return prev.filter((att: any) =>
-					!attachments.some((a) => a.id === att.id)
-				);
-			});
+			console.error("Error uploading files:", error);
+			toast.error("Dosya yüklenirken hata oluştu");
 		}
-
-		if (uploadRef.current) {
-			uploadRef.current.value = "";
-		}
-	}, [setAttachments, uploadRef]);
+	}, [addAttachment, uploadRef]);
 
 	useEffect(() => {
 		return () => {
+			// Cleanup blob URLs
 			attachments.forEach((attachment: any) => {
 				if (attachment.preview?.startsWith('blob:')) {
 					URL.revokeObjectURL(attachment.preview);
@@ -106,46 +110,28 @@ export const AttachmentUploader = ({
 		};
 	}, [attachments]);
 
-	const handleRemoveAttachment = useCallback((index: number) => {
-		// @ts-ignore
-		setAttachments((prev) => {
-			const attachment = prev[index];
-			if (attachment.preview?.startsWith('blob:')) {
-				URL.revokeObjectURL(attachment.preview);
-			}
-			return prev.filter((_: any, i: number) => i !== index);
-		});
-	}, [setAttachments]);
+	const handleRemoveAttachment = useCallback((id: string) => {
+		const attachment = attachments.find(att => att.id === id);
+		if (attachment?.preview?.startsWith('blob:')) {
+			URL.revokeObjectURL(attachment.preview);
+		}
+		removeAttachment(id);
+		toast.success("Dosya kaldırıldı");
+	}, [removeAttachment, attachments]);
 
 	return (
 		<>
-			{attachments.length > 0 && (
-				<motion.div className="p-4 border-b -mt-2 rounded-t-2xl inset-0 z-20 flex flex-col items-center justify-start w-full">
-					<div className="flex items-center gap-2 w-full overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
-						{attachments.map((attachment, index) => (
-							<AttachmentItem
-								key={attachment.id}
-								attachment={attachment}
-								index={index}
-								onRemove={handleRemoveAttachment}
-							/>
-						))}
-					</div>
-				</motion.div>
-			)}
-
 			<input
 				type="file"
 				ref={uploadRef}
 				className="hidden"
 				multiple
+				accept="image/*,.pdf,.txt"
 				onChange={handleUpload}
-				accept="image/*,application/pdf,.txt,.doc,.docx"
 			/>
 		</>
 	);
 };
-
 
 const formatBytes = (bytes: number) => {
 	const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -153,22 +139,19 @@ const formatBytes = (bytes: number) => {
 	return (bytes / Math.pow(1024, index)).toFixed(2) + ' ' + units[index];
 };
 
-const AttachmentItem = memo(({
+export const AttachmentItem = memo(({
 	attachment,
-	index,
 	onRemove
 }: {
 	attachment: any;
-	index: number;
-	onRemove: (index: number) => void;
+	onRemove: (id: string) => void;
 }) => {
 	const handleRemove = useCallback(() => {
-		onRemove(index);
-	}, [index, onRemove]);
+		onRemove(attachment.id);
+	}, [attachment.id, onRemove]);
 
 	return (
 		<Tooltip
-			key={attachment.id}
 			content={
 				attachment.preview && attachment.preview.trim() ? (
 					<img
@@ -179,48 +162,55 @@ const AttachmentItem = memo(({
 					/>
 				) : (
 					<div className="flex items-center justify-center p-4 text-muted-foreground">
-						Preview not available
+						Önizleme mevcut değil
 					</div>
 				)
 			}
 		>
-			<div className="flex items-center gap-2 border rounded-md p-2 pr-4 relative">
-				<div className="relative gap-2 w-10 h-10 flex-shrink-0 rounded-md overflow-hidden">
+			<motion.div
+				className="flex items-center gap-2 border border-border bg-input rounded-xl p-2 pr-3 relative min-w-0 flex-shrink-0"
+				initial={{ opacity: 0, scale: 0.8 }}
+				animate={{ opacity: 1, scale: 1 }}
+				exit={{ opacity: 0, scale: 0.8 }}
+				transition={{ duration: 0.2 }}
+			>
+				<div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden">
 					{attachment.preview && attachment.preview.trim() ? (
 						<img
 							src={attachment.preview}
 							alt={attachment.name || 'Preview'}
-							className="border w-10 h-10 rounded-md flex-shrink-0 object-cover"
+							className="w-10 h-10 rounded-lg object-cover"
 							onError={(e) => {
-								// Hatalı image'leri placeholder ile değiştir
 								(e.target as HTMLImageElement).style.display = 'none';
 							}}
 						/>
 					) : (
-						<div className="border w-10 h-10 rounded-md flex-shrink-0 bg-muted flex items-center justify-center">
-							<span className="text-xs text-muted-foreground">
-								{attachment.name?.split('.').pop()?.toUpperCase() || 'FILE'}
+						<div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center border">
+							<span className="text-xs text-muted-foreground font-medium">
+								{attachment.extension?.toUpperCase() || 'FILE'}
 							</span>
 						</div>
 					)}
 					{attachment.uploading && (
-						<div className="absolute inset-0 bg-black/50 text-foreground flex justify-center items-center">
-							<RotatingLines size={32} color="currentColor" />
+						<div className="absolute inset-0 bg-black/60 text-white flex justify-center items-center rounded-lg">
+							<RotatingLines size={20} color="currentColor" />
 						</div>
 					)}
 				</div>
-				<div className="flex flex-col w-full">
-					<p className="text-sm text-muted-foreground truncate">{attachment.name}</p>
+				<div className="flex flex-col min-w-0 flex-1">
+					<p className="text-sm text-foreground truncate font-medium max-w-[8rem] line-clamp-1">{attachment.name}</p>
 					<p className="text-xs text-muted-foreground">{formatBytes(attachment.size)}</p>
 				</div>
 				<button
-					className="ml-4 text-xs text-muted cursor-pointer"
+					className="text-muted-foreground hover:text-red-500 cursor-pointer p-1 rounded-lg hover:bg-red-500/10 transition-colors flex-shrink-0"
 					onClick={handleRemove}
 					type="button"
 				>
 					<Cancel01Icon className="w-4 h-4" />
 				</button>
-			</div>
+			</motion.div>
 		</Tooltip>
 	);
 });
+
+AttachmentItem.displayName = "AttachmentItem";

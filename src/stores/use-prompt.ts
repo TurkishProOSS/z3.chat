@@ -8,6 +8,6 @@ interface PromptState {
 export const usePromptStore = create<PromptState>()(
 	(set) => ({
 		prompt: '',
-		setPrompt: (value) => set({ prompt: value }),
+		setPrompt: (value) => set({ prompt: value })
 	})
 );

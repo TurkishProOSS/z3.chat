@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AttachmentItem {
 	id: string;
@@ -23,8 +24,7 @@ export const useAttachmentsStore = create<AttachmentsState>()((set, get) => ({
 	attachments: [],
 	setAttachments: (attachments) => set({ attachments }),
 	addAttachment: (attachment) => {
-		const currentAttachments = get().attachments;
-		set({ attachments: [...currentAttachments, attachment] });
+		set(prev => ({ attachments: [...prev.attachments, attachment] }));
 	},
 	removeAttachment: (id) => {
 		const currentAttachments = get().attachments;

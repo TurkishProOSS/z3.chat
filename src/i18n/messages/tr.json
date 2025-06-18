@@ -13,7 +13,9 @@
 			"Agent_Feature_Reasoning": "Akıl Yürütme",
 			"Submit_Disabled": "Göndermek için bir şeyler yazmalısınız",
 			"Submit": "Gönder"
-		}
+		},
+		"Usage_Warning": "Metin geliştirme ve model kullanım limitiniz yaklaşıyor. Lütfen kullanımınızı kontrol edin.",
+		"Check_Usage": "Kullanımı Kontrol Et"
 	},
 	"HomePage": {
 		"Morning": "{is_logged_in, plural, =0 {İyi günler!} =1 {İyi günler, <name-mark>{name}</name-mark>!} other {İyi günler!}}",
@@ -32,17 +34,13 @@
 				"Title": "Kişiselleştirme",
 				"Description": "Z3 deneyiminizi özelleştirin."
 			},
-			"History": {
-				"Title": "Geçmiş",
-				"Description": "Sohbet geçmişinizi yönetin."
-			},
-			"Models": {
-				"Title": "Modeller",
-				"Description": "Kullanılabilir modelleri yönetin."
-			},
 			"ApiKeys": {
 				"Title": "API Anahtarları",
 				"Description": "API anahtarlarınızı yönetin."
+			},
+			"Usage": {
+				"Title": "Kullanım",
+				"Description": "Z3C kullanımınızı görüntüleyin."
 			}
 		}
 	}

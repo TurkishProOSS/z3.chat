@@ -20,7 +20,7 @@ function Input({
 	const id = useId();
 	const [type, setType] = useState(initialType);
 	const [focus, setFocus] = useState(false);
-	const [value, setValue] = useState(props.value || "");
+	const [value, setValue] = useState(props.value || props.defaultValue || "");
 	const [isFloating, setIsFloating] = useState(false);
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -9,37 +9,31 @@ export type useThemeSchema = z.infer<typeof useThemeSchema>;
 
 export const agentModelSchema = z.object({
 	provider: z.string().default('OpenAI'),
-	orId: z.string().optional().nullable(), // OpenRouter Id
+	openRouterId: z.string().optional().nullable(), // OpenRouter Id
 	id: z.string(),
 	name: z.string(),
 	description: z.string(),
 	version: z.string().optional().nullable().default(null),
 	features: z.object({
 		vision: z.boolean().optional(),
-		imageInput: z.boolean().optional(),
 		imageGeneration: z.boolean().optional(),
 		objectGeneration: z.boolean().optional(),
-		toolUsage: z.boolean().optional(),
-		toolStreaming: z.boolean().optional(),
 		reasoning: z.boolean().optional(),
 		pdfSupport: z.boolean().optional(),
 		search: z.boolean().optional(),
 		effortControl: z.boolean().optional(),
 		fast: z.boolean().optional(),
-		experimental: z.boolean().optional(),
-		premium: z.boolean().optional()
+		experimental: z.boolean().optional()
 	}).partial().default({}),
 	enabled: z.boolean(),
 	available: z.boolean(),
-	priority: z.number().int().min(0).max(100)
+	premium: z.boolean().optional(),
+	is_fallback: z.boolean().optional().default(false)
 });
 export type AgentModel = z.infer<typeof agentModelSchema>;
 
 export const z3Schema = z.object({
-	agents: z.array(z.object({
-		provider: z.string(),
-		models: z.array(agentModelSchema)
-	})).default([]),
+	agents: z.array(agentModelSchema).default([]),
 	cookies: z.array(z.object({
 		name: z.string(),
 		value: z.string(),

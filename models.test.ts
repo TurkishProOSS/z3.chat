@@ -1,83 +1,100 @@
 import { AgentModel } from "@/lib/definitions";
+import { AgentModel as MonguzAgent } from '@/database/models/Models'
 import axios from "axios";
 import fs from "fs";
-
-// export const agentModelSchema = z.object({
-// 	id: z.string(),
-// 	name: z.string(),
-// 	description: z.string(),
-// 	version: z.string().optional().nullable().default(null),
-// 	features: z.object({
-// 		vision: z.boolean().optional(),
-// 		imageInput: z.boolean().optional(),
-// 		imageGeneration: z.boolean().optional(),
-// 		objectGeneration: z.boolean().optional(),
-// 		toolUsage: z.boolean().optional(),
-// 		toolStreaming: z.boolean().optional(),
-// 		reasoning: z.boolean().optional(),
-// 		pdfSupport: z.boolean().optional(),
-// 		search: z.boolean().optional(),
-// 		effortControl: z.boolean().optional(),
-// 		fast: z.boolean().optional(),
-// 		experimental: z.boolean().optional()
-// 	}).partial().default({}),
-// 	enabled: z.boolean(),
-// 	available: z.boolean(),
-// 	priority: z.number().int().min(0).max(100)
-// });
-
+import { z } from "zod";
+import mongoose from "mongoose";
 
 (async () => {
-	const providers = await axios.get("https://openrouter.ai/api/frontend/all-providers").then(res => res.data);
-	const providersData = providers.data.map((provider: any) => ({ slug: provider.slug, displayName: provider.displayName }));
+	await mongoose.connect("mongodb://localhost:27017/z3-chat");
 
-	const parseModel = (model: any) => {
-		const provider = providersData.find((p: any) => p.slug === model?.author)?.displayName;
+	const parseModel = async (model: any) => {
+		if (!model.endpoint) return null;
+		const openRouterId = model?.endpoint?.model_variant_permaslug;
+		let provider = model?.group || model?.endpoint?.model?.provider_info?.displayName;
+		if (provider === "Llama2" || provider === "Llama3" || provider === "Llama4") provider = "Meta";
+		if (provider === "GPT") provider = "OpenAI";
+		if (provider === "Claude") provider = "Anthropic";
+		if (provider === "Gemini") provider = "Google";
+
+		if (!provider) throw new Error(`Provider name not found for model: ${model.permaslug} ${model?.provider_slug}`);
+
 		const inputMods = model?.endpoint?.model?.input_modalities || model?.input_modalities;
 		const outputMods = model?.endpoint?.model?.output_modalities || model?.output_modalities;
-		const isReasoning = model?.reasoning_config !== null;
+		const isReasoning = model?.endpoint?.supports_reasoning || model?.reasoning_config !== null;
+		const id = model?.endpoint?.id;
 		const slug = model?.endpoint?.model?.slug || model?.permaslug;
 		const name = model?.endpoint?.model?.short_name || model?.short_name;
 		const description = model?.endpoint?.model?.description || model?.description;
 		const is_free = model?.endpoint?.is_free || model.name.endsWith("(free)") || slug?.endsWith("free");
+		const toolSupported = model?.endpoint?.supported_parameters?.includes("tools") || model?.endpoint?.model?.supported_parameters?.includes("tools");
+		const warningMessage = model?.endpoint?.model?.warning_message || model?.warning_message;
+		const api_key_required = warningMessage && warningMessage.includes("your own API key") && warningMessage.includes("https://openrouter.ai/settings/integrations");
 
 
 		const modelData = {
-			id: slug,
+			id,
+			openRouterId,
 			name,
 			description,
 			features: {
 				vision: inputMods.includes("image"),
-				imageInput: inputMods.includes("image"),
 				imageGeneration: outputMods.includes("image"),
 				objectGeneration: outputMods.includes("object"),
-				toolUsage: inputMods.includes("tool"),
-				toolStreaming: inputMods.includes("tool"),
 				reasoning: isReasoning,
 				pdfSupport: inputMods.includes("file"),
-				search: inputMods.includes("search"),
-				effortControl: inputMods.includes("effort_control"),
-				fast: name.includes("fast"),
-				experimental: name.includes("experimental") || name.includes("exp"),
-				premium: !is_free
+				search: toolSupported,
+				fast: name.includes("fast") || name.includes("turbo") || name.includes("speed") || name.includes("Fast") || name.includes("Turbo") || name.includes("Speed"),
+				experimental: name.includes("experimental") || name.includes("exp")
 			},
-			provider
+			api_key_required: typeof api_key_required === "boolean" ? api_key_required : false,
+			provider,
+			available: !(model?.hidden || false),
+			enabled: !(model?.hidden || false),
+			is_fallback: false,
+			premium: !is_free
 		};
+
+		if (!provider) return null;
+		if (provider.length === 0) return null;
 
 		return modelData;
 	}
 
 	const response = await axios.get("https://openrouter.ai/api/frontend/models/find").then(res => res.data);
 	const models: AgentModel[] = [];
-	const freeModels: AgentModel[] = [];
-	response.data.models.map((model: any) => {
-		try {
-			const modelData = parseModel(model);
-			models.push(modelData);
-		} catch (error) {
-			console.log(`${model.permaslug} - ${error}`);
-		}
-	});
 
-	fs.writeFileSync("models.json", JSON.stringify(models, null, 4));
+	const allModels = Promise.all(
+		response.data.models.map((model: any) => {
+			return parseModel(model)
+				.catch((error) => {
+					return null;
+				});
+		})
+	);
+
+	await MonguzAgent.deleteMany({});
+
+	const parsedModels = await allModels;
+	for (const model of parsedModels) {
+		if (model) {
+			if (models.some(m => m.id === model.id)) {
+				console.warn(`Duplicate model found: ${model.id}, skipping...`);
+				return;
+			}
+
+			const existingModel = await MonguzAgent.findOne({ id: model.id }).lean().exec();
+			if (existingModel) {
+				console.log(`Model already exists in database: ${model.id}, skipping...`);
+				continue;
+			}
+
+			models.push(model);
+		}
+	}
+
+	await MonguzAgent.insertMany(models);
+
+
+	// fs.writeFileSync("models.json", JSON.stringify(models, null, 4));
 })();

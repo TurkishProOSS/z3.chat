@@ -15,7 +15,10 @@ export default async function ChatPage({ params }: {
 	if (!response) return notFound();
 
 	return (
-		<ChatProvider initialMessages={response.conversation.messages}>
+		<ChatProvider
+			initialMessages={response.conversation.messages}
+			response={response.conversation}
+		>
 			<Chat conversationId={conversationId} response={response.conversation} />
 		</ChatProvider>
 	);

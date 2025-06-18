@@ -4,6 +4,8 @@ import {
 	put as putVercel
 } from "@vercel/blob";
 
+// (alias) putVercel(pathname: string, body: PutBody, optionsInput: PutCommandOptions): Promise<PutBlobResult>
+
 export const put = async (folder: string, ...rest: Parameters<typeof putVercel>): Promise<PutBlobResult> => {
 	const [filename, ...props] = rest;
 	const blob = await putVercel(folder + "/" + filename, ...props);

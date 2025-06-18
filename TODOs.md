@@ -6,7 +6,7 @@
 - [x] Kimlik Doğrulama ve Senkronizasyon
 - - Sohbet geçmişi senkronizasyonuyla kullanıcı kimlik doğrulaması
 
-- [ ] Tarayıcı Dostu
+- [x] Tarayıcı Dostu
 - - Ne kadar istesek de, gerçekçi bir şekilde herkesin yerel uygulamalarını kuramayız
 
 - [x] Denemesi Kolay
@@ -17,7 +17,7 @@
 - [x] Ek Desteği
 - - Kullanıcıların dosya (resim ve pdf) yüklemesine izin ver
 
-- [ ] Resim Oluşturma Desteği
+- [x] Resim Oluşturma Desteği
 - - AI destekli resim oluşturma yetenekleri
 
 - [x] Sözdizimi Vurgulama
@@ -26,7 +26,7 @@
 - [x] Devam Edilebilir Akışlar
 - - Sayfa yenilemesinden sonra oluşturmaya devam et
 
-- [x] Sohbet Dallanması
+- [x] Sohbet Dallanması (Fork)
 - - Alternatif konuşma yolları oluştur
 
 - [x] Sohbet Paylaşımı
@@ -36,7 +36,7 @@
 - [x] Web Araması
 - - Gerçek zamanlı web aramasını entegre et
 
-- [ ] Kendi Anahtarını Getir
+- [x] Kendi Anahtarını Getir
 - - Kendi API anahtarlarını kullan
 
 - [ ] Mobil Uygulama (PWA)

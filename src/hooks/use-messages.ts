@@ -36,26 +36,44 @@ export const useMessages = () => {
 
 				// Mevcut part'ı bul
 				const existingPartIndex = lastMessage.parts.findIndex((p: any) => p.type === part.type);
+				const isImage = part.type === 'image';
 
 				if (existingPartIndex >= 0) {
 					// Mevcut part'ı güncelle - value'yu birleştir
 					const existingPart = lastMessage.parts[existingPartIndex];
-					lastMessage.parts[existingPartIndex] = {
-						...existingPart,
-						[parseType(part.type)]: (existingPart[part.type === 'error' ? 'content' : part.type] || '') + part.value
-					};
+					if (isImage) {
+						lastMessage.parts[existingPartIndex] = {
+							...existingPart,
+							...part.value as any
+						};
+					} else {
+						lastMessage.parts[existingPartIndex] = {
+							...existingPart,
+							[parseType(part.type)]: (existingPart[part.type === 'error' ? 'content' : part.type] || '') + part.value
+						};
+					}
+
 				} else {
-					// Yeni part ekle
-					lastMessage.parts.push({
-						type: part.type,
-						[parseType(part.type === 'error' ? 'content' : part.type)]: part.value,
-					});
+					if (isImage) {
+						lastMessage.parts.push({
+							type: part.type,
+							...part.value as any // part.value should be an object with image data
+						});
+					} else {
+
+						// Yeni part ekle
+						lastMessage.parts.push({
+							type: part.type,
+							[parseType(part.type === 'error' ? 'content' : part.type)]: part.value,
+						});
+					}
 				}
 
 				updatedMessages[updatedMessages.length - 1] = {
 					...lastMessage,
 					streaming: true,
 					is_waiting: false,
+					updatedAt: new Date(),
 					...data
 				};
 			}
@@ -65,22 +83,6 @@ export const useMessages = () => {
 	};
 
 	const setToolResult = (callId: string, toolResult: JSONValue) => {
-		/*!SECTION
-		
-					{
-						"toolInvocation": {
-							"args": {
-								"query": "Enes Batur"
-							},
-							"result": [
-							],
-							"state": "result",
-							"step": 0,
-							"toolCallId": "call_eeceDPukSiSsVOVy3IaR9g",
-							"toolName": "webSearch"
-						},
-						"type": "tool-invocation"
-					},*/
 		// @ts-ignore
 		setMessages(prev => {
 			const updatedMessages = [...prev];
@@ -92,11 +94,9 @@ export const useMessages = () => {
 
 			// Mevcut part'ı bul
 			const existingPartIndex = lastMessage.parts.findIndex((p: any) => p.type === 'tool-invocation' && p.toolInvocation.toolCallId === callId);
-			console.log("Existing part index:", existingPartIndex, "for callId:", callId);
 			if (existingPartIndex >= 0) {
 				// Mevcut part'ı güncelle
 				const existingPart = lastMessage.parts[existingPartIndex];
-				console.log("Existing part found:", existingPart);
 				lastMessage.parts[existingPartIndex] = {
 					...existingPart,
 					toolInvocation: {
@@ -115,36 +115,37 @@ export const useMessages = () => {
 		const conversationId = params?.conversationId as string;
 
 		// @ts-ignore
-		setMessages(prev => prev.concat([
-			{
-				role: 'user',
-				parts: [
-					{
-						type: 'text',
-						text: content
-					}
-				],
-				chatId: conversationId,
-				experimental_attachments: attachments.map((attachment: any) => ({
-					name: attachment.name,
-					url: attachment.preview,
-					contentType: attachment.type
-				})),
-				createdAt: new Date()
-			},
-			{
-				role: 'assistant',
-				parts: [
-					{
-						type: 'text',
-						text: "Hmm..."
-					}
-				],
-				chatId: conversationId,
-				streaming: true,
-				is_waiting: true
-			}
-		]));
+		setMessages(prev => {
+			console.log("Previous messages:", prev, content);
+			return prev.concat([
+				{
+					role: 'user',
+					parts: [
+						{
+							type: 'text',
+							text: content
+						}
+					],
+					chatId: conversationId,
+					experimental_attachments: attachments.map((attachment: any) => ({
+						name: attachment.name,
+						url: attachment.preview,
+						contentType: attachment.type
+					})),
+					createdAt: new Date(),
+					updatedAt: new Date(),
+				},
+				{
+					role: 'assistant',
+					parts: [],
+					chatId: conversationId,
+					streaming: true,
+					is_waiting: true,
+					createdAt: new Date(),
+					updatedAt: new Date()
+				}
+			])
+		});
 	};
 
 	const handleVoteFunction = async (messageIndex: number, direction: 'up' | 'down') => {

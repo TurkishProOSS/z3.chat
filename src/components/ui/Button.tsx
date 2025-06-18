@@ -39,11 +39,12 @@ export interface ButtonProps
 	href?: string;
 	linkProps?: Omit<LinkProps, 'href'>;
 	target?: "_blank" | "_self";
+	as?: React.ElementType; // 'button' veya 'a' gibi farklı element tipleri için
 }
 
 const Button = forwardRef<HTMLElement, ButtonProps>(
-	({ className, href, variant = "default", size = "default", isLoading = false, children, startIcon, linkProps, ...props }, ref) => {
-		const Comp = href ? Link : 'button';
+	({ as = 'button', className, href, variant = "default", size = "default", isLoading = false, children, startIcon, linkProps, ...props }, ref) => {
+		const Comp = href ? Link : as;
 		const compProps = href
 			? { ...linkProps, href, ...props }
 			: props;
@@ -69,9 +70,9 @@ const Button = forwardRef<HTMLElement, ButtonProps>(
 				)} */}
 
 				{isLoading && (
-					<div className="absolute inset-0 flex items-center justify-center">
+					<span className="absolute inset-0 flex items-center justify-center">
 						<Line size={20} color="currentColor" />
-					</div>
+					</span>
 				)}
 
 				{/* Ana içerik */}
