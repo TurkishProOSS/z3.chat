@@ -7,7 +7,7 @@ import { AnyAaaaRecord } from "node:dns";
 
 export const POST = async (
 	request: NextRequest,
-	{ params }: { params: { conversationId: string } }
+	{ params }: any
 ) => {
 	return await withAuth(async (session) => {
 		const { conversationId } = await params;

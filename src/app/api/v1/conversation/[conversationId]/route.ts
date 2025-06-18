@@ -36,7 +36,7 @@ const isStillResponding = async (conversationId: string) => {
 
 export const GET = async (
 	request: NextRequest,
-	{ params }: { params: { conversationId: string } }
+	{ params }: any
 ) => {
 	return await withAuth(async (session) => {
 		const { conversationId } = await params;
@@ -115,7 +115,7 @@ export const GET = async (
 type AMT = TAgentModel & any;
 export const POST = async (
 	request: NextRequest,
-	{ params }: { params: { conversationId: string } }
+	{ params }: any
 ) => {
 	return await withAuth(async (session) => {
 		try {

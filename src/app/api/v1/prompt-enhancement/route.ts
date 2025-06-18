@@ -50,7 +50,7 @@ export const POST = async (
 			const { prompt } = await request.json();
 
 			const response = await generateText({
-				model: (await ai()).languageModel("enhancment-0"),
+				model: (await (ai as any)()).languageModel("enhancment-0"),
 				messages: [
 					{
 						role: 'user',
