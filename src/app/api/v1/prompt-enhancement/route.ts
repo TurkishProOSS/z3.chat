@@ -12,6 +12,7 @@ export const POST = async (
 	request: NextRequest
 ) => {
 	return await withAuth(async (session) => {
+        let fn: any;
 
 		try {
 			const ip = ipAddress(request) || (!session?.user?.isAnonymous ? session?.user?.id : (process.env.NODE_ENV === 'development' ? '127.0.0.1' : ''));
@@ -28,6 +29,14 @@ export const POST = async (
 			});
 
 			const { success, remaining, limit, reset } = await ratelimit.limit(`prompt-enhancement:${md5(ip)}`);
+
+            const increaseLimit = async () => {
+                const key = `prompt-enhancement:${md5(ip)}`;
+                await ratelimit.resetUsedTokens(key);
+                await Promise.all(Array.from({ length: (session?.user?.usage_enhance || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
+            };
+
+            fn = increaseLimit;
 
 			if (!success) {
 				return Response.json({
@@ -50,7 +59,7 @@ export const POST = async (
 			const { prompt } = await request.json();
 
 			const response = await generateText({
-				model: (await (ai as any)()).languageModel("enhancment-0"),
+				model: (await ai({ session })).languageModel("enhancment-0"),
 				messages: [
 					{
 						role: 'user',
@@ -68,6 +77,8 @@ ${prompt}
 			});
 
 			if (!response || !response.text) {
+                await increaseLimit();
+
 				return Response.json({
 					success: false,
 					message: "Failed to enhance prompt",
@@ -90,6 +101,8 @@ ${prompt}
 				}
 			});
 		} catch (error) {
+            if (fn) await fn();
+
 			return Response.json({
 				success: false,
 				message: "Failed to enhance prompt",

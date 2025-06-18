@@ -43,13 +43,12 @@ export default async function RootLayout({
 	const cookieList = await cookies();
 	const locale = await getLocale();
 	const init = await initZ3();
+    
 	const session = await auth.api.getSession({
 		headers: {
 			'Cookie': cookieList.toString()
 		} as any
 	}).catch(() => null);
-
-	const mainFont = cookieList.get('z3-main-font')?.value as keyof typeof mainFonts;
 
 	return (
 		<html lang={locale} suppressHydrationWarning>

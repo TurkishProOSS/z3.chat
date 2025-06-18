@@ -118,6 +118,8 @@ export const POST = async (
 	{ params }: any
 ) => {
 	return await withAuth(async (session) => {
+        let fn: any;
+
 		try {
 			const { conversationId } = await params;
 			const { prompt, model, modelOptions, attachments } = await request.json();
@@ -140,6 +142,12 @@ export const POST = async (
 
 			const { success, remaining, limit, reset } = await ratelimit.limit(`models:${md5(ip)}`);
 
+            const increaseLimit = async () => {
+                const key = `models:${md5(ip)}`;
+                await ratelimit.resetUsedTokens(key);
+                await Promise.all(Array.from({ length: ((agent?.features?.imageGeneration ? session?.user?.usage_image_generation : session?.user?.usage_models) || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
+            };
+
 			if (!success) {
 				return Response.json({
 					success: false,
@@ -161,20 +169,33 @@ export const POST = async (
 
 			const tools = getAgentTools(agent as any, modelOptions);
 
-			if (!conversationId) return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
+			if (!conversationId) { 
+                await increaseLimit();
+                return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
+            };
+
 			if (isValidObjectId(conversationId) === false) {
+                await increaseLimit();
 				return Response.json({ success: false, message: 'Invalid conversation ID' }, { status: 400 });
-			}
+			};
 
 			const models = await getAllModelsArray();
 			const requestModel = models.find(m => m === model);
-			if (!requestModel) return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
+
+			if (!requestModel) {
+                await increaseLimit();
+                return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
+            };
 
 			const conversation = await Conversation.findOne({
 				_id: conversationId,
 				userId: session.user.id
 			}).select('-messages').lean();
-			if (!conversation) return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
+
+			if (!conversation) {
+                await increaseLimit();
+                return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
+            };
 
 			const existingRespond = await Message.findOne({
 				chatId: conversationId,
@@ -183,12 +204,14 @@ export const POST = async (
 			}).lean();
 
 			if (existingRespond) {
+                await increaseLimit();
+
 				return Response.json({
 					success: false,
 					message: 'There is already an ongoing response for this conversation. Please wait for it to finish or delete the conversation.',
 					conversationId
 				}, { status: 400 });
-			}
+			};
 
 
 			const attachmentsSchema = z.array(z.object({
@@ -198,6 +221,8 @@ export const POST = async (
 			})).safeParse(attachments);
 
 			if (!attachmentsSchema.success) {
+                await increaseLimit();
+
 				return Response.json({
 					success: false,
 					message: 'Invalid attachments',
@@ -356,6 +381,8 @@ export const POST = async (
 								experimental_attachments: uploadedImages
 							} as any);
 						} catch (error) {
+                            await increaseLimit();
+
 							dataStream.writeData({
 								type: 'error',
 								text: (error as any)?.message || 'An error occurred while processing your request.'
@@ -426,6 +453,8 @@ export const POST = async (
 							experimental_transform: smoothStream({ chunking: 'word' }),
 							onError: async ({ error }) => {
 								try {
+                                    await increaseLimit();
+
 									dataStream.writeData({
 										type: 'error',
 										text: (error as any)?.message || 'An error occurred while processing your request.'
@@ -479,6 +508,8 @@ export const POST = async (
 				});
 			}
 		} catch (error) {
+            if (fn) await fn();
+
 			console.error('Error occurred while processing request:', error);
 			return Response.json({
 				success: false,

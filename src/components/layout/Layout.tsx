@@ -24,15 +24,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 		}
 	}, [isPending, session]);
 
+    const isConversation = useMemo(
+		() => pathname === '/chats/' + params?.conversationId,
+		[pathname, params?.conversationId]
+	);
+
 	if (['/auth', '/settings'].some(p => pathname.startsWith(p))) return (
 		<div className={`w-full min-h-screen main-font-${mainFont} code-font-${codeFont}`}>
 			{children}
 		</div>
-	);
-
-	const isConversation = useMemo(
-		() => pathname === '/chats/' + params?.conversationId,
-		[pathname, params?.conversationId]
 	);
 
 	return (

@@ -65,16 +65,13 @@ export const auth = betterAuth({
 				default: 5
 			},
 			interests: {
-				type: 'string',
-				input: false
+				type: 'string'
 			},
 			tone: {
-				type: 'string',
-				input: false
+				type: 'string'
 			},
 			bio: {
-				type: 'string',
-				input: false
+				type: 'string'
 			},
 			pinned_agents: {
 				type: 'string[]',
