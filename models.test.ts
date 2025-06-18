@@ -2,7 +2,6 @@ import { AgentModel } from "@/lib/definitions";
 import { AgentModel as MonguzAgent } from '@/database/models/Models'
 import axios from "axios";
 import fs from "fs";
-import { z } from "zod";
 import mongoose from "mongoose";
 
 (async () => {

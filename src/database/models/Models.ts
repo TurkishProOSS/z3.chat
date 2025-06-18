@@ -4,12 +4,9 @@ const FeaturesSchema = new mongoose.Schema({
 	vision: { type: Boolean, default: false },
 	imageGeneration: { type: Boolean, default: false },
 	objectGeneration: { type: Boolean, default: false },
-	toolUsage: { type: Boolean, default: false },
-	toolStreaming: { type: Boolean, default: false },
 	reasoning: { type: Boolean, default: false },
 	pdfSupport: { type: Boolean, default: false },
 	search: { type: Boolean, default: false },
-	effortControl: { type: Boolean, default: false },
 	fast: { type: Boolean, default: false },
 	experimental: { type: Boolean, default: false }
 }, { _id: false });

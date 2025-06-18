@@ -114,7 +114,15 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 					{reduceAgents(agents).map((agent) => (
 						<Select.Group key={agent.provider} label={agent.provider}>
 							{agent.models.map((model, index) => (
-								<Select.Item key={index} value={model.id}>
+								<Select.Item
+									key={index}
+									value={model.id}
+									disabled={!model.enabled}
+									className={cn(
+										"cursor-pointer",
+										!model.enabled && "cursor-not-allowed opacity-50 !bg-transparent !text-muted"
+									)}
+								>
 									<Model
 										company={agent.provider}
 										modelName={model.name}
