@@ -41,6 +41,10 @@
 			"Usage": {
 				"Title": "Kullanım",
 				"Description": "Z3C kullanımınızı görüntüleyin."
+			},
+			"Devs": {
+				"Title": "Geliştiriciler",
+				"Description": "Proje hakkında bilgi alın."
 			}
 		}
 	}

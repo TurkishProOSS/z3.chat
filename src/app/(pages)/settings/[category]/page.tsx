@@ -1,6 +1,6 @@
 'use client';
 
-import { RiArrowLeftLine, RiUser3Line, RiBrushLine, RiKeyLine, RiBarChartLine, RiVipCrownLine } from '@remixicon/react';
+import { RiArrowLeftLine, RiUser3Line, RiBrushLine, RiKeyLine, RiBarChartLine, RiVipCrownLine, RiCodeLine, RiExternalLinkFill, RiExternalLinkLine, RiGithubLine } from '@remixicon/react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession } from "@/hooks/use-session";
@@ -22,729 +22,884 @@ import { api } from '@/lib/api';
 import { useSWRApi } from '@/hooks/use-swr-api';
 
 type IProps = {
-	session?: ReturnType<typeof useSession>['data'];
-	refetch: () => void;
-	isPending: boolean;
+    session?: ReturnType<typeof useSession>['data'];
+    refetch: () => void;
+    isPending: boolean;
 };
 
 const CATEGORIES = [
-	['Account', RiUser3Line],
-	['Customization', RiBrushLine],
-	['ApiKeys', RiKeyLine],
-	['Usage', RiBarChartLine]
+    ['Account', RiUser3Line],
+    ['Customization', RiBrushLine],
+    ['ApiKeys', RiKeyLine],
+    ['Usage', RiBarChartLine]
 ];
 
 export default function Settings() {
-	const { data: session, isPending, refetch } = useSession();
-	const [mount, setMount] = useState(false);
-	const [load, setLoad] = useState(false);
+    const { data: session, isPending, refetch } = useSession();
+    const [mount, setMount] = useState(false);
+    const [load, setLoad] = useState(false);
 
-	const t = useTranslations("SettingsPage");
-	const router = useRouter();
+    const t = useTranslations("SettingsPage");
+    const router = useRouter();
 
-	const { category } = useParams() || { category: 'account' };
+    const { category } = useParams() || { category: 'account' };
 
-	const searchParams = useSearchParams();
-	const a = searchParams.get('a');
+    const searchParams = useSearchParams();
+    const a = searchParams.get('a');
 
-	useEffect(() => {
-		setMount(true);
-	}, []);
+    useEffect(() => {
+        setMount(true);
+    }, []);
 
-	useEffect(() => {
-		if (isPending) return;
+    useEffect(() => {
+        if (isPending) return;
 
-		if (!session || session?.user?.isAnonymous) {
-			router.push('/auth/signin');
-		} else {
-			setLoad(true);
-		}
-	}, [isPending]);
+        if (!session || session?.user?.isAnonymous) {
+            router.push('/auth/signin');
+        } else {
+            setLoad(true);
+        }
+    }, [isPending]);
 
-	const isLoading = !load && (isPending || !session || session?.user?.isAnonymous);
+    const isLoading = !load && (isPending || !session || session?.user?.isAnonymous);
 
-	if (isLoading) return (
-		<div className="flex h-screen w-full">
-			<motion.div
-				className="bg-primary sticky top-0 shrink-0 group h-screen hidden lg:flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out"
-				initial={{ width: 85 }}
-			>
-				<div className="w-full h-full space-y-10">
-					<div className="flex w-full grayscale-100">
-						<Logo size={36} />
-					</div>
-				</div>
-			</motion.div>
-			<div className="flex-1 w-full h-full flex items-center justify-center">
-				<div className="w-8 h-8 border border-muted rounded-full">
-					<div className="w-full h-full animate-spin relative flex justify-center">
-						<span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+    if (isLoading) return (
+        <div className="flex h-screen w-full">
+            <motion.div
+                className="bg-primary sticky top-0 shrink-0 group h-screen hidden lg:flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out"
+                initial={{ width: 85 }}
+            >
+                <div className="w-full h-full space-y-10">
+                    <div className="flex w-full grayscale-100">
+                        <Logo size={36} />
+                    </div>
+                </div>
+            </motion.div>
+            <div className="flex-1 w-full h-full flex items-center justify-center">
+                <div className="w-8 h-8 border border-muted rounded-full">
+                    <div className="w-full h-full animate-spin relative flex justify-center">
+                        <span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
-	const props = {
-		session,
-		isPending,
-		refetch
-	};
+    const props = {
+        session,
+        isPending,
+        refetch
+    };
 
-	return (
-		<div className="flex">
-			<motion.div
-				className={cn("bg-primary hidden sticky top-0 shrink-0 group h-screen lg:flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out", {
-					'bg-secondary': a,
-				})}
-				initial={a ? { width: '24rem' } : { width: 85 }}
-				animate={{ width: '24rem', backgroundColor: 'var(--color-secondary)' }}
-			>
-				<div className="w-full h-full space-y-10">
-					<div className="flex w-full">
-						<AnimatePresence mode="wait">
-							{(!mount && !a) ? (
-								<motion.div
-									key={"logo"}
-									className="grayscale-100"
-									exit={{ opacity: 0, scale: 1, y: -20 }}
-									animate={{ opacity: 1, scale: 1, y: 0 }}
-								>
-									<Logo size={36} />
-								</motion.div>
-							) : (
-								<motion.div
-									key={"arrow"}
-									initial={a ? {} : { opacity: 0, scale: 1, y: 20 }}
-									animate={{ opacity: 1, scale: 1, y: 0 }}
-								>
-									<button
-										className="text-muted cursor-pointer flex items-center space-x-2"
-										onClick={() => router.back()}
-									>
-										<RiArrowLeftLine />
-									</button>
-								</motion.div>
-							)}
-						</AnimatePresence>
-					</div>
-					<div className="space-y-2">
-						<motion.h1
-							initial={a ? {} : { opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: 0.5 }}
-							className="text-2xl text-foreground"
-						>
-							{t('Title')}
-						</motion.h1>
-						<motion.p
-							initial={a ? {} : { opacity: 0, y: 20 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ delay: 0.7 }}
-							className="text-muted max-w-64"
-						>
-							{t('Description')}
-						</motion.p>
-					</div>
-					<div className="space-y-3">
-						{CATEGORIES.map((item, index) => {
-							const IconComp = item[1];
-							return (
-								<motion.div
-									key={index}
-									initial={a ? {} : { opacity: 0, scale: 0.95 }}
-									animate={{ opacity: 1, scale: 1 }}
-									transition={{ delay: 0.1 * (index + 1) + 0.7 }}
-									className={cn(item[2] || 'from-muted/20 to-muted/20', "rounded-2xl bg-gradient-to-br via-border p-px cursor-pointer")}
-								>
-									<Link href={`/settings/${String(item[0]).toLowerCase()}?a=1`} className={cn("bg-secondary rounded-2xl transition-colors p-4 flex items-center space-x-4", {
-										'bg-foreground': category === String(item[0]).toLowerCase(),
-										'hover:bg-primary/50': category !== String(item[0]).toLowerCase(),
-									})}>
-										<div className={"relative " + (category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60')}>
-											{category !== String(item[0]).toLowerCase() && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
-											<IconComp size={48} />
-										</div>
-										<div className="space-y-1">
-											<h1 className={(category === String(item[0]).toLowerCase() ? 'text-primary' : 'text-foreground') + " leading-none text-lg"}>{t(`Categories.${item[0]}.Title`)}</h1>
-											<p className={(category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60') + " leading-none"}>{t(`Categories.${item[0]}.Description`)}</p>
-										</div>
-									</Link>
-								</motion.div>
-							)
-						})}
-					</div>
-				</div>
-			</motion.div >
-			<div className="w-full flex-1 h-full min-h-screen flex flex-col">
-				<div className="lg:hidden flex flex-col p-3">
-					<Navbar sub={t("Title")} />
-				</div>
-				<div className="lg:hidden flex items-center gap-2 px-3 w-screen overflow-x-auto flex-wrap">
-					{CATEGORIES.map((item, index) => {
-						const IconComp = item[1];
-						return (
-							<motion.div
-								key={index}
-								initial={a ? {} : { opacity: 0, scale: 0.95 }}
-								animate={{ opacity: 1, scale: 1 }}
-								transition={{ delay: 0.1 * (index + 1) + 0.7 }}
-								className={cn(item[2] || 'from-muted/20 to-muted/20', "rounded-2xl bg-gradient-to-br via-border p-px cursor-pointer")}
-							>
-								<Link href={`/settings/${String(item[0]).toLowerCase()}?a=1`} className={cn("bg-secondary rounded-2xl transition-colors p-4 flex items-center space-x-4", {
-									'bg-foreground': category === String(item[0]).toLowerCase(),
-									'hover:bg-primary/50': category !== String(item[0]).toLowerCase(),
-								})}>
-									<div className={"relative " + (category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60')}>
-										{category !== String(item[0]).toLowerCase() && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
-										<IconComp size={20} />
-									</div>
-									<div className="space-y-1">
-										<h1 className={(category === String(item[0]).toLowerCase() ? 'text-primary' : 'text-foreground') + " break-keep leading-none text-lg"}>{t(`Categories.${item[0]}.Title`)}</h1>
-									</div>
-								</Link>
-							</motion.div>
-						)
-					})}
-				</div>
-				<div className="flex-1 flex flex-col justify-between px-2 lg:px-5 py-5 lg:py-20 space-y-10">
-					{category === 'account' && <AccountSettings {...props} />}
-					{category === 'customization' && <CustomizationSettings {...props} />}
-					{category === 'apikeys' && <ApiKeysSettings {...props} />}
-					{category === 'usage' && <UsageSettings {...props} />}
-				</div>
-			</div>
-		</div >
-	);
+    return (
+        <div className="flex">
+            <motion.div
+                className={cn("bg-primary hidden sticky top-0 shrink-0 group h-screen lg:flex flex-col justify-between p-6 border-r transition-all duration-300 ease-in-out", {
+                    'bg-secondary': a,
+                })}
+                initial={a ? { width: '24rem' } : { width: 85 }}
+                animate={{ width: '24rem', backgroundColor: 'var(--color-secondary)' }}
+            >
+                <div className="w-full h-full flex flex-col space-y-10">
+                    <div className="flex w-full">
+                        <AnimatePresence mode="wait">
+                            {(!mount && !a) ? (
+                                <motion.div
+                                    key={"logo"}
+                                    className="grayscale-100"
+                                    exit={{ opacity: 0, scale: 1, y: -20 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                >
+                                    <Logo size={36} />
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key={"arrow"}
+                                    initial={a ? {} : { opacity: 0, scale: 1, y: 20 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                >
+                                    <button
+                                        className="text-muted cursor-pointer flex items-center space-x-2"
+                                        onClick={() => router.back()}
+                                    >
+                                        <RiArrowLeftLine />
+                                    </button>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                    <div className="space-y-2">
+                        <motion.h1
+                            initial={a ? {} : { opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.5 }}
+                            className="text-2xl text-foreground"
+                        >
+                            {t('Title')}
+                        </motion.h1>
+                        <motion.p
+                            initial={a ? {} : { opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.7 }}
+                            className="text-muted max-w-64"
+                        >
+                            {t('Description')}
+                        </motion.p>
+                    </div>
+                    <div className="space-y-3 flex-1">
+                        {CATEGORIES.map((item, index) => {
+                            const IconComp = item[1];
+                            return (
+                                <motion.div
+                                    key={index}
+                                    initial={a ? {} : { opacity: 0, scale: 0.95 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ delay: 0.1 * (index + 1) + 0.7 }}
+                                    className={cn(item[2] || 'from-muted/20 to-muted/20', "rounded-2xl bg-gradient-to-br via-border p-px cursor-pointer")}
+                                >
+                                    <Link href={`/settings/${String(item[0]).toLowerCase()}?a=1`} className={cn("bg-secondary rounded-2xl transition-colors p-4 flex items-center space-x-4", {
+                                        'bg-foreground': category === String(item[0]).toLowerCase(),
+                                        'hover:bg-primary/50': category !== String(item[0]).toLowerCase(),
+                                    })}>
+                                        <div className={"relative " + (category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60')}>
+                                            {category !== String(item[0]).toLowerCase() && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
+                                            <IconComp size={48} />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <h1 className={(category === String(item[0]).toLowerCase() ? 'text-primary' : 'text-foreground') + " leading-none text-lg"}>{t(`Categories.${item[0]}.Title`)}</h1>
+                                            <p className={(category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60') + " leading-none"}>{t(`Categories.${item[0]}.Description`)}</p>
+                                        </div>
+                                    </Link>
+                                </motion.div>
+                            )
+                        })}
+                    </div>
+                    <motion.div
+                        initial={a ? {} : { opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.1 }}
+                        className="rounded-2xl bg-gradient-to-br via-border p-px cursor-pointer from-muted/20 to-muted/20"
+                    >
+                        <Link href={`/settings/devs?a=1`} className={cn("bg-secondary rounded-2xl transition-colors p-4 flex items-center space-x-4", {
+                            'bg-foreground': category === 'devs',
+                            'hover:bg-primary/50': category !== 'devs',
+                        })}>
+                            <div className={"relative " + (category === 'devs' ? 'text-primary/60' : 'text-foreground/60')}>
+                                {category !== 'devs' && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
+                                <RiCodeLine size={48} />
+                            </div>
+                            <div className="space-y-1">
+                                <h1 className={(category === 'devs' ? 'text-primary' : 'text-foreground') + " leading-none text-lg"}>{t(`Categories.Devs.Title`)}</h1>
+                                <p className={(category === 'devs' ? 'text-primary/60' : 'text-foreground/60') + " leading-none"}>{t(`Categories.Devs.Description`)}</p>
+                            </div>
+                        </Link>
+                    </motion.div>
+                </div>
+            </motion.div >
+            <div className="w-full flex-1 h-full min-h-screen flex flex-col">
+                <div className="lg:hidden flex flex-col p-3">
+                    <Navbar sub={t("Title")} />
+                </div>
+                <div className="lg:hidden flex items-center gap-2 px-3 w-screen overflow-x-auto flex-wrap">
+                    {[...CATEGORIES, ['Devs', RiCodeLine]].map((item, index) => {
+                        const IconComp = item[1];
+                        return (
+                            <motion.div
+                                key={index}
+                                initial={a ? {} : { opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ delay: 0.1 * (index + 1) + 0.7 }}
+                                className={cn(item[2] || 'from-muted/20 to-muted/20', "rounded-2xl bg-gradient-to-br via-border p-px cursor-pointer")}
+                            >
+                                <Link href={`/settings/${String(item[0]).toLowerCase()}?a=1`} className={cn("bg-secondary rounded-2xl transition-colors p-4 flex items-center space-x-4", {
+                                    'bg-foreground': category === String(item[0]).toLowerCase(),
+                                    'hover:bg-primary/50': category !== String(item[0]).toLowerCase(),
+                                })}>
+                                    <div className={"relative " + (category === String(item[0]).toLowerCase() ? 'text-primary/60' : 'text-foreground/60')}>
+                                        {category !== String(item[0]).toLowerCase() && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
+                                        <IconComp size={20} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h1 className={(category === String(item[0]).toLowerCase() ? 'text-primary' : 'text-foreground') + " break-keep leading-none text-lg"}>{t(`Categories.${item[0]}.Title`)}</h1>
+                                    </div>
+                                </Link>
+                            </motion.div>
+                        )
+                    })}
+                </div>
+                <div className="flex-1 flex flex-col justify-between px-2 lg:px-5 py-5 lg:py-20 space-y-10">
+                    {category === 'account' && <AccountSettings {...props} />}
+                    {category === 'customization' && <CustomizationSettings {...props} />}
+                    {category === 'apikeys' && <ApiKeysSettings {...props} />}
+                    {category === 'usage' && <UsageSettings {...props} />}
+                    {category === 'devs' && <DevCredits {...props} />}
+                </div>
+            </div>
+        </div >
+    );
+};
+
+function DevCredits({ session, refetch, isPending }: IProps) {
+    return (
+        <div className="px-5 lg:px-20 max-w-4xl mx-auto w-full space-y-5">
+            <div className="w-full h-40 bg-secondary rounded-2xl relative">
+                <div className="absolute inset-0 z-1 flex flex-col justify-center px-5 lg:px-10">
+                    <div>
+                        {"z3c.dev".split("").map((letter, letterIndex) => (
+                            <motion.span
+                                key={`0-${letterIndex}`}
+                                initial={{ y: 100, opacity: 0 }}
+                                animate={{ y: 0, opacity: 1 }}
+                                transition={{
+                                    delay: letterIndex * 0.03,
+                                    type: "spring",
+                                    stiffness: 150,
+                                    damping: 25,
+                                }}
+                                className="inline-block text-4xl lg:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-700"
+                            >
+                                {letter}
+                            </motion.span>
+                        ))}
+                    </div>
+                    <p className="text-muted max-w-xs pt-3">Z3C, "T3 Chat Cloneathon" için yapılmış olan bir projedir.</p>
+                </div>
+                <div className="absolute inset-0 left-20 opacity-50">
+                    <FloatingPaths position={1} />
+                    <FloatingPaths position={-1} />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <Link target='_blank' href='https://github.com/z3cdotdev'>
+                    <motion.div
+                        className="bg-secondary rounded-2xl p-5"
+                        whileHover={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 150, damping: 25 }}
+                    >
+                        <RiExternalLinkLine size={48} />
+                        <h1 className="text-2xl text-foreground pt-3">GitHub</h1>
+                        <p className="text-muted">Projenin github organizasyonu.</p>
+                    </motion.div>
+                </Link>
+                <div className="bg-secondary row-span-2 rounded-2xl p-5 flex-col flex">
+                    <RiCodeLine size={48} />
+                    <h1 className="text-2xl text-foreground pt-3">Geliştiriciler</h1>
+                    <p className="text-muted">Projenin geliştiricileri.</p>
+                    <div className="flex flex-1 flex-col justify-end space-y-5">
+                        {([
+                            ['clqu', 'mail@clqu.dev', 'd032af8986ff07e7d50530e8ced8e1adbe70c5fd81ae3d383c0e71821dc9f8f0', { github: 'clqu', web: 'https://clqu.dev' }],
+                            ['swoth', 'me@swoth.dev', 'de85755e2118d69a6004e9f4179dd125bed362528bcdeccef069edb1a9769d75', { github: 'swothh', web: 'https://swoth.dev' }]
+                        ] as const).map((dev, i) => (
+                            <Link key={i} target='_blank' href={`https://github.com/${dev[3].github}`}>
+                                <div key={i} className="flex space-x-3">
+                                    <img
+                                        src={`https://gravatar.com/avatar/${dev[2]}?d=retro`}
+                                        className="w-10 h-10 rounded-xl"
+                                    />
+                                    <div className="space-y-1">
+                                        <h1 className="text-foreground leading-none">{dev[0]}</h1>
+                                        <p className="text-muted leading-none">{dev[1]}</p>
+                                        <div className="flex flex-wrap gap-y-2 gap-x-3 pt-1">
+                                            <div className="flex items-center space-x-1 text-muted">
+                                                <RiGithubLine size={16} />
+                                                <p className="leading-none">{dev[3].github}</p>
+                                            </div>
+                                            <Link target='_blank' href={dev[3].web}>
+                                                <div className="flex items-center space-x-1 text-muted">
+                                                    <RiExternalLinkLine size={16} />
+                                                    <p className="leading-none">{dev[3].web.replace('https://', '')}</p>
+                                                </div>
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+                <Link target='_blank' href='https://x.com/z3cdotdev'>
+                    <motion.div
+                        className="bg-secondary rounded-2xl p-5"
+                        whileHover={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 150, damping: 25 }}
+                    >
+                        <RiExternalLinkLine size={48} />
+                        <h1 className="text-2xl text-foreground pt-3">X Hesabı</h1>
+                        <p className="text-muted">Sosyal medya hesabımız.</p>
+                    </motion.div>
+                </Link>
+            </div>
+        </div>
+    );
 };
 
 function UsageSettings({ session, refetch, isPending }: IProps) {
-	const { data, isLoading } = useSWRApi("/usages");
+    const { data, isLoading } = useSWRApi("/usages");
 
-	if (isLoading) return (
-		<div className="flex h-[calc(100vh-10rem)] w-full">
-			<div className="flex-1 w-full h-full flex items-center justify-center">
-				<div className="w-8 h-8 border border-muted rounded-full">
-					<div className="w-full h-full animate-spin relative flex justify-center">
-						<span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+    if (isLoading) return (
+        <div className="flex h-[calc(100vh-10rem)] w-full">
+            <div className="flex-1 w-full h-full flex items-center justify-center">
+                <div className="w-8 h-8 border border-muted rounded-full">
+                    <div className="w-full h-full animate-spin relative flex justify-center">
+                        <span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
-	return (
-		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Üyelik</h1>
-					<p className="text-muted text-sm">Üyelik bilgileriniz.</p>
-				</div>
-				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-					<div className="bg-gradient-to-br from-orange-800/20 border border-orange-400/30 to-orange-800/20 via-transparent w-full overflow-hidden rounded-2xl relative">
-						<div className="w-full p-4 rounded-2xl bg-orange-600/10">
-							<div className="text-orange-600/20 absolute top-3 right-3">
-								<RiVipCrownLine size={96} />
-							</div>
-							<h3 className="text-orange-900/40">Üyelik Türü</h3>
-							<h1 className="text-orange-400 text-3xl font-bold">Normal</h1>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">İyileştirme</h1>
-					<p className="text-muted text-sm">Prompt iyileştirme istatistikleri.</p>
-				</div>
-				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-					<div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
-						<div className="w-full p-4 rounded-2xl bg-secondary">
-							<div className="text-muted/20 absolute top-3 right-3">
-								<RiBarChartLine size={96} />
-							</div>
-							<h3 className="text-muted">İyileştirme Kotası</h3>
-							<h1 className="text-foreground text-3xl font-bold">{data?.data?.promptEnhancement?.limit || 0}</h1>
-						</div>
-					</div>
-					<div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
-						<div className="w-full p-4 rounded-2xl bg-secondary">
-							<div className="text-muted/20 absolute top-3 right-3">
-								<RiBarChartLine size={96} />
-							</div>
-							<h3 className="text-muted">Kalan Kota</h3>
-							<h1 className="text-foreground text-3xl font-bold">{data?.data?.promptEnhancement?.remaining || 0}</h1>
-						</div>
-					</div>
-					<p className="text-muted text-sm">{new Date(data?.data?.promptEnhancement?.reset).toDateString()} tarihinde sıfırlanacak.</p>
-				</div>
-			</div>
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Soru</h1>
-					<p className="text-muted text-sm">Model kullanım istatistikleri.</p>
-				</div>
-				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-					<div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
-						<div className="w-full p-4 rounded-2xl bg-secondary">
-							<div className="text-muted/20 absolute top-3 right-3">
-								<RiBarChartLine size={96} />
-							</div>
-							<h3 className="text-muted">Soru Kotası</h3>
-							<h1 className="text-foreground text-3xl font-bold">{data?.data?.models?.limit || 0}</h1>
-						</div>
-					</div>
-					<div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
-						<div className="w-full p-4 rounded-2xl bg-secondary">
-							<div className="text-muted/20 absolute top-3 right-3">
-								<RiBarChartLine size={96} />
-							</div>
-							<h3 className="text-muted">Kalan Kota</h3>
-							<h1 className="text-foreground text-3xl font-bold">{data?.data?.models?.remaining || 0}</h1>
-						</div>
-					</div>
-					<p className="text-muted text-sm">{new Date(data?.data?.models?.reset).toDateString()} tarihinde sıfırlanacak.</p>
-				</div>
-			</div>
-		</div>
-	);
+    return (
+        <div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">Üyelik</h1>
+                    <p className="text-muted text-sm">Üyelik bilgileriniz.</p>
+                </div>
+                <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                    <div className="bg-gradient-to-br from-orange-800/20 border border-orange-400/30 to-orange-800/20 via-transparent w-full overflow-hidden rounded-2xl relative">
+                        <div className="w-full p-4 rounded-2xl bg-orange-600/10">
+                            <div className="text-orange-600/20 absolute top-3 right-3">
+                                <RiVipCrownLine size={96} />
+                            </div>
+                            <h3 className="text-orange-900/40">Üyelik Türü</h3>
+                            <h1 className="text-orange-400 text-3xl font-bold">Normal</h1>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">İyileştirme</h1>
+                    <p className="text-muted text-sm">Prompt iyileştirme istatistikleri.</p>
+                </div>
+                <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                    <div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
+                        <div className="w-full p-4 rounded-2xl bg-secondary">
+                            <div className="text-muted/20 absolute top-3 right-3">
+                                <RiBarChartLine size={96} />
+                            </div>
+                            <h3 className="text-muted">İyileştirme Kotası</h3>
+                            <h1 className="text-foreground text-3xl font-bold">{data?.data?.promptEnhancement?.limit || 0}</h1>
+                        </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
+                        <div className="w-full p-4 rounded-2xl bg-secondary">
+                            <div className="text-muted/20 absolute top-3 right-3">
+                                <RiBarChartLine size={96} />
+                            </div>
+                            <h3 className="text-muted">Kalan Kota</h3>
+                            <h1 className="text-foreground text-3xl font-bold">{data?.data?.promptEnhancement?.remaining || 0}</h1>
+                        </div>
+                    </div>
+                    <p className="text-muted text-sm">{new Date(data?.data?.promptEnhancement?.reset).toDateString()} tarihinde sıfırlanacak.</p>
+                </div>
+            </div>
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">Soru</h1>
+                    <p className="text-muted text-sm">Model kullanım istatistikleri.</p>
+                </div>
+                <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                    <div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
+                        <div className="w-full p-4 rounded-2xl bg-secondary">
+                            <div className="text-muted/20 absolute top-3 right-3">
+                                <RiBarChartLine size={96} />
+                            </div>
+                            <h3 className="text-muted">Soru Kotası</h3>
+                            <h1 className="text-foreground text-3xl font-bold">{data?.data?.models?.limit || 0}</h1>
+                        </div>
+                    </div>
+                    <div className="bg-gradient-to-br from-muted/20 to-muted/20 via-border w-full overflow-hidden p-px rounded-2xl relative">
+                        <div className="w-full p-4 rounded-2xl bg-secondary">
+                            <div className="text-muted/20 absolute top-3 right-3">
+                                <RiBarChartLine size={96} />
+                            </div>
+                            <h3 className="text-muted">Kalan Kota</h3>
+                            <h1 className="text-foreground text-3xl font-bold">{data?.data?.models?.remaining || 0}</h1>
+                        </div>
+                    </div>
+                    <p className="text-muted text-sm">{new Date(data?.data?.models?.reset).toDateString()} tarihinde sıfırlanacak.</p>
+                </div>
+            </div>
+        </div>
+    );
 };
 
 function AccountSettings({ session, refetch, isPending }: IProps) {
-	const [submitable, setSubmittable] = useState(false);
-	const [submiting, setSubmiting] = useState(false);
-	const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitable, setSubmittable] = useState(false);
+    const [submiting, setSubmiting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
 
-	const [username, setUsername] = useState<string>(String(session?.user?.username || ''));
-	const [oldpass, setOldpass] = useState<string>('');
-	const [newpass, setNewpass] = useState<string>('');
+    const [username, setUsername] = useState<string>(String(session?.user?.username || ''));
+    const [oldpass, setOldpass] = useState<string>('');
+    const [newpass, setNewpass] = useState<string>('');
 
-	const [interests, setInterests] = useState<string>(String(session?.user?.interests || ''));
-	const [tone, setTone] = useState<string>(String(session?.user?.tone || ''));
-	const [bio, setBio] = useState<string>(String(session?.user?.bio || ''));
+    const [interests, setInterests] = useState<string>(String(session?.user?.interests || ''));
+    const [tone, setTone] = useState<string>(String(session?.user?.tone || ''));
+    const [bio, setBio] = useState<string>(String(session?.user?.bio || ''));
 
-	useEffect(() => {
-		if (!oldpass) setNewpass('');
+    useEffect(() => {
+        if (!oldpass) setNewpass('');
 
-		const newErrs = {
-			username: username.length < 3 ? 'Kullanıcı adı en az 3 karakter olmalıdır.' :
-				username.length > 32 ? 'Kullanıcı adı en fazla 32 karakter olmalıdır.' :
-					username.replace(/[a-z0-9-_]/gi, '').length > 0 ? 'Kullanıcı adı sadece harf, rakam, tire ve alt çizgi içerebilir.' : '',
-			password: !oldpass ? '' :
-				newpass.length < 8 ? 'Yeni şifre en az 8 karakter olmalıdır.' :
-					newpass.length > 64 ? 'Yeni şifre en fazla 64 karakter olmalıdır.' :
-						!newpass.match(/[a-z]/) ? 'Yeni şifre en az bir küçük harf içermelidir.' :
-							!newpass.match(/[A-Z]/) ? 'Yeni şifre en az bir büyük harf içermelidir.' :
-								!newpass.match(/[0-9]/) ? 'Yeni şifre en az bir rakam içermelidir.' :
-									'',
-			interests: interests?.length > 64 ? 'İlgi alanı en fazla 64 karakter olmalıdır.' : '',
-			tone: tone?.length > 24 ? 'Konuşma tarzı en fazla 24 karakter olmalıdır.' : '',
-			bio: bio?.length > 256 ? 'Hakkında en fazla 256 karakter olmalıdır.' : '',
-		};
+        const newErrs = {
+            username: username.length < 3 ? 'Kullanıcı adı en az 3 karakter olmalıdır.' :
+                username.length > 32 ? 'Kullanıcı adı en fazla 32 karakter olmalıdır.' :
+                    username.replace(/[a-z0-9-_]/gi, '').length > 0 ? 'Kullanıcı adı sadece harf, rakam, tire ve alt çizgi içerebilir.' : '',
+            password: !oldpass ? '' :
+                newpass.length < 8 ? 'Yeni şifre en az 8 karakter olmalıdır.' :
+                    newpass.length > 64 ? 'Yeni şifre en fazla 64 karakter olmalıdır.' :
+                        !newpass.match(/[a-z]/) ? 'Yeni şifre en az bir küçük harf içermelidir.' :
+                            !newpass.match(/[A-Z]/) ? 'Yeni şifre en az bir büyük harf içermelidir.' :
+                                !newpass.match(/[0-9]/) ? 'Yeni şifre en az bir rakam içermelidir.' :
+                                    '',
+            interests: interests?.length > 64 ? 'İlgi alanı en fazla 64 karakter olmalıdır.' : '',
+            tone: tone?.length > 24 ? 'Konuşma tarzı en fazla 24 karakter olmalıdır.' : '',
+            bio: bio?.length > 256 ? 'Hakkında en fazla 256 karakter olmalıdır.' : '',
+        };
 
-		setErrors(newErrs);
-		setSubmittable(Object.values(newErrs).filter(e => !!e).length === 0 ? true : false);
-	}, [username, oldpass, newpass, interests, tone, bio]);
+        setErrors(newErrs);
+        setSubmittable(Object.values(newErrs).filter(e => !!e).length === 0 ? true : false);
+    }, [username, oldpass, newpass, interests, tone, bio]);
 
-	const handleReset = () => {
-		setUsername(String(session?.user?.username || ''));
-		setOldpass('');
-		setNewpass('');
-		setInterests(String(session?.user?.interests || ''));
-		setTone(String(session?.user?.tone || ''));
-		setBio(String(session?.user?.bio || ''));
-	};
+    const handleReset = () => {
+        setUsername(String(session?.user?.username || ''));
+        setOldpass('');
+        setNewpass('');
+        setInterests(String(session?.user?.interests || ''));
+        setTone(String(session?.user?.tone || ''));
+        setBio(String(session?.user?.bio || ''));
+    };
 
-	const handleSubmit = async () => {
-		if (submiting) return;
-		setSubmiting(true);
+    const handleSubmit = async () => {
+        if (submiting) return;
+        setSubmiting(true);
 
-		if (oldpass && newpass) await authClient.changePassword({
-			currentPassword: oldpass,
-			newPassword: newpass,
-			revokeOtherSessions: true
-		});
+        if (oldpass && newpass) await authClient.changePassword({
+            currentPassword: oldpass,
+            newPassword: newpass,
+            revokeOtherSessions: true
+        });
 
-		if (username || interests || tone || bio) await authClient.updateUser({
-			username,
-			interests,
-			tone,
-			bio
-		} as any);
+        if (username || interests || tone || bio) await authClient.updateUser({
+            username,
+            interests,
+            tone,
+            bio
+        } as any);
 
-		refetch();
-		await new Promise(r => {
-			let i: any;
-			i = setInterval(() => {
-				if (isPending) return;
-				clearInterval(i);
-				r(true);
-			}, 1000);
-		});
+        refetch();
+        await new Promise(r => {
+            let i: any;
+            i = setInterval(() => {
+                if (isPending) return;
+                clearInterval(i);
+                r(true);
+            }, 1000);
+        });
 
-		handleReset();
-		setSubmiting(false);
-	};
+        handleReset();
+        setSubmiting(false);
+    };
 
-	return (
-		<>
-			<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Kullanıcı Adı</h1>
-						<p className="text-muted text-sm">Kullanıcı adınızı değiştirin.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Kullanıcı Adı' disabled={submiting} value={username} onChange={e => setUsername(e.target.value)} />
-						<AnimatePresence>
-							{errors?.username && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.username}</motion.p>}
-						</AnimatePresence>
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">E-mail</h1>
-						<p className="text-muted text-sm">E-mail adresiniz.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Email' value={session?.user?.email || '???'} disabled />
-						<p className="text-muted text-sm">E-mail adresi değiştirilemez.</p>
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Parola</h1>
-						<p className="text-muted text-sm">Şifrenizi güncelleyin.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Eski şifre' value={oldpass} onChange={e => setOldpass(e.target.value)} type="password" disabled={submiting} />
-						<Input label='Yeni şfire' value={newpass} onChange={e => setNewpass(e.target.value)} type="password" disabled={!oldpass || submiting} />
-						<AnimatePresence>
-							{errors?.password && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.password}</motion.p>}
-						</AnimatePresence>
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">İlgi Alanın</h1>
-						<p className="text-muted text-sm">Ne iş yapıyorsun?</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='İlgi Alanın' disabled={submiting} value={interests} onChange={e => setInterests(e.target.value)} />
-						<p className="text-muted text-sm">mühendis, geliştirici, öğrenci, vb.</p>
-						<AnimatePresence>
-							{errors?.interests && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.interests}</motion.p>}
-						</AnimatePresence>
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Konuşma Tarzı</h1>
-						<p className="text-muted text-sm">Z3 seninle nasıl konuşmalı?</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Konuşma Tarzı' disabled={submiting} value={tone} onChange={e => setTone(e.target.value)} />
-						<p className="text-muted text-sm">şakacı, ciddi, net, detaylı, vb.</p>
-						<AnimatePresence>
-							{errors?.tone && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.tone}</motion.p>}
-						</AnimatePresence>
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Hakkında</h1>
-						<p className="text-muted text-sm">Z3 senin hakkında ne bilmeli?</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Textarea label='Hakkında' disabled={submiting} value={bio} onChange={e => setBio(e.target.value)} />
-						<p className="text-muted text-sm">Z3'e kısaca nasıl biri olduğunu anlat.</p>
-						<AnimatePresence>
-							{errors?.bio && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.bio}</motion.p>}
-						</AnimatePresence>
-					</div>
-				</div>
-			</div>
-			<div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
-				<div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
-					<Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">Sıfırla</Button>
-				</div>
-				<div className="rounded-2xl bg-primary">
-					<Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>Kaydet</Button>
-				</div>
-			</div>
-		</>
-	);
+    return (
+        <>
+            <div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Kullanıcı Adı</h1>
+                        <p className="text-muted text-sm">Kullanıcı adınızı değiştirin.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Kullanıcı Adı' disabled={submiting} value={username} onChange={e => setUsername(e.target.value)} />
+                        <AnimatePresence>
+                            {errors?.username && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.username}</motion.p>}
+                        </AnimatePresence>
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">E-mail</h1>
+                        <p className="text-muted text-sm">E-mail adresiniz.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Email' value={session?.user?.email || '???'} disabled />
+                        <p className="text-muted text-sm">E-mail adresi değiştirilemez.</p>
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Parola</h1>
+                        <p className="text-muted text-sm">Şifrenizi güncelleyin.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Eski şifre' value={oldpass} onChange={e => setOldpass(e.target.value)} type="password" disabled={submiting} />
+                        <Input label='Yeni şfire' value={newpass} onChange={e => setNewpass(e.target.value)} type="password" disabled={!oldpass || submiting} />
+                        <AnimatePresence>
+                            {errors?.password && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.password}</motion.p>}
+                        </AnimatePresence>
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">İlgi Alanın</h1>
+                        <p className="text-muted text-sm">Ne iş yapıyorsun?</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='İlgi Alanın' disabled={submiting} value={interests} onChange={e => setInterests(e.target.value)} />
+                        <p className="text-muted text-sm">mühendis, geliştirici, öğrenci, vb.</p>
+                        <AnimatePresence>
+                            {errors?.interests && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.interests}</motion.p>}
+                        </AnimatePresence>
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Konuşma Tarzı</h1>
+                        <p className="text-muted text-sm">Z3 seninle nasıl konuşmalı?</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Konuşma Tarzı' disabled={submiting} value={tone} onChange={e => setTone(e.target.value)} />
+                        <p className="text-muted text-sm">şakacı, ciddi, net, detaylı, vb.</p>
+                        <AnimatePresence>
+                            {errors?.tone && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.tone}</motion.p>}
+                        </AnimatePresence>
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Hakkında</h1>
+                        <p className="text-muted text-sm">Z3 senin hakkında ne bilmeli?</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Textarea label='Hakkında' disabled={submiting} value={bio} onChange={e => setBio(e.target.value)} />
+                        <p className="text-muted text-sm">Z3'e kısaca nasıl biri olduğunu anlat.</p>
+                        <AnimatePresence>
+                            {errors?.bio && <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">{errors.bio}</motion.p>}
+                        </AnimatePresence>
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
+                <div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
+                    <Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">Sıfırla</Button>
+                </div>
+                <div className="rounded-2xl bg-primary">
+                    <Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>Kaydet</Button>
+                </div>
+            </div>
+        </>
+    );
 };
 
 function CustomizationSettings({ session }: IProps) {
-	const [viewMcMode, setViewMcMode] = useState(false);
-	const [mcMode, setMcMode] = useState(false);
+    const [viewMcMode, setViewMcMode] = useState(false);
+    const [mcMode, setMcMode] = useState(false);
 
-	const { theme, setTheme } = useTheme();
-	const { codeFont, mainFont, setCodeFont, setMainFont } = useFontStore();
+    const { theme, setTheme } = useTheme();
+    const { codeFont, mainFont, setCodeFont, setMainFont } = useFontStore();
 
-	useEffect(() => {
-		if (theme !== 'pixel') return;
-		setMainFont('lufga');
+    useEffect(() => {
+        if (theme !== 'pixel') return;
+        setMainFont('lufga');
 
-		setMcMode(true);
-		setViewMcMode(true);
-	}, [theme]);
+        setMcMode(true);
+        setViewMcMode(true);
+    }, [theme]);
 
-	return (
-		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Tema</h1>
-					<p className="text-muted text-sm">Renk temasını değiştirin.</p>
-				</div>
-				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-					<div className="grid grid-cols-2 gap-3 w-full">
-						{['dark', 'light'].map((t, i) => (
-							<motion.a onClick={() => setTheme(t)} whileHover={{ scale: theme === t ? 1 : 0.95 }} key={i} className={cn("cursor-pointer from-muted/40 via-border to-muted/40 rounded-2xl p-px", { "bg-gradient-to-br": theme !== t, "bg-orange-400": theme === t })}>
-								<div className="bg-secondary rounded-2xl p-2">
-									<ThemePreview theme={t} />
-								</div>
-							</motion.a>
-						))}
-						{mcMode && (
-							<motion.a
-								onClick={() => setTheme("pixel")}
-								whileHover={{ scale: theme === "pixel" ? 1 : 0.95 }}
-								className={cn("cursor-pointer from-muted/40 via-border to-muted/40 rounded-2xl p-px", { "bg-gradient-to-br": theme !== "pixel", "bg-orange-400": theme === "pixel" })}
-								initial={{ opacity: 0, scale: 0.75 }}
-								animate={{ opacity: 1, scale: 1 }}
-								exit={{ opacity: 0, scale: 0.75 }}
-							>
-								<div className="bg-secondary rounded-2xl p-2">
-									<ThemePreview theme={"pixel"} />
-								</div>
-							</motion.a>
-						)}
-					</div>
-				</div>
-			</div>
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Yazı Tipi</h1>
-					<p className="text-muted text-sm">Genel yazı tipini değiştirin.</p>
-				</div>
-				<div className="col-span-2 py-5 pl-5 space-y-1.5">
-					<p className="text-muted text-sm">Genel Yazı Tipi</p>
-					<div className={"w-full transition-opacity " + (theme === 'pixel' ? 'opacity-50' : 'opacity-100')}>
-						<Select
-							placeholder="Yazı tipi seçin"
-							value={mainFont || 'lufga'}
-							onValueChange={v => setMainFont(v)}
-							disabled={theme === 'pixel'}
-						>
-							{['Lufga', 'Inter', 'Roboto', 'Montserrat', 'Quicksand'].map((font, i) => (
-								<Select.Item value={font.toLowerCase()} key={i}>
-									<p style={{ fontFamily: `var(--font-${font === 'Lufga' ? 'main' : font.toLowerCase()})` }}>
-										{font}
-									</p>
-								</Select.Item>
-							))}
-						</Select>
-					</div>
-					<p className="text-muted text-sm pt-3">Kod Yazı Tipi</p>
-					<Select
-						placeholder="Yazı tipi seçin"
-						value={(codeFont || 'jetbrains-mono').toLowerCase().replace(/ /g, '-')}
-						onValueChange={v => setCodeFont(v.toLowerCase().replace(/ /g, '-'))}
-					>
-						{['JetBrains Mono', 'Geist Mono', 'Roboto Mono', 'Source Code Pro'].map((font, i) => (
-							<Select.Item value={font.toLowerCase().replace(/ /g, '-')} key={i}>
-								<p style={{ fontFamily: `var(--font-${font.toLowerCase().replace(/ /g, '-')})` }}>
-									{font}
-								</p>
-							</Select.Item>
-						))}
-					</Select>
-				</div>
-			</div>
-			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Minecraft?</h1>
-					<p className="text-muted text-sm">Huh.</p>
-				</div>
-				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-					<Select
-						value={viewMcMode ? 'on' : 'off'}
-						onValueChange={v => {
-							if (v === 'off' && theme === 'pixel') setTheme('dark');
-							setViewMcMode(v === 'on' ? true : false);
-							if (v === 'off') setMcMode(false);
-						}}
-					>
-						<Select.Item value="on">
-							Açık
-						</Select.Item>
-						<Select.Item value="off">
-							Kapalı
-						</Select.Item>
-					</Select>
-				</div>
-			</div>
-			<AnimatePresence>
-				{viewMcMode && (
-					<motion.div
-						className="w-full grid grid-cols-3"
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: 20 }}
-					>
-						<div className="border-r flex flex-col text-right items-end pr-5 py-5">
-							<h1 className="text-lg text-foreground font-medium">Minecraft, gerçekten?</h1>
-							<p className="text-muted text-sm">La-la-la-lava, ch-ch-ch-chicken.</p>
-						</div>
-						<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-							<Select
-								value={mcMode ? 'on' : 'off'}
-								onValueChange={v => {
-									if (v === 'off' && theme === 'pixel') setTheme('dark');
-									setMcMode(v === 'on' ? true : false);
-								}}
-							>
-								<Select.Item value="on">
-									Açık
-								</Select.Item>
-								<Select.Item value="off">
-									Kapalı
-								</Select.Item>
-							</Select>
-							<AnimatePresence>
-								{mcMode && (
-									<motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">
-										Özel tema açıldı.
-									</motion.p>
-								)}
-							</AnimatePresence>
-						</div>
-					</motion.div>
-				)}
-			</AnimatePresence>
-		</div>
-	);
+    return (
+        <div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">Tema</h1>
+                    <p className="text-muted text-sm">Renk temasını değiştirin.</p>
+                </div>
+                <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                        {['dark', 'light'].map((t, i) => (
+                            <motion.a onClick={() => setTheme(t)} whileHover={{ scale: theme === t ? 1 : 0.95 }} key={i} className={cn("cursor-pointer from-muted/40 via-border to-muted/40 rounded-2xl p-px", { "bg-gradient-to-br": theme !== t, "bg-orange-400": theme === t })}>
+                                <div className="bg-secondary rounded-2xl p-2">
+                                    <ThemePreview theme={t} />
+                                </div>
+                            </motion.a>
+                        ))}
+                        {mcMode && (
+                            <motion.a
+                                onClick={() => setTheme("pixel")}
+                                whileHover={{ scale: theme === "pixel" ? 1 : 0.95 }}
+                                className={cn("cursor-pointer from-muted/40 via-border to-muted/40 rounded-2xl p-px", { "bg-gradient-to-br": theme !== "pixel", "bg-orange-400": theme === "pixel" })}
+                                initial={{ opacity: 0, scale: 0.75 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.75 }}
+                            >
+                                <div className="bg-secondary rounded-2xl p-2">
+                                    <ThemePreview theme={"pixel"} />
+                                </div>
+                            </motion.a>
+                        )}
+                    </div>
+                </div>
+            </div>
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">Yazı Tipi</h1>
+                    <p className="text-muted text-sm">Genel yazı tipini değiştirin.</p>
+                </div>
+                <div className="col-span-2 py-5 pl-5 space-y-1.5">
+                    <p className="text-muted text-sm">Genel Yazı Tipi</p>
+                    <div className={"w-full transition-opacity " + (theme === 'pixel' ? 'opacity-50' : 'opacity-100')}>
+                        <Select
+                            placeholder="Yazı tipi seçin"
+                            value={mainFont || 'lufga'}
+                            onValueChange={v => setMainFont(v)}
+                            disabled={theme === 'pixel'}
+                        >
+                            {['Lufga', 'Inter', 'Roboto', 'Montserrat', 'Quicksand'].map((font, i) => (
+                                <Select.Item value={font.toLowerCase()} key={i}>
+                                    <p style={{ fontFamily: `var(--font-${font === 'Lufga' ? 'main' : font.toLowerCase()})` }}>
+                                        {font}
+                                    </p>
+                                </Select.Item>
+                            ))}
+                        </Select>
+                    </div>
+                    <p className="text-muted text-sm pt-3">Kod Yazı Tipi</p>
+                    <Select
+                        placeholder="Yazı tipi seçin"
+                        value={(codeFont || 'jetbrains-mono').toLowerCase().replace(/ /g, '-')}
+                        onValueChange={v => setCodeFont(v.toLowerCase().replace(/ /g, '-'))}
+                    >
+                        {['JetBrains Mono', 'Geist Mono', 'Roboto Mono', 'Source Code Pro'].map((font, i) => (
+                            <Select.Item value={font.toLowerCase().replace(/ /g, '-')} key={i}>
+                                <p style={{ fontFamily: `var(--font-${font.toLowerCase().replace(/ /g, '-')})` }}>
+                                    {font}
+                                </p>
+                            </Select.Item>
+                        ))}
+                    </Select>
+                </div>
+            </div>
+            <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                    <h1 className="text-lg text-foreground font-medium">Minecraft?</h1>
+                    <p className="text-muted text-sm">Huh.</p>
+                </div>
+                <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                    <Select
+                        value={viewMcMode ? 'on' : 'off'}
+                        onValueChange={v => {
+                            if (v === 'off' && theme === 'pixel') setTheme('dark');
+                            setViewMcMode(v === 'on' ? true : false);
+                            if (v === 'off') setMcMode(false);
+                        }}
+                    >
+                        <Select.Item value="on">
+                            Açık
+                        </Select.Item>
+                        <Select.Item value="off">
+                            Kapalı
+                        </Select.Item>
+                    </Select>
+                </div>
+            </div>
+            <AnimatePresence>
+                {viewMcMode && (
+                    <motion.div
+                        className="w-full grid grid-cols-3"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 20 }}
+                    >
+                        <div className="border-r flex flex-col text-right items-end pr-5 py-5">
+                            <h1 className="text-lg text-foreground font-medium">Minecraft, gerçekten?</h1>
+                            <p className="text-muted text-sm">La-la-la-lava, ch-ch-ch-chicken.</p>
+                        </div>
+                        <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                            <Select
+                                value={mcMode ? 'on' : 'off'}
+                                onValueChange={v => {
+                                    if (v === 'off' && theme === 'pixel') setTheme('dark');
+                                    setMcMode(v === 'on' ? true : false);
+                                }}
+                            >
+                                <Select.Item value="on">
+                                    Açık
+                                </Select.Item>
+                                <Select.Item value="off">
+                                    Kapalı
+                                </Select.Item>
+                            </Select>
+                            <AnimatePresence>
+                                {mcMode && (
+                                    <motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">
+                                        Özel tema açıldı.
+                                    </motion.p>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
 };
 
 function ApiKeysSettings({ session }: IProps) {
-	const [submitable, setSubmittable] = useState(false);
-	const [submiting, setSubmiting] = useState(false);
+    const [submitable, setSubmittable] = useState(false);
+    const [submiting, setSubmiting] = useState(false);
 
-	const { data, mutate, isLoading } = useSWRApi("/user/api-keys");
+    const { data, mutate, isLoading } = useSWRApi("/user/api-keys");
 
-	const [openai, setOpenai] = useState("");
-	const [gemini, setGemini] = useState("");
-	const [anthropic, setAnthropic] = useState("");
+    const [openai, setOpenai] = useState("");
+    const [gemini, setGemini] = useState("");
+    const [anthropic, setAnthropic] = useState("");
 
-	useEffect(() => {
-		setSubmittable(
-			(openai !== data?.data?.find((k: any) => k.provider === 'openai')?.key) ||
-			(gemini !== data?.data?.find((k: any) => k.provider === 'gemini')?.key) ||
-			(anthropic !== data?.data?.find((k: any) => k.provider === 'anthropic')?.key)
-		);
-	}, [openai, gemini, anthropic]);
+    useEffect(() => {
+        setSubmittable(
+            (openai !== data?.data?.find((k: any) => k.provider === 'openai')?.key) ||
+            (gemini !== data?.data?.find((k: any) => k.provider === 'gemini')?.key) ||
+            (anthropic !== data?.data?.find((k: any) => k.provider === 'anthropic')?.key)
+        );
+    }, [openai, gemini, anthropic]);
 
-	const handleReset = () => {
-		if (!openai) setOpenai(data?.data?.find((k: any) => k.provider === 'openai')?.key || '');
-		if (!gemini) setGemini(data?.data?.find((k: any) => k.provider === 'gemini')?.key || '');
-		if (!anthropic) setAnthropic(data?.data?.find((k: any) => k.provider === 'anthropic')?.key || '');
-	};
+    const handleReset = () => {
+        if (!openai) setOpenai(data?.data?.find((k: any) => k.provider === 'openai')?.key || '');
+        if (!gemini) setGemini(data?.data?.find((k: any) => k.provider === 'gemini')?.key || '');
+        if (!anthropic) setAnthropic(data?.data?.find((k: any) => k.provider === 'anthropic')?.key || '');
+    };
 
-	useEffect(() => {
-		if (isLoading) return;
-		handleReset();
-	}, [isLoading]);
+    useEffect(() => {
+        if (isLoading) return;
+        handleReset();
+    }, [isLoading]);
 
-	if (isLoading) return (
-		<div className="flex h-[calc(100vh-10rem)] w-full">
-			<div className="flex-1 w-full h-full flex items-center justify-center">
-				<div className="w-8 h-8 border border-muted rounded-full">
-					<div className="w-full h-full animate-spin relative flex justify-center">
-						<span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
-					</div>
-				</div>
-			</div>
-		</div>
-	);
+    if (isLoading) return (
+        <div className="flex h-[calc(100vh-10rem)] w-full">
+            <div className="flex-1 w-full h-full flex items-center justify-center">
+                <div className="w-8 h-8 border border-muted rounded-full">
+                    <div className="w-full h-full animate-spin relative flex justify-center">
+                        <span className="w-2 h-2 bg-muted block rounded-full -translate-y-1/2" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
-	const handleSubmit = async () => {
-		if (submiting) return;
-		setSubmiting(true);
+    const handleSubmit = async () => {
+        if (submiting) return;
+        setSubmiting(true);
 
-		await api.patch("/user/api-keys", {
-			openai,
-			gemini,
-			anthropic
-		});
+        await api.patch("/user/api-keys", {
+            openai,
+            gemini,
+            anthropic
+        });
 
-		await mutate();
-		setSubmiting(false);
-	};
+        await mutate();
+        setSubmiting(false);
+    };
 
-	return (
-		<>
-			<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">OpenAI</h1>
-						<p className="text-muted text-sm">OpenAI API anahtarınız.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Anahtar' value={openai} onChange={e => setOpenai(e.target.value)} />
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Gemini</h1>
-						<p className="text-muted text-sm">Gemini API anahtarınız.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Anahtar' value={gemini} onChange={e => setGemini(e.target.value)} />
-					</div>
-				</div>
-				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
-					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-						<h1 className="text-lg text-foreground font-medium">Anthropic</h1>
-						<p className="text-muted text-sm">Claude API anahtarınız.</p>
-					</div>
-					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
-						<Input label='Anahtar' value={anthropic} onChange={e => setAnthropic(e.target.value)} />
-					</div>
-				</div>
-			</div>
-			<div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
-				<div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
-					<Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">Sıfırla</Button>
-				</div>
-				<div className="rounded-2xl bg-primary">
-					<Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>Kaydet</Button>
-				</div>
-			</div>
-		</>
-	);
+    return (
+        <>
+            <div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">OpenAI</h1>
+                        <p className="text-muted text-sm">OpenAI API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Anahtar' value={openai} onChange={e => setOpenai(e.target.value)} />
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Gemini</h1>
+                        <p className="text-muted text-sm">Gemini API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Anahtar' value={gemini} onChange={e => setGemini(e.target.value)} />
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Anthropic</h1>
+                        <p className="text-muted text-sm">Claude API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Anahtar' value={anthropic} onChange={e => setAnthropic(e.target.value)} />
+                    </div>
+                </div>
+            </div>
+            <div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
+                <div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
+                    <Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">Sıfırla</Button>
+                </div>
+                <div className="rounded-2xl bg-primary">
+                    <Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>Kaydet</Button>
+                </div>
+            </div>
+        </>
+    );
 };
 
 function ThemePreview({ theme }: { theme: string }) {
-	return (
-		<div className={cn(theme, "w-full aspect-video overflow-hidden rounded-lg relative flex border", `bg-[hsl(var(--primary))]`)}>
-			<span className={cn("absolute top-1 right-1 rounded-full h-2 w-4", `bg-[--foreground]`)} />
-			<div className={cn("w-3 h-full shrink-0 border-r flex flex-col space-y-1 items-center py-1", `bg-[hsl(var(--primary))]`, `border-[hsl(var(--border))]`)}>
-				{Array.from({ length: 4 }).map((_, i) => (
-					<span key={i} className={cn("w-1 h-1 block rounded-full", `bg-[hsl(var(--muted))]`)} />
-				))}
-			</div>
-			<div className="flex-1 flex flex-col items-center justify-center py-1">
-				<div className="flex items-center justify-center flex-1">
-					<div className={cn("border rounded-full p-2", `border-[hsl(var(--colored))]`)}>
-						<div className={cn("border rounded-full p-2", `border-[hsl(var(--colored))]`)}>
-							<span className={cn("w-2 h-2 rounded-full block", `bg-[hsl(var(--colored))]`)} />
-						</div>
-					</div>
-				</div>
-				<span className={cn("block shrink-0 w-16 h-5 border rounded-lg", `bg-[hsl(var(--secondary))]`, `border-[hsl(var(--border))]`)} />
-			</div>
-		</div>
-	);
+    return (
+        <div className={cn(theme, "w-full aspect-video overflow-hidden rounded-lg relative flex border", `bg-[hsl(var(--primary))]`)}>
+            <span className={cn("absolute top-1 right-1 rounded-full h-2 w-4", `bg-[--foreground]`)} />
+            <div className={cn("w-3 h-full shrink-0 border-r flex flex-col space-y-1 items-center py-1", `bg-[hsl(var(--primary))]`, `border-[hsl(var(--border))]`)}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <span key={i} className={cn("w-1 h-1 block rounded-full", `bg-[hsl(var(--muted))]`)} />
+                ))}
+            </div>
+            <div className="flex-1 flex flex-col items-center justify-center py-1">
+                <div className="flex items-center justify-center flex-1">
+                    <div className={cn("border rounded-full p-2", `border-[hsl(var(--colored))]`)}>
+                        <div className={cn("border rounded-full p-2", `border-[hsl(var(--colored))]`)}>
+                            <span className={cn("w-2 h-2 rounded-full block", `bg-[hsl(var(--colored))]`)} />
+                        </div>
+                    </div>
+                </div>
+                <span className={cn("block shrink-0 w-16 h-5 border rounded-lg", `bg-[hsl(var(--secondary))]`, `border-[hsl(var(--border))]`)} />
+            </div>
+        </div>
+    );
+};
+
+function FloatingPaths({ position }: { position: number }) {
+    const paths = Array.from({ length: 36 }, (_, i) => ({
+        id: i,
+        d: `M-${380 - i * 5 * position} -${189 + i * 6}C-${380 - i * 5 * position
+            } -${189 + i * 6} -${312 - i * 5 * position} ${216 - i * 6} ${152 - i * 5 * position
+            } ${343 - i * 6}C${616 - i * 5 * position} ${470 - i * 6} ${684 - i * 5 * position
+            } ${875 - i * 6} ${684 - i * 5 * position} ${875 - i * 6}`,
+        color: `rgba(15,23,42,${0.1 + i * 0.03})`,
+        width: 0.5 + i * 0.03,
+    }))
+
+    return (
+        <div className="absolute inset-0 pointer-events-none">
+            <svg className="w-full h-full text-slate-950 dark:text-white" viewBox="0 0 696 316" fill="none">
+                <title>Background Paths</title>
+                {paths.map((path) => (
+                    <motion.path
+                        key={path.id}
+                        d={path.d}
+                        stroke="currentColor"
+                        strokeWidth={path.width}
+                        strokeOpacity={0.1 + path.id * 0.03}
+                        initial={{ pathLength: 0.3, opacity: 0.6 }}
+                        animate={{
+                            pathLength: 1,
+                            opacity: [0.3, 0.6, 0.3],
+                            pathOffset: [0, 1, 0],
+                        }}
+                        transition={{
+                            duration: 20 + Math.random() * 10,
+                            repeat: Number.POSITIVE_INFINITY,
+                            ease: "linear",
+                        }}
+                    />
+                ))}
+            </svg>
+        </div>
+    )
 };
