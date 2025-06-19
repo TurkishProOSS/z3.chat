@@ -208,6 +208,29 @@
         "Reasoning": "Akıl Yürütme",
         "Vision": "Görüntü"
     },
+    "SettingsUsagePage": {
+        "MembershipType": "Üyelik",
+        "MembershipTypeDescription": "Üyelik bilgileriniz.",
+        "Membership": "Üyelik Türü",
+        "Normal": "Normal",
+        "Enhancement": "İyileştirme",
+        "EnhancementDescription": "Prompt iyileştirme istatistikleri.",
+        "EnhancementLimit": "İyileştirme Kotası",
+        "Remaining": "Kalan Kota",
+        "Reset": "{date} tarihinde sıfırlanacak.",
+        "Model": "Soru",
+        "ModelDescription": "Model kullanım istatistikleri.",
+        "ModelLimit": "Soru Kotası"
+    },
+    "SettingsCreditsPage": {
+        "Description": "Z3C, \"T3 Chat Cloneathon\" için yapılmış olan bir projedir.",
+        "GitHub": "GitHub",
+        "GitHubDescription": "Projenin github organizasyonu.",
+        "X": "X",
+        "XDescription": "Projenin X hesabı.",
+        "Developers": "Geliştiriciler",
+        "DevelopersDescription": "Projenin geliştiricileri."
+    },
     "Navbar": {
         "SignIn": "Giriş Yap",
         "Settings": "Ayarlar",

@@ -3,8 +3,11 @@
 import { RiExternalLinkLine, RiCodeLine, RiGithubLine } from "@remixicon/react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 export default function CreditsPage() {
+	const t = useTranslations("SettingsCreditsPage");
+
 	return (
 		<div className="px-5 lg:px-20 max-w-4xl mx-auto w-full space-y-5">
 			<div className="w-full h-40 bg-secondary rounded-2xl relative">
@@ -27,7 +30,7 @@ export default function CreditsPage() {
 							</motion.span>
 						))}
 					</div>
-					<p className="text-muted max-w-xs pt-3">Z3C, "T3 Chat Cloneathon" için yapılmış olan bir projedir.</p>
+					<p className="text-muted max-w-xs pt-3">{t("Description")}</p>
 				</div>
 				<div className="absolute inset-0 left-20 opacity-50">
 					<FloatingPaths position={1} />
@@ -42,14 +45,14 @@ export default function CreditsPage() {
 						transition={{ type: "spring", stiffness: 150, damping: 25 }}
 					>
 						<RiExternalLinkLine size={48} />
-						<h1 className="text-2xl text-foreground pt-3">GitHub</h1>
-						<p className="text-muted">Projenin github organizasyonu.</p>
+						<h1 className="text-2xl text-foreground pt-3">{t("GitHub")}</h1>
+						<p className="text-muted">{t("GitHubDescription")}</p>
 					</motion.div>
 				</Link>
 				<div className="bg-secondary row-span-2 rounded-2xl p-5 flex-col flex">
 					<RiCodeLine size={48} />
-					<h1 className="text-2xl text-foreground pt-3">Geliştiriciler</h1>
-					<p className="text-muted">Projenin geliştiricileri.</p>
+					<h1 className="text-2xl text-foreground pt-3">{t("Developers")}</h1>
+					<p className="text-muted">{t("DevelopersDescription")}</p>
 					<div className="flex flex-1 flex-col justify-end space-y-5">
 						{([
 							['clqu', 'mail@clqu.dev', 'd032af8986ff07e7d50530e8ced8e1adbe70c5fd81ae3d383c0e71821dc9f8f0', { github: 'clqu', web: 'https://clqu.dev' }],
@@ -89,8 +92,8 @@ export default function CreditsPage() {
 						transition={{ type: "spring", stiffness: 150, damping: 25 }}
 					>
 						<RiExternalLinkLine size={48} />
-						<h1 className="text-2xl text-foreground pt-3">X Hesabı</h1>
-						<p className="text-muted">Sosyal medya hesabımız.</p>
+						<h1 className="text-2xl text-foreground pt-3">{t("X")}</h1>
+						<p className="text-muted">{t("XDescription")}</p>
 					</motion.div>
 				</Link>
 			</div>
