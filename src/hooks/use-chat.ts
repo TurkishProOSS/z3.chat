@@ -155,7 +155,7 @@ export const useChat = (options?: UseChatOptions) => {
 	};
 
 	const handleSubmit = useCallback(async () => {
-		if (options?.disableSubmittion) return;
+        if (options?.disableSubmittion) return;
 		if (isEnhancing) return;
 
 		const conversationId = params?.conversationId as string;

@@ -15,19 +15,22 @@ export function ApiKeysSettings() {
     const [openai, setOpenai] = useState("");
     const [gemini, setGemini] = useState("");
     const [anthropic, setAnthropic] = useState("");
+    const [replicate, setReplicate] = useState("");
 
     useEffect(() => {
         setSubmittable(
             (openai !== data?.data?.find((k: any) => k.provider === 'openai')?.key) ||
             (gemini !== data?.data?.find((k: any) => k.provider === 'gemini')?.key) ||
-            (anthropic !== data?.data?.find((k: any) => k.provider === 'anthropic')?.key)
+            (anthropic !== data?.data?.find((k: any) => k.provider === 'anthropic')?.key) ||
+            (replicate !== data?.data?.find((k: any) => k.provider === 'replicate')?.key)
         );
-    }, [openai, gemini, anthropic]);
+    }, [openai, gemini, anthropic, replicate]);
 
     const handleReset = () => {
         if (!openai) setOpenai(data?.data?.find((k: any) => k.provider === 'openai')?.key || '');
         if (!gemini) setGemini(data?.data?.find((k: any) => k.provider === 'gemini')?.key || '');
         if (!anthropic) setAnthropic(data?.data?.find((k: any) => k.provider === 'anthropic')?.key || '');
+        if (!replicate) setReplicate(data?.data?.find((k: any) => k.provider === 'replicate')?.key || '');
     };
 
     useEffect(() => {
@@ -54,7 +57,10 @@ export function ApiKeysSettings() {
         await api.patch("/user/api-keys", {
             openai,
             gemini,
-            anthropic
+            anthropic,
+            replicate
+        }).catch(() => {
+            setSubmiting(false);
         });
 
         await mutate();
@@ -89,6 +95,15 @@ export function ApiKeysSettings() {
                     </div>
                     <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
                         <Input label='Anahtar' value={anthropic} onChange={e => setAnthropic(e.target.value)} />
+                    </div>
+                </div>
+                <div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
+                    <div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
+                        <h1 className="text-lg text-foreground font-medium">Replicate</h1>
+                        <p className="text-muted text-sm">Replicate API anahtarınız.</p>
+                    </div>
+                    <div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
+                        <Input label='Anahtar' value={replicate} onChange={e => setReplicate(e.target.value)} />
                     </div>
                 </div>
             </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { RiArrowLeftLine, RiUser3Line, RiBrushLine, RiKeyLine, RiBarChartLine, RiCodeLine } from '@remixicon/react';
+import { RiArrowLeftLine, RiUser3Line, RiBrushLine, RiKeyLine, RiBarChartLine, RiCodeLine, RiChatSmileAiLine } from '@remixicon/react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession } from "@/hooks/use-session";
@@ -12,14 +12,16 @@ import { Logo } from '@/brand/Logo';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 
-import { AccountSettings } from './pages/account';
 import { CustomizationSettings } from './pages/customization';
-import { ApiKeysSettings } from './pages/apiket';
+import { AccountSettings } from './pages/account';
+import { ApiKeysSettings } from './pages/apikey';
+import { ModelsSettings } from './pages/models';
 import { UsageSettings } from './pages/usage';
 import { DevCredits } from './pages/dev';
 
 const CATEGORIES = [
     ['Account', RiUser3Line],
+    ['Models', RiChatSmileAiLine],
     ['Customization', RiBrushLine],
     ['ApiKeys', RiKeyLine],
     ['Usage', RiBarChartLine]
@@ -219,6 +221,7 @@ export default function Settings() {
                     {category === 'account' && <AccountSettings {...props} />}
                     {category === 'customization' && <CustomizationSettings />}
                     {category === 'apikeys' && <ApiKeysSettings />}
+                    {category === 'models' && <ModelsSettings />}
                     {category === 'usage' && <UsageSettings />}
                     {category === 'devs' && <DevCredits />}
                 </div>

@@ -221,28 +221,15 @@ export const UserMenu = () => {
 				</button>
 			</Dropdown.Trigger>
 			<Dropdown.Content sideOffset={5} align="end">
-				<Dropdown.Item>
-					Profil
-				</Dropdown.Item>
-				<Dropdown.Separator />
-				<Dropdown.Item>
-					<Link href="/settings"> {/* test */}
+				<Dropdown.Item className="p-0">
+					<Link href="/settings" className='px-3 py-2 w-full'>
 						Ayarlar
 					</Link>
 				</Dropdown.Item>
-				<Dropdown.Item>
-					API Anahtarları
-				</Dropdown.Item>
-				<Dropdown.Separator />
-				<Dropdown.Item>
-					Upgrade to Plus
-				</Dropdown.Item>
-				<Dropdown.Separator />
-				<Dropdown.Item>
-					Yardım ve Destek
-				</Dropdown.Item>
-				<Dropdown.Item>
-					Dökümanlar
+				<Dropdown.Item className="p-0">
+					<Link href="/settings/apikeys" className='px-3 py-2 w-full'>
+						API Anahtarları
+					</Link>
 				</Dropdown.Item>
 				<Dropdown.Separator />
 				<Dropdown.Item onClick={handleLogout}>

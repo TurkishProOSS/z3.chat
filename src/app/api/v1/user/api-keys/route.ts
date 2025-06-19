@@ -28,6 +28,8 @@ export const PATCH = (request: NextRequest) => withAuth(async session => {
 
 		if (!(response.data?.data && response.status === 200)) return Response.json({ success: false, message: 'Invalid OpenAI API key' }, { status: 400 });
 		modify.openai = body.openai;
+	} else if (typeof body.openai === 'string') {
+		modify.openai = '';
 	};
 
 	if (body.gemini) {
@@ -39,6 +41,8 @@ export const PATCH = (request: NextRequest) => withAuth(async session => {
 
 		if (!(response.data?.nextPageToken && response.status === 200)) return Response.json({ success: false, message: 'Invalid Gemini API key' }, { status: 400 });
 		modify.gemini = body.gemini;
+	} else if (typeof body.gemini === 'string') {
+		modify.gemini = '';
 	};
 
 	if (body.anthropic) {
@@ -51,6 +55,21 @@ export const PATCH = (request: NextRequest) => withAuth(async session => {
 
 		if (!(response.data?.data && response.status === 200)) return Response.json({ success: false, message: 'Invalid Anthropic API key' }, { status: 400 });
 		modify.anthropic = body.anthropic;
+	} else if (typeof body.anthropic === 'string') {
+		modify.anthropic = '';
+	};
+
+	if (body.replicate) {
+		const response = await axios.get('https://api.replicate.com/v1/models', {
+			headers: {
+				'Authorization': `Bearer ${body.replicate}`
+			}
+		}).catch(() => ({} as any));
+
+		if (!(response.data?.results && response.status === 200)) return Response.json({ success: false, message: 'Invalid Replicate API key' }, { status: 400 });
+		modify.replicate = body.replicate;
+	} else if (typeof body.replicate === 'string') {
+		modify.replicate = '';
 	};
 
 	await Promise.all(Object.entries(modify).map(([provider, key]) => ApiKeys.updateOne({ user: session.user.id, provider }, { $set: { key } }, { upsert: true })));

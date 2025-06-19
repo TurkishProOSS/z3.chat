@@ -42,6 +42,10 @@
 				"Title": "Kullanım",
 				"Description": "Z3C kullanımınızı görüntüleyin."
 			},
+            "Models": {
+				"Title": "Modeller",
+				"Description": "Sabitlenen modelleri yönetin."
+			},
 			"Devs": {
 				"Title": "Geliştiriciler",
 				"Description": "Proje hakkında bilgi alın."

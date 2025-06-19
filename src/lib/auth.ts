@@ -79,7 +79,7 @@ export const auth = betterAuth({
 					model: 'agentmodels',
 					field: 'id'
 				},
-				input: false,
+				input: true,
 				default: []
 			},
 		}
