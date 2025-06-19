@@ -74,11 +74,18 @@ export const GET = async (
 			return acc;
 		}, {});
 
+		const allModelsWithAvaiable = agents.map(agent => {
+			return {
+				...agent,
+				enabled: agent.premium ? (session?.user?.is_premium ? true : false) : (agent.available)
+			}
+		});
+
 		return Response.json({
 			success: true,
 			message: "OK",
 			data: {
-				agents,
+				agents: allModelsWithAvaiable,
 				providersWithModelCount,
 				fallbackModel
 			}
