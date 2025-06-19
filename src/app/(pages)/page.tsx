@@ -5,27 +5,10 @@ import PromptInput from "@/forms/PromptInput";
 import { useTranslations } from "next-intl";
 import { motion } from "motion/react";
 import { useSession } from "@/hooks/use-session";
-import { MotionGlobalConfig } from 'motion/react';
-import { useReduceMotionStore } from "@/stores/use-reduce-motion";
-import { useAutoSubmit } from "@/stores/use-auto-submit";
-import Chat from "@/components/chat-ui/chat";
-import { ChatProvider } from "@/contexts/ChatProvder";
 
 export default function HomePage() {
 	const { data: session, isPending } = useSession();
-	// const autoSubmit = useAutoSubmit(state => state.autoSubmit);
 	const t = useTranslations("HomePage");
-
-
-	// if (autoSubmit) {
-	// 	return (
-	// 		<div className="flex flex-col max-w-3xl w-full mx-auto relative pt-3 mb-40">
-	// 			<ChatProvider initialMessages={[]}>
-	// 				<Chat isTemporary />
-	// 			</ChatProvider>
-	// 		</div>
-	// 	);
-	// }
 
 	return <>
 		<div className="flex w-full flex-col items-center justify-center flex-1 space-y-5">

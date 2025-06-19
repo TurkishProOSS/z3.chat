@@ -35,6 +35,7 @@ import { useAttachmentsStore } from "@/stores/use-attachments";
 import { Popover } from "../ui/Popover";
 import { AnimatePresence, motion } from "motion/react";
 import { ScrollArea } from "radix-ui";
+import { useTranslations } from "next-intl";
 
 export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, setIsResponding, uploadRef, shouldShowSpinner }: {
 	handleSubmit: () => void;
@@ -61,6 +62,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 	const z3cs = z3Context?.installedZ3Cs || [];
 
 	const { messages: allMessages } = useMessages();
+	const t = useTranslations("Toolbar");
 
 	const isWaiting = useMemo(() => {
 		if (!allMessages || allMessages.length === 0) return false;
@@ -114,21 +116,21 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 											{selectedAgent && (selectedAgent.features.vision || selectedAgent.features.pdfSupport) && (
 												<button className={toolItem} onClick={() => setActiveToolMenu("vision")} key="vision">
 													<ImageAdd01Icon className="w-4 h-4" />
-													İçerik Yükle
+													{t("Upload")}
 													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
 												</button>
 											)}
 											{z3cs.length > 0 && (
 												<button className={toolItem} onClick={() => setActiveToolMenu("z3cs")} key="z3cs">
 													<IdentificationIcon className="w-4 h-4" />
-													Z3Cs
+													{t("Z3Cs")}
 													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
 												</button>
 											)}
 											{selectedAgent?.features.reasoning || selectedAgent?.features.search && (
 												<button className={toolItem} onClick={() => setActiveToolMenu("features")} key="ozellikler">
 													<SparklesIcon className="w-4 h-4" />
-													Model Özellikleri
+													{t("ModelFeatures")}
 													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
 												</button>
 											)}
@@ -140,7 +142,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
 													<ArrowLeft01Icon className="w-4 h-4" />
 												</button>
-												<p>İçerik Yükle</p>
+												<p>{t("Upload")}</p>
 											</div>
 											<hr className="w-full bg-border border-border" key="hr-icerik" />
 											{selectedAgent?.features.vision && (
@@ -154,7 +156,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 												>
 													<ImageAdd01Icon className="w-4 h-4" />
 													<span>
-														Resim yükle
+														{t("ImageUpload")}
 													</span>
 												</button>
 											)}
@@ -169,7 +171,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 												>
 													<FileAddIcon className="w-4 h-4" />
 													<span>
-														Dosya yükle
+														{t("FileUpload")}
 													</span>
 												</button>
 											)}
@@ -181,13 +183,13 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
 													<ArrowLeft01Icon className="w-4 h-4" />
 												</button>
-												<p>Z3Cs</p>
+												<p>{t("Z3Cs")}</p>
 											</div>
 											<hr className="w-full bg-border border-border" key="hr-z3cs" />
 											<div className="flex flex-col gap-1 overflow-y-auto max-h-[300px]" key="z3cs-listesi">
 												<button className={toolItem} onClick={() => setSelectedZ3C(null)} key="devredisi-birak">
 													<span className="text-sm">
-														Devredışı Bırak
+														{t("Detach")}
 													</span>
 													{!selectedZ3C && (
 														<Tick02Icon className="w-4 h-4 ml-auto" />
@@ -215,7 +217,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
 													<ArrowLeft01Icon className="w-4 h-4" />
 												</button>
-												<p>Model Özellikleri</p>
+												<p>{t("ModelFeatures")}</p>
 											</div>
 											<hr className="w-full bg-border border-border" key="hr-ozellikler" />
 											<div className="flex flex-col gap-1 overflow-y-auto max-h-[300px]" key="ozellikler-listesi">
@@ -223,7 +225,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 													<div className={toolItem} onClick={() => setFeature('reasoning', !features.reasoning)} key="reasoning">
 														<Brain02Icon className="w-4 h-4" />
 														<span className="flex-1 text-left">
-															Reasoning
+															{t("Reasoning")}
 														</span>
 														<Switch checked={features.reasoning} />
 													</div>
@@ -232,7 +234,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 													<div className={toolItem} onClick={() => setFeature('search', !features.search)} key="web-search">
 														<Globe02Icon className="w-4 h-4" />
 														<span className="flex-1 text-left">
-															Web search
+															{t("WebSearch")}
 														</span>
 														<Switch checked={features.search} />
 													</div>
@@ -246,7 +248,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 					</Popover>
 				)}
 				<Select
-					placeholder="Select a model"
+					placeholder={t("SelectModel")}
 					value={selectedAgent?.id || ''}
 					onValueChange={(change: string) => changeAgent(change, z3Context as any)}
 					triggerProps={{
@@ -279,7 +281,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 			</div>
 
 			<div className="flex items-center gap-2">
-				<Tooltip content="Enhance prompt with AI">
+				<Tooltip content={t("EnhancePrompt")}>
 					<Button
 						size="icon"
 						onClick={() => {
@@ -320,6 +322,7 @@ function Model({
 	reasoning?: boolean;
 	premium?: boolean;
 }) {
+    const t = useTranslations("Toolbar");
 
 	const Icon = (() => {
 		switch (company?.toLowerCase()) {
@@ -357,7 +360,7 @@ function Model({
 			<div className="flex-1 flex items-center justify-between gap-2">
 				<span className="text-sm font-medium line-clamp-1">{modelName}</span>
 				{premium && (
-					<Tooltip content="Premium model">
+					<Tooltip content={t("PremiumModel")}>
 						<span className="flex-shrink-0 text-xs text-muted-foreground ml-1 bg-colored/10 text-colored w-5 h-5 flex justify-center items-center rounded-full">
 							<CrownIcon size={12} />
 						</span>

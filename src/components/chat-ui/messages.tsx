@@ -1,33 +1,31 @@
 "use client";
 
-import { ArrowDown01Icon, ArrowRight01Icon, ArrowRight02Icon, BrainIcon, GitBranchIcon, Globe02Icon, GlobeIcon, ThumbsDownIcon, ThumbsUpIcon } from "hugeicons-react";
-import { useClientFunctions } from "@/hooks/use-client-functions";
+import { ArrowRight01Icon, BrainIcon, GitBranchIcon, Globe02Icon, ThumbsDownIcon, ThumbsUpIcon } from "hugeicons-react";
 import { RiDownload2Fill, RiErrorWarningFill, RiFileLine } from "@remixicon/react";
-import { redirect, useParams } from "next/navigation";
-import { useMessages } from "@/hooks/use-messages";
+import { useClientFunctions } from "@/hooks/use-client-functions";
 import { useId, useMemo, useState, useContext } from "react";
-import { DocumentViewer } from "react-documents";
+import { AnimatePresence, motion } from "framer-motion";
+import { useMessages } from "@/hooks/use-messages";
+import { Z3Context } from "@/contexts/Z3Provider";
 import { useMounted } from "@/hooks/use-mounted";
 import { AgentModel } from "@/lib/definitions";
 import { RotatingLines } from "../ui/Spinner";
 import { AnimatedLogo } from "../brand/Logo";
+import { useParams } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@colidy/ui-utils";
 import rehypeKatex from "rehype-katex";
-import { Z3Context } from "@/contexts/Z3Provider";
-import { AnimatePresence, motion } from "framer-motion";
 import { Tooltip } from "../ui/Tooltip";
 import { Accordion } from "radix-ui";
 import remarkMath from "remark-math";
 import remarkGfm from "remark-gfm";
-import { api } from "@/lib/api";
 import { UIMessage } from "ai";
-import { toast } from "sonner";
 
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Link from "next/link";
 import { TextShimmer } from "@/ui/TextShimmer";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
 
 type AdditionalParts = {
 	_id?: string;
@@ -237,6 +235,8 @@ function ReasoningMessage({ content, nextElement }: {
 	content: string,
 	nextElement?: UIMessage['parts'][number],
 }) {
+	const t = useTranslations("ChatUI");
+
 	const isReasoningEnd = useMemo(() => {
 		if (!nextElement) return false;
 		const nextElementValue = (nextElement as any)?.[nextElement.type];
@@ -269,14 +269,14 @@ function ReasoningMessage({ content, nextElement }: {
 							<>
 								<Icon />
 								<span className="ml-2">
-									Thoughts
+									{t("Thoughts")}
 								</span>
 							</>
 						) : (
 							<>
 								<BrainIcon className="w-4 h-4 mr-2" />
 								<TextShimmer duration={1} spread={2}>
-									Dediklerini düşünüyorum...
+									{t("Thinking")}
 								</TextShimmer>
 							</>
 						)}
@@ -311,6 +311,8 @@ function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messag
 }) {
 
 	const { conversationId }: { conversationId: string } = useParams();
+	const t = useTranslations("ChatUI");
+
 	const {
 		fork: {
 			handleFork,
@@ -350,7 +352,7 @@ function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messag
 						</button>
 					</Tooltip>
 					{showUpVoteButton && (
-						<Tooltip content="Upvote this message">
+						<Tooltip content={t("Upvote")}>
 							<button
 								className={button}
 								onClick={() => handleVote(conversationId, messageId as string, 'up', messageIndex as number, actionBy as 'object_id' | 'index')}
@@ -366,7 +368,7 @@ function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messag
 						</Tooltip>
 					)}
 					{showDownVoteButton && (
-						<Tooltip content="Downvote this message">
+						<Tooltip content={t("Downvote")}>
 							<button
 								className={button}
 								onClick={() => handleVote(conversationId, messageId as string, 'down', messageIndex as number, actionBy as 'object_id' | 'index')}
@@ -390,7 +392,7 @@ function AssistantActions({ messageId, messageIndex, actionKey, actionBy, messag
 			)}
 			{duration && (
 				<span className="text-xs text-muted">
-					{duration} seconds
+					{duration} {t("Seconds")}
 				</span>
 			)}
 		</div>
@@ -639,6 +641,7 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 	nextElement?: React.ReactNode;
 }) {
 	const [isOpen, setIsOpen] = useState(false);
+	const t = useTranslations("ChatUI");
 	const isMounted = useMounted();
 
 	const handleToggle = () => {
@@ -675,15 +678,11 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 						<span>
 							{(data && Object.keys(data).length > 0) ? (
 								<>
-									{
-										// @ts-ignore
-										data ? (Array.isArray(data) ? `${data.length}` : '0') : '0'
-									}
-									{" "}results found in the web
+									{t("FoundInWeb", { count: data ? (Array.isArray(data) ? `${data.length}` : '0') : '0' })}
 								</>
 							) : (
 								<TextShimmer duration={1} spread={2}>
-									Searching in the web...
+									{t("SearchingInWeb")}
 								</TextShimmer>
 							)}
 						</span>
@@ -719,7 +718,7 @@ function ToolInvocation({ toolName, args, data, nextElement }: {
 									))
 								) : (
 									<div className="mb-4">
-										<h3 className="text-sm font-medium mb-2">Data:</h3>
+										<h3 className="text-sm font-medium mb-2">{t("Data")}:</h3>
 										<pre className="bg-muted/10 p-2 rounded-lg">
 											<code className="text-sm">{JSON.stringify(data, null, 2)}</code>
 										</pre>

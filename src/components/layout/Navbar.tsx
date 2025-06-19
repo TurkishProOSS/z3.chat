@@ -4,12 +4,11 @@ import { useParams, usePathname } from 'next/navigation';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { authClient } from '@/lib/authClient';
 import { RiMenuLine } from '@remixicon/react';
+import { useMemo, useState } from 'react';
 import { Dropdown } from '@/ui/Dropdown';
 import { Dialog } from '../ui/Dialog';
 import { Button } from '@/ui/Button';
 import { Avatar } from '@/ui/Avatar';
-import { useMemo, useState } from 'react';
-import { api } from '@/lib/api';
 import Input from '../ui/Input';
 import Link from 'next/link';
 
@@ -24,11 +23,9 @@ import { RotatingLines } from '../ui/Spinner';
 import { AnimatePresence } from 'motion/react';
 import { motion } from 'motion/react';
 import { cn } from '@colidy/ui-utils';
+import { useTranslations } from 'next-intl';
 
 export default function Navbar({
-	showChat = false,
-	rightContent,
-	leftContent,
 	sub,
 	hiddenMenu
 }: {
@@ -42,15 +39,7 @@ export default function Navbar({
 	const params = useParams();
 	const toggleSidebar = useSidebarStore((state) => state.toggleSidebar);
 	const responseStore = useChatDataStore((state) => state.response);
-	const setResponseStore = useChatDataStore((state) => state.setResponse);
-
-	const {
-		responding,
-		setIsResponding
-	} = useMemo(() => ({
-		responding: responseStore?.isResponding || false,
-		setIsResponding: (value: boolean) => setResponseStore({ ...responseStore, isResponding: value }),
-	}), [responseStore, setResponseStore]);
+	const t = useTranslations("Navbar");
 
 	const shared_id = useMemo(() => {
 		return responseStore?.is_shared || false;
@@ -60,10 +49,6 @@ export default function Navbar({
 	const [shareId, setShareId] = useState<string | null>(shared_id ? app_url + "/chats/" + shared_id || null : null);
 	const [copied, setCopied] = useState(false);
 	const {
-		fork: {
-			handleFork,
-			isForking
-		},
 		share: {
 			handleShare,
 			isSharing
@@ -76,12 +61,12 @@ export default function Navbar({
 
 	const title = useMemo(() => {
 		if (pathname === '/chats/' + (params?.conversationId || '')) {
-			const conversationTitle = responseStore?.title || 'Yeni Sohbet';
+			const conversationTitle = responseStore?.title || t("NewChat");
 			return conversationTitle;
 		}
 
 		return false;
-	}, [pathname, responseStore]);
+	}, [pathname, responseStore, t]);
 
 	return (
 		<nav className={cn("sticky top-0 xl:flex rounded-b-2xl z-[20] flex justify-between items-center gap-2 bg-secondary backdrop-blur-sm xl:backdrop-blur-none xl:bg-transparent flex-shrink-0 !h-16 border-b xl:border-none px-3", {
@@ -134,12 +119,12 @@ export default function Navbar({
 						<Dialog>
 							<Dialog.Trigger asChild>
 								<Button className="rounded-full">
-									Paylaş
+									{t("Share")}
 								</Button>
 							</Dialog.Trigger>
 							<Dialog.Content
-								titleChildren="Sohbeti Paylaş"
-								descriptionChildren="Bu sohbeti paylaşmak için aşağıdaki bilgileri kullanabilirsiniz."
+								titleChildren={t("ShareChat")}
+								descriptionChildren={t("ShareChatDescription")}
 							>
 								<Input
 									readOnly
@@ -155,7 +140,7 @@ export default function Navbar({
 												className="text-orange-500 hover:underline cursor-pointer"
 												disabled={!shareId}
 											>
-												{copied ? "Kopyalandı!" : "Kopyala"}
+												{copied ? t("Copied") : t("Copy")}
 											</button>
 										) : null
 									}
@@ -172,10 +157,10 @@ export default function Navbar({
 											{isUnsharing ? (
 												<>
 													<RotatingLines size={16} color="currentColor" />
-													<span className="ml-2">Sonlandırılıyor...</span>
+													<span className="ml-2">{t("Stopping")}</span>
 												</>
 											) : (
-												"Paylaşımı Sonlandır"
+												t("StopSharing")
 											)}
 										</Button>
 									)}
@@ -187,10 +172,10 @@ export default function Navbar({
 										{isSharing ? (
 											<>
 												<RotatingLines size={16} color="currentColor" />
-												<span className="ml-2">{shareId ? "Güncelleniyor..." : "Paylaşılıyor..."}</span>
+												<span className="ml-2">{shareId ? t("Updating") : t("Sharing")}</span>
 											</>
 										) : (
-											shareId ? "Güncelle" : "Paylaş"
+											shareId ? t("Update") : t("Share")
 										)}
 									</Button>
 								</div>
@@ -211,13 +196,14 @@ export default function Navbar({
 export const UserMenu = () => {
 	const { data: session, isPending } = useSession();
 	const mounted = useMounted();
+    const t = useTranslations("Navbar");
 	const isAuthenticated = mounted && (!!session && !isPending && session.user && !session.user.isAnonymous);
 	const [open, setOpen] = useState(false);
 
 	useHotkeys('p', () => setOpen(!open));
 
 	if (!isAuthenticated) return (
-		<Button href="/auth/signin" className="rounded-full">Giriş Yap</Button>
+		<Button href="/auth/signin" className="rounded-full">{t("SignIn")}</Button>
 	);
 
 	const handleLogout = async () => {
@@ -234,17 +220,17 @@ export const UserMenu = () => {
 			<Dropdown.Content sideOffset={5} align="end">
 				<Dropdown.Item className="p-0">
 					<Link href="/settings" className='px-3 py-2 w-full'>
-						Ayarlar
+						{t("Settings")}
 					</Link>
 				</Dropdown.Item>
 				<Dropdown.Item className="p-0">
 					<Link href="/settings/apikeys" className='px-3 py-2 w-full'>
-						API Anahtarları
+						{t("ApiKeys")}
 					</Link>
 				</Dropdown.Item>
 				<Dropdown.Separator />
 				<Dropdown.Item onClick={handleLogout}>
-					Çıkış Yap
+					{t("Logout")}
 				</Dropdown.Item>
 			</Dropdown.Content>
 		</Dropdown>

@@ -10,8 +10,11 @@ import { cn } from "@colidy/ui-utils";
 import { authClient } from "@/lib/authClient";
 import { Accordion } from "radix-ui";
 import ModelIcon from "@/components/ui/ModelIcon";
+import { useTranslations } from "next-intl";
 
 export default function ModelsPage() {
+    const t = useTranslations("SettingsModelsPage");
+
 	const { data: session, isPending } = authClient.useSession();
 	const [pinnedModels, setPinnedModels] = useState<any[]>(session?.user.pinned_agents || []);
 	const { data, isLoading } = useSWRApi('/models/all');
@@ -73,10 +76,10 @@ export default function ModelsPage() {
 		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
 			<div className="space-y-3">
 				<div className="space-y-1">
-					<h1 className="text-xl text-foreground font-medium">Modeller</h1>
-					<p className="text-muted max-w-lg text-sm">Sabitlemek istediğiniz modellerin üstüne tıklayın. <span className="text-orange-400">Premium</span> modelleri kullanmak için <span className="text-orange-400">Premium</span> aboneliğiniz olmalıdır.</p>
+					<h1 className="text-xl text-foreground font-medium">{t("Title")}</h1>
+					<p className="text-muted max-w-lg text-sm">{t("Description")}</p>
 				</div>
-				<Input placeholder="Arayın..." value={search} onChange={e => setSearch(e.target.value)} />
+				<Input placeholder={t("SearchPlaceholder")} value={search} onChange={e => setSearch(e.target.value)} />
 			</div>
 			<Accordion.Root
 				type="single"
@@ -84,20 +87,20 @@ export default function ModelsPage() {
 				className="w-full space-y-2"
 			>
 				<p className="text-sm text-muted">
-					Toplam {filteredData.map(cat => cat.models.length).reduce((a, b) => a + b, 0)} model bulundu.
+					{t("TotalModels", { count: filteredData.map(cat => cat.models.length).reduce((a, b) => a + b, 0) })}
 				</p>
 				<div className="flex items-center gap-2">
 					<button className={filterButtons(!filter.premium && !filter.non_premium && !filter.pinned)} onClick={() => setFilter({ premium: false, non_premium: false, pinned: false })}>
-						Hepsi
+						{t("All")}
 					</button>
 					<button className={filterButtons(filter.premium)} onClick={() => setFilter({ premium: true, non_premium: false, pinned: false })}>
-						Premium
+						{t("Premium")}
 					</button>
 					<button className={filterButtons(filter.non_premium)} onClick={() => setFilter({ premium: false, non_premium: true, pinned: false })}>
-						Non-Premium
+						{t("NonPremium")}
 					</button>
 					<button className={filterButtons(filter.pinned)} onClick={() => setFilter({ premium: false, non_premium: false, pinned: true })}>
-						Sabitlenmiş
+						{t("Pinned")}
 					</button>
 				</div>
 				{
@@ -121,7 +124,7 @@ export default function ModelsPage() {
 											<h1 className="text-lg font-medium">{cat.provider}</h1>
 										</div>
 										<p className="text-sm text-muted">
-											{totalModels} model {totalPremiumModels} premium olmak üzere, {totalPinnedModels} sabitlenmiş model
+											{t("ProviderDesc", { totalModels, totalPremiumModels, totalPinnedModels })}
 										</p>
 									</div>
 									<RiArrowDownSLine size={20} className="ml-auto" />
@@ -155,18 +158,18 @@ export default function ModelsPage() {
 												<div className="space-y-1">
 													<div className="flex items-center space-x-2">
 														<h1 className="text-lg font-medium">{model.name}</h1>
-														{model.premium && <p className="bg-orange-800/10 text-xs text-orange-400 py-0.5 px-1.5 rounded-md">Premium</p>}
-														{((model as any)?.api_key_required || false) && <p className="bg-rose-800/10 text-xs text-rose-400 py-0.5 px-1.5 rounded-md">API Key Required for Use</p>}
-														{(!model.enabled || !model.available) && <p className="bg-red-800/10 text-xs text-red-400 py-0.5 px-1.5 rounded-md">Disabled</p>}
+														{model.premium && <p className="bg-orange-800/10 text-xs text-orange-400 py-0.5 px-1.5 rounded-md">{t("Premium")}</p>}
+														{((model as any)?.api_key_required || false) && <p className="bg-rose-800/10 text-xs text-rose-400 py-0.5 px-1.5 rounded-md">{t("ApiKeyRequired")}</p>}
+														{(!model.enabled || !model.available) && <p className="bg-red-800/10 text-xs text-red-400 py-0.5 px-1.5 rounded-md">{t("Disabled")}</p>}
 													</div>
 													<div className="flex items-center gap-2">
-														{model.features?.experimental && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">Experimental</p>}
-														{model.features?.reasoning && <p className="bg-green-800/10 text-xs dark:text-emerald-400 text-emerald-800 py-0.5 px-1.5 rounded-md">Reasoning</p>}
-														{model.features?.vision && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">Vision</p>}
-														{model.features?.pdfSupport && <p className="bg-purple-800/10 text-xs text-purple-400 py-0.5 px-1.5 rounded-md">PDF Support</p>}
-														{model.features?.imageGeneration && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">Image Generation</p>}
-														{model.features?.search && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">Web Search</p>}
-														{model.features?.fast && <p className="bg-yellow-800/10 text-xs text-yellow-800 dark:text-yellow-400 py-0.5 px-1.5 rounded-md">Fast</p>}
+														{model.features?.experimental && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">{t("Experimental")}</p>}
+														{model.features?.reasoning && <p className="bg-green-800/10 text-xs dark:text-emerald-400 text-emerald-800 py-0.5 px-1.5 rounded-md">{t("Reasoning")}</p>}
+														{model.features?.vision && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">{t("Vision")}</p>}
+														{model.features?.pdfSupport && <p className="bg-purple-800/10 text-xs text-purple-400 py-0.5 px-1.5 rounded-md">{t("PDFSupport")}</p>}
+														{model.features?.imageGeneration && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">{t("ImageGeneration")}</p>}
+														{model.features?.search && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">{t("WebSearch")}</p>}
+														{model.features?.fast && <p className="bg-yellow-800/10 text-xs text-yellow-800 dark:text-yellow-400 py-0.5 px-1.5 rounded-md">{t("Fast")}</p>}
 													</div>
 													<p className="text-muted text-sm line-clamp-2">{model.description}</p>
 												</div>

@@ -17,6 +17,7 @@ import { Dialog } from '@/ui/Dialog';
 import { Logo } from '@/brand/Logo';
 import Link from 'next/link';
 import { useSidebarStore } from '@/stores/use-sidebar';
+import { useTranslations } from 'next-intl';
 
 const useSearchChats = () => {
 	const openSearchChatsHandler = () => {
@@ -34,7 +35,7 @@ export default function Sidebar() {
 
 	const { expand, setExpand } = useExpandStore();
 	const pathname = usePathname();
-	const { openSearchChats } = useSearchChats();
+	const t = useTranslations("Sidebar");
 	const isOpen = useSidebarStore((state) => state.isOpen);
 	const setIsOpen = useSidebarStore((state) => state.setIsOpen);
 
@@ -66,12 +67,12 @@ export default function Sidebar() {
 
 
 	const items = [
-		{ icon: Home01Icon, label: 'New Chat', path: '/' },
-		{ icon: FolderLibraryIcon, label: "Library", path: '/library' },
-		{ icon: Brain01Icon, label: "Models", path: '/models' },
+		{ icon: Home01Icon, label: t("NewChat"), path: '/' },
+		{ icon: FolderLibraryIcon, label: t("Library"), path: '/library' },
+		{ icon: Brain01Icon, label: t("Models"), path: '/models' },
 		// { type: 'spacer' },
-		{ icon: WorkHistoryIcon, label: 'Chat History', path: '/chats' },
-		{ icon: CustomizeIcon, label: "Z3Cs", path: '/z3cs', badge: 'NEW' }
+		{ icon: WorkHistoryIcon, label: t("ChatHistory"), path: '/chats' },
+		{ icon: CustomizeIcon, label: t("Z3Cs"), path: '/z3cs', badge: t("NewBadge") }
 	];
 
 	const itemAnimationVariants = {
@@ -250,7 +251,7 @@ export default function Sidebar() {
 										layout
 										variants={itemAnimationVariantsConversation}
 									>
-										Pinned
+										{t("Pinned")}
 									</motion.p>
 									{conversations.pinnedConversations.map((conversation: any) => (
 										<ConversationCard
@@ -289,7 +290,7 @@ export default function Sidebar() {
 										layout
 										variants={itemAnimationVariantsConversation}
 									>
-										Conversations
+										{t("Chats")}
 									</motion.p>
 									{conversations.conversations.map((conversation: any) => (
 										<ConversationCard
@@ -342,7 +343,7 @@ export default function Sidebar() {
 								layout
 								variants={itemAnimationVariants}
 							>
-								Daralt
+								{t("Collapse")}
 							</motion.span>
 						)}
 					</motion.button>

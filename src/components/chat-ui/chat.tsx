@@ -1,17 +1,13 @@
 "use client";
 
-import { ArrowDown01Icon } from "hugeicons-react";
-import PromptInput from "@/components/forms/PromptInput";
-import Messages from "@/components/chat-ui/messages";
-import { useScrollDown } from "@/hooks/use-scroll-down";
-import Navbar, { UserMenu } from "@/layout/Navbar";
-import { Dialog } from "@/ui/Dialog";
-import { Button } from "@/ui/Button";
-import { Input } from "@/ui/Input";
-import { useState } from "react";
-import { RotatingLines } from "@/ui/Spinner";
 import { useClientFunctions } from "@/hooks/use-client-functions";
-import { app_url } from "@/../z3c.config.json";
+import PromptInput from "@/components/forms/PromptInput";
+import { useScrollDown } from "@/hooks/use-scroll-down";
+import Messages from "@/components/chat-ui/messages";
+import { ArrowDown01Icon } from "hugeicons-react";
+import { RotatingLines } from "@/ui/Spinner";
+import { useTranslations } from "next-intl";
+import { useState } from "react";
 
 export default function Chat({
 	response,
@@ -71,6 +67,8 @@ function PromptBase({
 		}
 	} = useClientFunctions();
 
+    const t = useTranslations("ChatUI");
+
 	return (
 		<div className="flex flex-col gap-2">
 			{isNeedScroll && (
@@ -80,7 +78,7 @@ function PromptBase({
 					className="cursor-pointer flex items-center gap-2 bg-border/10 backdrop-brightness-110 backdrop-blur-lg w-fit px-4 py-2 rounded-full text-sm text-muted-foreground hover:bg-zinc-500/20 transition-colors duration-200 ease-in-out mx-auto"
 				>
 					<ArrowDown01Icon size={16} />
-					En alta kaydır
+					{t("ScrollToBottom")}
 				</button>
 			)}
 
@@ -94,7 +92,7 @@ function PromptBase({
 				conversationId && (
 					<div className="w-full bg-secondary rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
 						<p className="text-sm text-muted-foreground">
-							Bu sohbet paylaşılmış. Sadece mesajları görüntüleyebilirsiniz.
+							{t("SharedChat")}
 						</p>
 						<button
 							onClick={() => handleFork(conversationId, response?.lastMessage || null)}
@@ -103,11 +101,11 @@ function PromptBase({
 						>
 							{isForking ? (
 								<>
-									<RotatingLines size={16} color="currentColor" />
-									<span>Kopyalanıyor...</span>
+									<RotatingLines size={16} color="currentColor" />    
+									<span>{t("Copying")}</span>
 								</>
 							) : (
-								"Sohbeti Kopyala"
+								t("CopyChat")
 							)}
 						</button>
 					</div>

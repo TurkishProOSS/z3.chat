@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSWRApi } from "@/hooks/use-swr-api";
 import { useMemo, useState } from "react";
 import { Download01Icon, EyeIcon, FileAttachmentIcon, DocumentAttachmentIcon, Image01Icon } from "hugeicons-react";
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 
 export default function Library() {
@@ -18,6 +19,8 @@ export default function Library() {
 		revalidateOnReconnect: false,
 		refreshInterval: 30000
 	});
+
+    const t = useTranslations("LibraryPage");
 
 	const [search, setSearch] = useState("");
 	const files = data?.data || [];
@@ -60,18 +63,18 @@ export default function Library() {
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
 				<div>
 					<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-						Dosya Galerim
+						{t("Title")}
 					</h1>
 					<p className="text-sm sm:text-base text-muted">
-						Sohbetlerde yüklediğin dosyaları buradan görüntüleyebilirsin.
+						{t("Description")}
 					</p>
 				</div>
 				<div className="flex items-center gap-3 justify-between sm:justify-end">
 					<span className="text-xs sm:text-sm text-muted bg-secondary px-2 sm:px-3 py-1 rounded-full">
-						{filteredFiles.length} dosya
+						{t("FileCount", { count: filteredFiles.length })}
 					</span>
 					<Link href="/" className="text-xs sm:text-sm text-orange-500 hover:underline">
-						Ana sayfaya dön
+						{t("BackToHome")}
 					</Link>
 				</div>
 			</div>
@@ -83,7 +86,7 @@ export default function Library() {
 					"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
 					"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 				)}
-				placeholder="Dosya adlarında ara..."
+				placeholder={t("SearchPlaceholder")}
 				type="text"
 				value={search}
 				onChange={(e) => setSearch(e.target.value)}
@@ -128,16 +131,16 @@ export default function Library() {
 														className="w-full flex items-center justify-center gap-1 sm:gap-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-medium transition-colors"
 													>
 														<Download01Icon className="w-3 h-3" />
-														<span className="hidden sm:inline">İndir</span>
-														<span className="sm:hidden">İndir</span>
+														<span className="hidden sm:inline">{t("Download")}</span>
+														<span className="sm:hidden">{t("Download")}</span>
 													</button>
 													<button
 														onClick={() => window.open(file.url, '_blank')}
 														className="w-full flex items-center justify-center gap-1 sm:gap-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-xs font-medium transition-colors"
 													>
 														<EyeIcon className="w-3 h-3" />
-														<span className="hidden sm:inline">Aç</span>
-														<span className="sm:hidden">Aç</span>
+														<span className="hidden sm:inline">{t("Open")}</span>
+														<span className="sm:hidden">{t("Open")}</span>
 													</button>
 												</div>
 											</div>
@@ -154,18 +157,20 @@ export default function Library() {
 }
 
 function EmptyState() {
+    const t = useTranslations("LibraryPage");
+    
 	return (
 		<div className="flex flex-col items-center justify-center h-64 border border-dotted border-border rounded-2xl">
 			<FileAttachmentIcon className="w-16 h-16 text-muted-foreground mb-4 opacity-50" />
-			<h3 className="text-muted-foreground text-lg font-medium mb-2">Henüz dosyan yok</h3>
+			<h3 className="text-muted-foreground text-lg font-medium mb-2">{t("NoFiles")}</h3>
 			<p className="text-muted-foreground text-sm text-center max-w-md">
-				Sohbetlerde yüklediğin dosyalar burada görünecek. Yeni bir sohbet başlatıp dosya yükleyebilirsin.
+				{t("NoFilesDescription")}
 			</p>
 			<Link
 				href="/"
 				className="mt-4 text-orange-500 hover:underline text-sm font-medium"
 			>
-				Yeni sohbet başlat →
+				{t("NewChat")} →
 			</Link>
 		</div>
 	);

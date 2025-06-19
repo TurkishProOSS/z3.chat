@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
 import { useClientFunctions } from "@/hooks/use-client-functions";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export default function Chat() {
 	const {
@@ -29,7 +30,8 @@ export default function Chat() {
 	const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 	const conversations = data?.conversations || [];
 	const { deleteConversation: { deleteConversation, isDeleting } } = useClientFunctions();
-
+    const t = useTranslations("ChatsPage");
+    
 	const filteredConversations = useMemo(() => {
 		if (!conversations) return [];
 		return conversations.filter((conversation: any) => {
@@ -68,12 +70,12 @@ export default function Chat() {
 
 			await Promise.all(deletePromises);
 
-			toast.success(`${selectedConversations.length} sohbet başarıyla silindi`);
+			toast.success(t("BulkDeleted", { count: selectedConversations.length }));
 			setSelectedConversations([]);
 			mutate(); // Listeyi yenile
 		} catch (error) {
 			console.error('Toplu silme hatası:', error);
-			toast.error('Bazı sohbetler silinirken hata oluştu');
+			toast.error(t("BulkDeleteError"));
 		} finally {
 			setIsBulkDeleting(false);
 		}
@@ -98,18 +100,18 @@ export default function Chat() {
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
 				<div>
 					<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-						Sohbet Geçmişim
+						{t("Title")}
 					</h1>
 					<p className="text-sm sm:text-base text-muted">
-						Geçmiş sohbetlerini burada bulabilirsin.
+						{t("Description")}
 					</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<span className="text-xs sm:text-sm text-muted bg-secondary px-2 sm:px-3 py-1 rounded-full">
-						{filteredConversations.length} sohbet
+						{t("ChatCount", { count: filteredConversations.length })}
 					</span>
 					<Link href="/" className="text-xs sm:text-sm text-orange-500 hover:underline">
-						Yeni sohbet başlat
+						{t("NewChat")}
 					</Link>
 				</div>
 			</div>
@@ -134,7 +136,7 @@ export default function Chat() {
 								) : <span />}
 							</div>
 							<span className="text-xs sm:text-sm text-foreground font-medium">
-								{isAllSelected ? 'Tümünü kaldır' : 'Tümünü seç'}
+								{isAllSelected ? t("RemoveAll") : t("SelectAll")}
 							</span>
 						</motion.button>
 
@@ -144,7 +146,7 @@ export default function Chat() {
 								animate={{ opacity: 1, scale: 1 }}
 								className="px-2 sm:px-3 py-1.5 bg-colored/10 text-colored text-xs font-medium rounded-full border border-colored/20"
 							>
-								{selectedConversations.length} seçildi
+								{t("SelectedCount", { count: selectedConversations.length })}
 							</motion.div>
 						)}
 					</div>
@@ -163,18 +165,18 @@ export default function Chat() {
 										className="text-xs px-3 sm:px-4 py-2 h-8 sm:h-9"
 									>
 										<Delete01Icon className="w-3 sm:w-4 h-3 sm:h-4 mr-1 sm:mr-2" />
-										<span className="hidden sm:inline">Seçilenleri Sil ({selectedConversations.length})</span>
-										<span className="sm:hidden">Sil ({selectedConversations.length})</span>
+										<span className="hidden sm:inline">{t("DeleteSelected", { count: selectedConversations.length })}</span>
+										<span className="sm:hidden">{t("Delete", { count: selectedConversations.length })}</span>
 									</Button>
 								</Dialog.Trigger>
 								<Dialog.Content
-									titleChildren="Seçili Sohbetleri Sil"
-									descriptionChildren={`${selectedConversations.length} sohbeti silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`}
+									titleChildren={t("DeleteSelectedTitle")}
+									descriptionChildren={t("DeleteSelectedDescription")}
 								>
 									<div className="flex items-center justify-end gap-2 mt-4">
 										<Dialog.Close asChild>
 											<Button variant="link" className="text-muted">
-												Hayır, Vazgeçtim
+												{t("Cancel")}
 											</Button>
 										</Dialog.Close>
 										<Button
@@ -183,7 +185,7 @@ export default function Chat() {
 											isLoading={isBulkDeleting}
 											disabled={isBulkDeleting}
 										>
-											{selectedConversations.length} Sohbeti Sil
+											{t("DeleteConversation", { count: selectedConversations.length })}
 										</Button>
 									</div>
 								</Dialog.Content>
@@ -200,7 +202,7 @@ export default function Chat() {
 					"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
 					"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 				)}
-				placeholder="Sohbet başlıklarında ara..."
+				placeholder={t("SearchPlaceholder")}
 				type="text"
 				value={search}
 				onChange={(e) => setSearch(e.target.value)}
@@ -268,7 +270,7 @@ export default function Chat() {
 																"font-medium text-xs sm:text-sm truncate leading-tight transition-colors",
 																isSelected ? "text-colored" : "text-foreground"
 															)}>
-																{conversation.title || "Yeni Sohbet"}
+																{conversation.title || t("NewChatLabel")}
 															</h3>
 															<p className="text-muted text-xs mt-auto">
 																{formatDate(conversation.updatedAt)}
@@ -289,13 +291,13 @@ export default function Chat() {
 													</button>
 												</Dialog.Trigger>
 												<Dialog.Content
-													titleChildren="Sohbeti Sil"
-													descriptionChildren="Bu sohbeti silmek istediğinize emin misiniz? Bu işlem geri alınamaz."
+													titleChildren={t("DeleteConversationTitle")}
+													descriptionChildren={t("DeleteConversationDescription")}
 												>
 													<div className="flex items-center justify-end gap-2 mt-4">
 														<Dialog.Close asChild>
 															<Button variant="link" className="text-muted">
-																Hayır, Vazgeçtim
+																{t("Cancel")}
 															</Button>
 														</Dialog.Close>
 														<Button
@@ -308,7 +310,7 @@ export default function Chat() {
 															isLoading={isDeleting}
 															disabled={isDeleting}
 														>
-															Sohbeti Sil
+															{t("DeleteConversation", { count: 1 })}
 														</Button>
 													</div>
 												</Dialog.Content>
@@ -326,18 +328,20 @@ export default function Chat() {
 }
 
 function EmptyState() {
+    const t = useTranslations("ChatsPage");
+    
 	return (
 		<div className="flex flex-col items-center justify-center h-64 border border-dotted border-border rounded-xl sm:rounded-2xl col-span-1 lg:col-span-2">
 			<BubbleChatBlockedIcon className="w-12 sm:w-16 h-12 sm:h-16 text-muted-foreground mb-3 sm:mb-4 opacity-50" />
-			<h3 className="text-muted-foreground text-base sm:text-lg font-medium mb-2">Henüz sohbet geçmişin yok</h3>
+			<h3 className="text-muted-foreground text-base sm:text-lg font-medium mb-2">{t("NoChats")}</h3>
 			<p className="text-muted-foreground text-xs sm:text-sm text-center max-w-md px-4 sm:px-0">
-				Sohbetlerdeki geçmişini burada bulabilirsin. Yeni bir sohbet başlatıp konuşmaya başlayabilirsin.
+				{t("NoChatsDescription")}
 			</p>
 			<Link
 				href="/"
 				className="mt-3 sm:mt-4 text-orange-500 hover:underline text-xs sm:text-sm font-medium"
 			>
-				Yeni sohbet başlat →
+				{t("NewChat")} →
 			</Link>
 		</div>
 	);

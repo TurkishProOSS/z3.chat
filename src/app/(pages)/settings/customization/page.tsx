@@ -6,8 +6,11 @@ import { Select } from "@/components/ui/Select";
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { cn } from "@colidy/ui-utils";
+import { useTranslations } from "next-intl";
 
 export default function CustomizationPage() {
+	const t = useTranslations("SettingsCustomizationPage");
+
 	const [viewMcMode, setViewMcMode] = useState(false);
 	const [mcMode, setMcMode] = useState(false);
 
@@ -26,8 +29,8 @@ export default function CustomizationPage() {
 		<div className="w-full max-w-2xl h-full mx-auto flex flex-col space-y-10">
 			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Tema</h1>
-					<p className="text-muted text-sm">Renk temasını değiştirin.</p>
+					<h1 className="text-lg text-foreground font-medium">{t("Theme")}</h1>
+					<p className="text-muted text-sm">{t("ThemeDescription")}</p>
 				</div>
 				<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
 					<div className="grid grid-cols-2 gap-3 w-full">
@@ -57,14 +60,14 @@ export default function CustomizationPage() {
 			</div>
 			<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 				<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
-					<h1 className="text-lg text-foreground font-medium">Yazı Tipi</h1>
-					<p className="text-muted text-sm">Genel yazı tipini değiştirin.</p>
+					<h1 className="text-lg text-foreground font-medium">{t("Font")}</h1>
+					<p className="text-muted text-sm">{t("FontDescription")}</p>
 				</div>
 				<div className="col-span-2 py-5 pl-5 space-y-1.5">
-					<p className="text-muted text-sm">Genel Yazı Tipi</p>
+					<p className="text-muted text-sm">{t("MainFont")}</p>
 					<div className={"w-full transition-opacity " + (theme === 'pixel' ? 'opacity-50' : 'opacity-100')}>
 						<Select
-							placeholder="Yazı tipi seçin"
+							placeholder={t("FontChoose")}
 							value={mainFont || 'lufga'}
 							onValueChange={v => setMainFont(v)}
 							disabled={theme === 'pixel'}
@@ -78,9 +81,9 @@ export default function CustomizationPage() {
 							))}
 						</Select>
 					</div>
-					<p className="text-muted text-sm pt-3">Kod Yazı Tipi</p>
+					<p className="text-muted text-sm pt-3">{t("CodeFont")}</p>
 					<Select
-						placeholder="Yazı tipi seçin"
+						placeholder={t("FontChoose")}
 						value={(codeFont || 'jetbrains-mono').toLowerCase().replace(/ /g, '-')}
 						onValueChange={v => setCodeFont(v.toLowerCase().replace(/ /g, '-'))}
 					>
@@ -126,7 +129,7 @@ export default function CustomizationPage() {
 						exit={{ opacity: 0, y: 20 }}
 					>
 						<div className="border-r flex flex-col text-right items-end pr-5 py-5">
-							<h1 className="text-lg text-foreground font-medium">Minecraft, gerçekten?</h1>
+							<h1 className="text-lg text-foreground font-medium">{t("Minecraft")}</h1>
 							<p className="text-muted text-sm">La-la-la-lava, ch-ch-ch-chicken.</p>
 						</div>
 						<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
@@ -138,16 +141,16 @@ export default function CustomizationPage() {
 								}}
 							>
 								<Select.Item value="on">
-									Açık
+									{t("On")}
 								</Select.Item>
 								<Select.Item value="off">
-									Kapalı
+									{t("Off")}
 								</Select.Item>
 							</Select>
 							<AnimatePresence>
 								{mcMode && (
 									<motion.p initial={{ opacity: 0 }} exit={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-orange-400 text-sm">
-										Özel tema açıldı.
+										{t("SpecialTheme")}
 									</motion.p>
 								)}
 							</AnimatePresence>

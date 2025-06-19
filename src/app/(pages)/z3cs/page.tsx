@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import { RiSave2Fill } from "@remixicon/react";
 import { Select } from "@/components/ui/Select";
+import { useTranslations } from "next-intl";
 
 const Z3CContext = createContext<any>(null);
 
@@ -37,6 +38,8 @@ interface Z3C {
 }
 
 export default function Z3Cs() {
+	const t = useTranslations("Z3CsPage");
+
 	const { data: session } = useSession();
 	const [search, setSearch] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("all");
@@ -122,13 +125,13 @@ export default function Z3Cs() {
 		setLoading(true);
 		await api.put(`/z3cs/${showingData?._id.toString()}`, formData)
 			.then((res) => {
-				toast.success("Z3C başarıyla düzenlendi");
+				toast.success(t("Updated"));
 				setEditMode(false);
 				setShowingData({ ...showingData, ...formData });
 				mutate();
 			})
 			.catch((err) => {
-				toast.error("Z3C düzenlenirken bir hata oluştu");
+				toast.error(t("UpdateError"));
 			})
 			.finally(() => {
 				setLoading(false);
@@ -142,10 +145,10 @@ export default function Z3Cs() {
 				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
 					<div>
 						<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-							Z3Cs
+							{t("Title")}
 						</h1>
 						<p className="text-sm sm:text-base text-muted max-w-2xl">
-							Farklı görevler için özelleştirilmiş AI asistanlarını keşfet ve kullan. Her biri belirli konularda uzmanlaşmış.
+							{t("Description")}
 						</p>
 					</div>
 					<div className="flex items-center gap-3 justify-between sm:justify-end">
@@ -155,7 +158,7 @@ export default function Z3Cs() {
 						{/* Kullanıcı giriş yaptıysa ve anonim değilse oluştur butonu */}
 						{session?.user && !session.user.isAnonymous && (
 							<Button className="bg-orange-500 text-white hover:bg-orange-600 transition-all" onClick={() => setCreateOpen(true)}>
-								Z3C Oluştur
+								{t("CreateNew")}
 							</Button>
 						)}
 					</div>
@@ -169,7 +172,7 @@ export default function Z3Cs() {
 							"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
 							"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 						)}
-						placeholder="Z3C'lerde ara..."
+						placeholder={t("SearchPlaceholder")}
 						type="text"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
@@ -183,7 +186,7 @@ export default function Z3Cs() {
 						{search ? (
 							<>
 								<CardGroup
-									title={`\"${search}\" ile ilgili Z3C'ler`}
+									title={t("SearchTitle", { search })}
 									type="featured"
 									data={{
 										isLoading,
@@ -197,7 +200,7 @@ export default function Z3Cs() {
 
 								{/* Featured Section */}
 								<CardGroup
-									title="En çok beğenilen Z3C'ler"
+									title={t("MostLiked")}  
 									type="featured"
 									data={{
 										isLoading,
@@ -207,7 +210,7 @@ export default function Z3Cs() {
 								/>
 
 								<CardGroup
-									title="En çok kullanılan Z3C'ler"
+									title={t("MostUsed")}
 									type="featured"
 									data={{
 										isLoading,
@@ -217,7 +220,7 @@ export default function Z3Cs() {
 								/>
 
 								<CardGroup
-									title="En çok indirilen Z3C'ler"
+									title={t("MostDownloaded")}
 									type="featured"
 									data={{
 										isLoading,
@@ -301,13 +304,13 @@ export default function Z3Cs() {
 												if (response.data) {
 													setFormData({ ...formData, profile_image: response.data.url });
 												} else {
-													toast.error("Fotoğraf yüklenirken bir hata oluştu");
+													toast.error(t("PhotoError"));
 												}
 											}}
 										/>
 										{/* @ts-ignore */}
 										<Button as="label" htmlFor="upload-photo" className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground relative">
-											Upload photo
+											{t("UploadPhoto")}
 										</Button>
 									</div>
 								) : (
@@ -340,7 +343,7 @@ export default function Z3Cs() {
 										className="rounded-full"
 									/>
 									<span className="text-sm text-foreground">
-										{showingData?.author?.username} tarafından
+										{t("Author", { author: showingData?.author?.username })}
 									</span>
 								</div>
 								{editMode ? (
@@ -363,7 +366,7 @@ export default function Z3Cs() {
 										}).format(+(showingData?.likes || 0) + +(newLiked ? (liked ? 1 : (showingData?.likes === 0 ? 0 : -1)) : 0))}
 									</div>
 									<div className="text-xs text-muted">
-										Beğeni
+										{t("Likes")}
 									</div>
 								</div>
 								<div className="text-center">
@@ -371,7 +374,7 @@ export default function Z3Cs() {
 										#{showingData?.placement}
 									</div>
 									<div className="text-xs text-muted">
-										{showingData?.category} kategorisinde
+										{t("Category", { category: showingData?.category })}
 									</div>
 								</div>
 								<div className="text-center">
@@ -379,14 +382,14 @@ export default function Z3Cs() {
 										{showingData?.conversations > 999 ? `${Math.floor(showingData?.conversations / 1000)}K+` : showingData?.conversations}
 									</div>
 									<div className="text-xs text-muted">
-										Konuşma
+										{t("Conversations")}
 									</div>
 								</div>
 							</div>
 
 							<div className="w-full">
 								<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-									Talimatlar
+									{t("Instructions")}
 								</h3>
 								{editMode ? (
 									<Textarea
@@ -412,11 +415,11 @@ export default function Z3Cs() {
 										}}
 									>
 										<Cancel01Icon className="w-4 h-4" />
-										<span>İptal</span>
+										<span>{t("Cancel")}</span>
 									</Button>
 									<Button className="flex-1 rounded-full px-4 h-10" onClick={handleEdit}>
 										<RiSave2Fill className="w-4 h-4" />
-										<span>Değişiklikleri Kaydet</span>
+										<span>{t("SaveChanges")}</span>
 									</Button>
 								</div>
 							) : (
@@ -428,7 +431,7 @@ export default function Z3Cs() {
 										onClick={handleDownload}
 										isLoading={isDownloading}
 									>
-										{downloaded ? "İndirildi" : "İndir"}
+										{downloaded ? t("Downloaded") : t("Download")}
 									</Button>
 									<Dropdown>
 										<Dropdown.Trigger asChild>
@@ -449,7 +452,7 @@ export default function Z3Cs() {
 											>
 												<ThumbsUpIcon className="w-4 h-4" fill={liked ? "currentColor" : "none"} />
 												<span>
-													{liked ? "Beğenildi" : "Beğen"}
+													{liked ? t("Liked") : t("Like")}
 												</span>
 											</Dropdown.Item>
 											<Dropdown.Item
@@ -459,7 +462,7 @@ export default function Z3Cs() {
 												className="flex items-center justify-start gap-2"
 											>
 												<Share01Icon className="w-4 h-4" />
-												<span>Paylaş</span>
+												<span>{t("Share")}</span>
 											</Dropdown.Item>
 											{session?.user?.id === showingData?.author?._id && (
 												<>
@@ -468,18 +471,18 @@ export default function Z3Cs() {
 															api.delete(`/z3cs/${showingData?._id.toString()}`)
 																.then((res) => {
 																	if (res.data.success) {
-																		toast.success("Z3C başarıyla silindi");
+																		toast.success(t("Deleted"));
 																		setOpen(false);
 																		mutate();
 																	} else {
-																		toast.error("Z3C silinirken bir hata oluştu");
+																		toast.error(t("DeleteError"));
 																	}
 																});
 														}}
 														className="flex items-center justify-start gap-2"
 													>
 														<Delete02Icon className="w-4 h-4" />
-														<span>Sil</span>
+														<span>{t("Delete")}</span>
 													</Dropdown.Item>
 													<Dropdown.Item
 														onClick={() => {
@@ -488,7 +491,7 @@ export default function Z3Cs() {
 														className="flex items-center justify-start gap-2"
 													>
 														<Edit02Icon className="w-4 h-4" />
-														<span>Düzenle</span>
+														<span>{t("Edit")}</span>
 													</Dropdown.Item>
 												</>
 											)}
@@ -500,7 +503,7 @@ export default function Z3Cs() {
 							{showingData?.author?.apps?.length > 0 && (
 								<div className="w-full flex flex-col gap-2 mt-4">
 									<p className="text-sm text-muted">
-										{showingData?.author?.username} adlı kullanıcıdan daha fazlası:
+										{t("MoreFrom", { author: showingData?.author?.username })}
 									</p>
 									<div className="flex flex-col gap-1">
 										{showingData?.author?.apps?.map((app: any) => (
@@ -590,10 +593,10 @@ export default function Z3Cs() {
 										if (response.data) {
 											setCreateForm({ ...createForm, profile_image: response.data.url });
 										} else {
-											toast.error("Fotoğraf yüklenirken bir hata oluştu");
+											toast.error(t("PhotoError"));
 										}
 									} catch (error) {
-										toast.error("Fotoğraf yüklenirken bir hata oluştu");
+										toast.error(t("PhotoError"));
 									} finally {
 										setCreateLoading(false);
 									}
@@ -601,7 +604,7 @@ export default function Z3Cs() {
 							/>
 							{/* @ts-ignore */}
 							<Button as="label" htmlFor="create-upload-photo" className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground relative">
-								Fotoğraf Yükle
+								{t("UploadPhoto")}
 							</Button>
 						</div>
 						<Textarea
@@ -612,7 +615,7 @@ export default function Z3Cs() {
 						{createError && <div className="text-red-500 text-sm">{createError}</div>}
 					</div>
 					<div className="flex gap-2 mt-6">
-						<Button className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground" onClick={() => setCreateOpen(false)} disabled={createLoading}>İptal</Button>
+						<Button className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground" onClick={() => setCreateOpen(false)} disabled={createLoading}>{t("Cancel")}</Button>
 						<Button className="flex-1 bg-orange-500 text-white hover:bg-orange-600" isLoading={createLoading} onClick={async () => {
 							setCreateLoading(true);
 							setCreateError("");
@@ -622,12 +625,12 @@ export default function Z3Cs() {
 									setCreateOpen(false);
 									setCreateForm({ name: "", description: "", category: categories[0] || "", profile_image: "", instructions: "" });
 									mutate();
-									toast.success("Z3C başarıyla oluşturuldu");
+									toast.success(t("Created"));
 								} else {
-									setCreateError("Bir hata oluştu");
+									setCreateError(t("CreateError"));
 								}
 							} catch (e) {
-								setCreateError("Bir hata oluştu");
+								setCreateError(t("CreateError"));
 							} finally {
 								setCreateLoading(false);
 							}
@@ -642,12 +645,14 @@ export default function Z3Cs() {
 }
 
 function EmptyState({ category }: { category: string }) {
+	const t = useTranslations("Z3CsPage");
+
 	return (
 		<div className="flex flex-col items-center justify-center h-64 border border-dotted border-border rounded-2xl transition-all duration-300 hover:border-orange-200/50">
 			<div className="w-16 h-16 bg-secondary rounded-full mb-4 opacity-50 transition-all duration-300" />
-			<h3 className="text-muted-foreground text-lg font-medium mb-2">Z3C bulunamadı</h3>
+			<h3 className="text-muted-foreground text-lg font-medium mb-2">{t("NoZ3C")}</h3>
 			<p className="text-muted-foreground text-sm text-center max-w-md">
-				{category} kategorisinde henüz Z3C bulunamadı.
+				{t("NoZ3CDescription", { category })}
 			</p>
 		</div>
 	);
@@ -713,6 +718,7 @@ function CardGroup({
 
 function StandartCard({ data }: { data: any }) {
 	const fetchApp = useZ3C();
+	const t = useTranslations("Z3CsPage");
 
 	return (
 		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -740,7 +746,7 @@ function StandartCard({ data }: { data: any }) {
 						</div>
 						{z3c.popular && (
 							<span className="text-xs bg-orange-500/10 text-orange-600 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
-								Popüler
+								{t("Popular")}
 							</span>
 						)}
 					</div>
@@ -753,7 +759,7 @@ function StandartCard({ data }: { data: any }) {
 					{/* Footer */}
 					<div className="flex items-center justify-between">
 						<span className="text-xs text-muted">
-							by {z3c.author.username}
+							{t("Author", { author: z3c.author.username })}
 						</span>
 					</div>
 				</div>

@@ -1,27 +1,27 @@
 "use client";
 
-import { cn } from "@colidy/ui-utils";
-import { useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "motion/react";
-import { useId, useRef, useCallback, useMemo, useState, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import remarkGfm from "remark-gfm";
-import { useSWRApi } from "@/hooks/use-swr-api";
-import { useChat } from "@/hooks/use-chat";
-import { useMessages } from "@/hooks/use-messages";
-import { AttachmentItem, AttachmentUploader } from "./AttachmentUploader";
-import { Toolbar } from "./Toolbar";
-import TextareaAutosize from "react-textarea-autosize";
-import { usePromptStore } from "@/stores/use-prompt";
-import { useEnhanceStore } from "@/stores/use-enhance";
-import { useAlertStore } from "@/stores/use-alert";
-import { RotatingLines } from "../ui/Spinner";
-import { useAttachmentsStore } from "@/stores/use-attachments";
-import { Button } from "../ui/Button";
-import { useAutoSubmit } from "@/stores/use-auto-submit";
 import { useIsConversationCreating } from "@/stores/use-is-conversation-creating";
+import { useId, useRef, useCallback, useMemo, useState, useEffect } from "react";
+import { AttachmentItem, AttachmentUploader } from "./AttachmentUploader";
+import { useAttachmentsStore } from "@/stores/use-attachments";
+import { useAutoSubmit } from "@/stores/use-auto-submit";
+import { AnimatePresence, motion } from "motion/react";
+import TextareaAutosize from "react-textarea-autosize";
+import { useEnhanceStore } from "@/stores/use-enhance";
+import { usePromptStore } from "@/stores/use-prompt";
+import { useMessages } from "@/hooks/use-messages";
+import { useAlertStore } from "@/stores/use-alert";
+import { useSWRApi } from "@/hooks/use-swr-api";
+import { RotatingLines } from "../ui/Spinner";
+import { useTranslations } from "next-intl";
+import { useChat } from "@/hooks/use-chat";
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
+import { cn } from "@colidy/ui-utils";
+import { Button } from "../ui/Button";
+import remarkMath from "remark-math";
+import { Toolbar } from "./Toolbar";
+import remarkGfm from "remark-gfm";
 
 const getAnimationVariants = (groupIndex: number) => ({
 	initial: { opacity: 0, x: (groupIndex === 0 ? -1 : 1) * 10 },

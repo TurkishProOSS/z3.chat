@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 export default function ApiKeysPage() {
+    const t = useTranslations("SettingsApiKeysPage");
+
 	const [submitable, setSubmittable] = useState(false);
 	const [submiting, setSubmiting] = useState(false);
 
@@ -73,7 +76,7 @@ export default function ApiKeysPage() {
 				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
 						<h1 className="text-lg text-foreground font-medium">OpenAI</h1>
-						<p className="text-muted text-sm">OpenAI API anahtarınız.</p>
+						<p className="text-muted text-sm">{t("Description", { provider: "OpenAI" })}</p>
 					</div>
 					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
 						<Input label='Anahtar' value={openai} onChange={e => setOpenai(e.target.value)} />
@@ -82,7 +85,7 @@ export default function ApiKeysPage() {
 				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
 						<h1 className="text-lg text-foreground font-medium">Gemini</h1>
-						<p className="text-muted text-sm">Gemini API anahtarınız.</p>
+						<p className="text-muted text-sm">{t("Description", { provider: "Gemini" })}</p>
 					</div>
 					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
 						<Input label='Anahtar' value={gemini} onChange={e => setGemini(e.target.value)} />
@@ -91,7 +94,7 @@ export default function ApiKeysPage() {
 				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
 						<h1 className="text-lg text-foreground font-medium">Anthropic</h1>
-						<p className="text-muted text-sm">Claude API anahtarınız.</p>
+						<p className="text-muted text-sm">{t("Description", { provider: "Claude" })}</p>
 					</div>
 					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
 						<Input label='Anahtar' value={anthropic} onChange={e => setAnthropic(e.target.value)} />
@@ -100,7 +103,7 @@ export default function ApiKeysPage() {
 				<div className="w-full flex flex-col border-l lg:border-none lg:grid grid-cols-3">
 					<div className="lg:border-r flex flex-col pl-4 lg:pl-0 lg:items-end pr-5 pb-3 lg:pb-5 py-5 lg:text-right">
 						<h1 className="text-lg text-foreground font-medium">Replicate</h1>
-						<p className="text-muted text-sm">Replicate API anahtarınız.</p>
+						<p className="text-muted text-sm">{t("Description", { provider: "Replicate" })}</p>
 					</div>
 					<div className="col-span-2 pt-0 lg:pt-5 py-5 lg:pl-5 pl-2 space-y-3">
 						<Input label='Anahtar' value={replicate} onChange={e => setReplicate(e.target.value)} />
@@ -109,10 +112,10 @@ export default function ApiKeysPage() {
 			</div>
 			<div className="flex justify-center items-center space-x-5 sticky bottom-0 py-3 bg-gradient-to-t from-primary via-primary/50">
 				<div className="rounded-2xl h-11 px-5 backdrop-blur bg-primary/50 flex items-center justify-center">
-					<Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">Sıfırla</Button>
+					<Button onClick={handleReset} disabled={submiting} variant="link" className="text-muted">{t("Reset")}</Button>
 				</div>
 				<div className="rounded-2xl bg-primary">
-					<Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>Kaydet</Button>
+					<Button onClick={handleSubmit} disabled={!submitable || submiting} isLoading={submiting}>{t("Save")}</Button>
 				</div>
 			</div>
 		</>

@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { memo } from "react";
 import { useAttachmentsStore } from "@/stores/use-attachments";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 interface AttachmentUploaderProps {
 	uploadRef: React.RefObject<HTMLInputElement | null>;
@@ -17,6 +18,8 @@ interface AttachmentUploaderProps {
 export const AttachmentUploader = ({
 	uploadRef,
 }: AttachmentUploaderProps) => {
+	const t = useTranslations("AttachmentUpload");
+    
 	const attachments = useAttachmentsStore(state => state.attachments);
 	const addAttachment = useAttachmentsStore(state => state.addAttachment);
 	const updateAttachment = useAttachmentsStore(state => state.updateAttachment);
@@ -39,14 +42,14 @@ export const AttachmentUploader = ({
 					uploading: false,
 					preview: response.data.url || attachment.preview
 				});
-				toast.success(`${attachment.name} başarıyla yüklendi`);
+				toast.success(t("Uploaded", { name: attachment.name }));
 			}
 		} catch (error) {
 			console.error('Upload error:', error);
 			updateAttachment(attachment.id, {
 				uploading: false
 			});
-			toast.error(`${attachment.name} yüklenirken hata oluştu`);
+			toast.error(t("UploadError", { name: attachment.name }));
 		}
 	};
 
@@ -64,12 +67,12 @@ export const AttachmentUploader = ({
 
 			for (const file of fileArray) {
 				if (file.size > maxSize) {
-					toast.error(`${file.name} çok büyük (maksimum 10MB)`);
+					toast.error(t("MaxSize", { file: file.name, size: String(maxSize / 1024 / 1024) }));
 					continue;
 				}
 
 				if (!allowedTypes.includes(file.type)) {
-					toast.error(`${file.name} desteklenmeyen dosya türü`);
+					toast.error(t("UnsupportedType", { file: file.name }));
 					continue;
 				}
 
@@ -95,7 +98,7 @@ export const AttachmentUploader = ({
 			}
 		} catch (error) {
 			console.error("Error uploading files:", error);
-			toast.error("Dosya yüklenirken hata oluştu");
+			toast.error(t("Error"));
 		}
 	}, [addAttachment, uploadRef]);
 
@@ -116,7 +119,7 @@ export const AttachmentUploader = ({
 			URL.revokeObjectURL(attachment.preview);
 		}
 		removeAttachment(id);
-		toast.success("Dosya kaldırıldı");
+		toast.success(t("Removed"));
 	}, [removeAttachment, attachments]);
 
 	return (
@@ -146,6 +149,8 @@ export const AttachmentItem = memo(({
 	attachment: any;
 	onRemove: (id: string) => void;
 }) => {
+	const t = useTranslations("AttachmentUpload");
+    
 	const handleRemove = useCallback(() => {
 		onRemove(attachment.id);
 	}, [attachment.id, onRemove]);
@@ -162,7 +167,7 @@ export const AttachmentItem = memo(({
 					/>
 				) : (
 					<div className="flex items-center justify-center p-4 text-muted-foreground">
-						Önizleme mevcut değil
+						{t("NoPreview")}
 					</div>
 				)
 			}

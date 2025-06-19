@@ -12,14 +12,6 @@ import { Logo } from '@/brand/Logo';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
 
-const CATEGORIES = [
-	['Account', RiUser3Line],
-	['Models', RiChatSmileAiLine],
-	['Customization', RiBrushLine],
-	['ApiKeys', RiKeyLine],
-	['Usage', RiBarChartLine]
-];
-
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
 	const { data: session, isPending, refetch } = useSession();
 	const [mount, setMount] = useState(false);
@@ -184,7 +176,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 										'hover:bg-primary/50': !isActive(item.href),
 									})}>
 										<div className={"relative " + (isActive(item.href) ? 'text-primary/60' : 'text-foreground/60')}>
-											{category !== item.href && <span className="absolute inset-0 bg-gradient-to-tl transition-all from-secondary via-transparent" />}
+											{isActive(item.href) && <span className="absolute inset-0 bg-gradient-to-tl transition-all via-transparent" />}
 											<IconComp size={48} />
 										</div>
 										<div className="space-y-1">

@@ -7,6 +7,7 @@ import { reduceAgents } from "@/lib/get-agents";
 import ModelIcon from "@/components/ui/ModelIcon";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { useTranslations } from "next-intl";
 
 export default function Z3Cs() {
 	const {
@@ -29,6 +30,8 @@ export default function Z3Cs() {
 		refreshInterval: 30000
 	});
 
+    const t = useTranslations("ModelsPage");
+
 	const [search, setSearch] = useState("");
 	const [providers, setProviders] = useState<string[]>([]);
 	const [premiumFilter, setPremiumFilter] = useState<string | null>(null);
@@ -44,10 +47,10 @@ export default function Z3Cs() {
 			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
 				<div>
 					<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-						Supported Models
+						{t("Title")}
 					</h1>
 					<p className="text-sm sm:text-base text-muted max-w-2xl">
-						All models supported by Z3C. {data?.length} models supported.
+						{t("Description", { count: data?.length })}
 					</p>
 				</div>
 			</div>
@@ -60,7 +63,7 @@ export default function Z3Cs() {
 						"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
 						"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
 					)}
-					placeholder="Search for a model..."
+					placeholder={t("SearchPlaceholder")}
 					type="text"
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
@@ -69,13 +72,13 @@ export default function Z3Cs() {
 				<div className="flex flex-wrap gap-2 mb-2">
 					<Button onClick={() => setPremiumFilter(null)} className={cn("bg-secondary text-foreground", {
 						"bg-colored/10 text-colored": premiumFilter === null
-					})}>All</Button>
+					})}>{t("All")}</Button>
 					<Button onClick={() => setPremiumFilter('premium')} className={cn("bg-secondary text-foreground", {
 						"bg-colored/10 text-colored": premiumFilter === 'premium'
-					})}>Premium</Button>
+					})}>{t("Premium")}</Button>
 					<Button onClick={() => setPremiumFilter('non_premium')} className={cn("bg-secondary text-foreground", {
 						"bg-colored/10 text-colored": premiumFilter === 'non_premium'
-					})}>Non-Premium</Button>
+					})}>{t("NonPremium")}</Button>
 				</div>
 				<div className="flex flex-wrap gap-2">
 					{reduceAgents(filteredData || []).map((cat) => (
@@ -120,18 +123,18 @@ export default function Z3Cs() {
 												<div className="space-y-1">
 													<div className="flex items-center space-x-2">
 														<h1 className="text-lg font-medium">{model.name}</h1>
-														{model.premium && <p className="bg-orange-800/10 text-xs text-orange-400 py-0.5 px-1.5 rounded-md">Premium</p>}
-														{((model as any)?.api_key_required || false) && <p className="bg-rose-800/10 text-xs text-rose-400 py-0.5 px-1.5 rounded-md">API Key Required for Use</p>}
-														{(!model.enabled || !model.available) && <p className="bg-red-800/10 text-xs text-red-400 py-0.5 px-1.5 rounded-md">Disabled</p>}
+														{model.premium && <p className="bg-orange-800/10 text-xs text-orange-400 py-0.5 px-1.5 rounded-md">{t("Premium")}</p>}
+														{((model as any)?.api_key_required || false) && <p className="bg-rose-800/10 text-xs text-rose-400 py-0.5 px-1.5 rounded-md">{t("APIKeyRequired")}</p>}
+														{(!model.enabled || !model.available) && <p className="bg-red-800/10 text-xs text-red-400 py-0.5 px-1.5 rounded-md">{t("Disabled")}</p>}
 													</div>
 													<div className="flex items-center gap-2">
-														{model.features?.experimental && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">Experimental</p>}
-														{model.features?.reasoning && <p className="bg-green-800/10 text-xs dark:text-emerald-400 text-emerald-800 py-0.5 px-1.5 rounded-md">Reasoning</p>}
-														{model.features?.vision && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">Vision</p>}
-														{model.features?.pdfSupport && <p className="bg-purple-800/10 text-xs text-purple-400 py-0.5 px-1.5 rounded-md">PDF Support</p>}
-														{model.features?.imageGeneration && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">Image Generation</p>}
-														{model.features?.search && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">Web Search</p>}
-														{model.features?.fast && <p className="bg-yellow-800/10 text-xs text-yellow-800 dark:text-yellow-400 py-0.5 px-1.5 rounded-md">Fast</p>}
+														{model.features?.experimental && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">{t("Experimental")}</p>}
+														{model.features?.reasoning && <p className="bg-green-800/10 text-xs dark:text-emerald-400 text-emerald-800 py-0.5 px-1.5 rounded-md">{t("Reasoning")}</p>}
+														{model.features?.vision && <p className="bg-blue-800/10 text-xs text-blue-400 py-0.5 px-1.5 rounded-md">{t("Vision")}</p>}
+														{model.features?.pdfSupport && <p className="bg-purple-800/10 text-xs text-purple-400 py-0.5 px-1.5 rounded-md">{t("PDFSupport")}</p>}
+														{model.features?.imageGeneration && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">{t("ImageGeneration")}</p>}
+														{model.features?.search && <p className="bg-pink-800/10 text-xs text-pink-400 py-0.5 px-1.5 rounded-md">{t("WebSearch")}</p>}
+														{model.features?.fast && <p className="bg-yellow-800/10 text-xs text-yellow-800 dark:text-yellow-400 py-0.5 px-1.5 rounded-md">{t("Fast")}</p>}
 													</div>
 													<p className="text-muted text-sm line-clamp-2 max-w-full">{model.description}</p>
 												</div>

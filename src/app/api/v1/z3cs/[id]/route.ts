@@ -99,11 +99,11 @@ export const GET = async (
 		// @ts-ignore
 		z3c.placement = inCategory.findIndex(app => app._id.toString() === z3c._id.toString()) + 1;
 		// @ts-ignore
-		const isDownloaded = session?.user?.downloaded_z3cs.find((m: any) => m.equals(z3c._id));
+		const isDownloaded = session?.user?.downloaded_z3cs?.find((m: any) => m.equals(z3c._id));
 		// @ts-ignore
 		z3c.is_downloaded = isDownloaded;
 		// @ts-ignore
-		const isLiked = session?.user?.liked_z3cs.find((m: any) => m.equals(z3c._id));
+		const isLiked = session?.user?.liked_z3cs?.find((m: any) => m.equals(z3c._id));
 		// @ts-ignore
 		z3c.is_liked = isLiked;
 
