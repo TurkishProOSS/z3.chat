@@ -37,6 +37,7 @@ export const POST = async (
 - do not use quotes or colons
 - use input language of the user for the title
 - do not use any special characters or emojis
+- just return the title, no other text
 
 Here is the original prompt:
 ${prompt}

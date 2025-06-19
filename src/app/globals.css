@@ -144,6 +144,12 @@
 		@apply box-border border-border;
 	}
 
+	/* 
+	[data-scroll-locked][data-scroll-locked] {
+		overflow-y: scroll !important;
+	} */
+
+
 	body,
 	main {
 		overflow-x: hidden;

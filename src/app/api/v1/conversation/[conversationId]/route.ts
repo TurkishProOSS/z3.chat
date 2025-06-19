@@ -19,6 +19,7 @@ import { AgentModel } from "@/database/models/Models";
 import { AgentModel as TAgentModel } from "@/lib/definitions";
 import { put } from "@/lib/blob";
 import { v4 as uuidv4 } from 'uuid';
+import { Z3Cs } from "@/database/models/Z3Cs";
 
 
 const streamContext = createResumableStreamContext({
@@ -118,12 +119,13 @@ export const POST = async (
 	{ params }: any
 ) => {
 	return await withAuth(async (session) => {
-        let fn: any;
+		let fn: any;
 
 		try {
 			const { conversationId } = await params;
-			const { prompt, model, modelOptions, attachments } = await request.json();
-			if (!prompt) return Response.json({ success: false, message: 'Message is required' }, { status: 400 });
+			let { prompt, model, modelOptions, attachments, z3cId } = await request.json();
+			if (!prompt && attachments.length === 0) return Response.json({ success: false, message: 'Message is required' }, { status: 400 });
+			if (!prompt && attachments.length > 0) prompt = ".";
 			if (!model) return Response.json({ success: false, message: 'Model is required' }, { status: 400 });
 			const agent: AMT & any = await AgentModel.findOne({ id: model }).lean();
 			if (!agent) return Response.json({ success: false, message: 'Invalid model' }, { status: 400 })
@@ -142,11 +144,11 @@ export const POST = async (
 
 			const { success, remaining, limit, reset } = await ratelimit.limit(`models:${md5(ip)}`);
 
-            const increaseLimit = async () => {
-                const key = `models:${md5(ip)}`;
-                await ratelimit.resetUsedTokens(key);
-                await Promise.all(Array.from({ length: ((agent?.features?.imageGeneration ? session?.user?.usage_image_generation : session?.user?.usage_models) || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
-            };
+			const increaseLimit = async () => {
+				const key = `models:${md5(ip)}`;
+				await ratelimit.resetUsedTokens(key);
+				await Promise.all(Array.from({ length: ((agent?.features?.imageGeneration ? session?.user?.usage_image_generation : session?.user?.usage_models) || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
+			};
 
 			if (!success) {
 				return Response.json({
@@ -167,15 +169,20 @@ export const POST = async (
 				}, { status: 429 });
 			}
 
+			let z3c: any = z3cId ? await Z3Cs.findOne({ _id: z3cId }).lean() : null;
+			if (z3cId && !z3c) {
+				z3c = null;
+			}
+
 			const tools = getAgentTools(agent as any, modelOptions);
 
-			if (!conversationId) { 
-                await increaseLimit();
-                return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
-            };
+			if (!conversationId) {
+				await increaseLimit();
+				return Response.json({ success: false, message: 'Conversation ID is required' }, { status: 400 });
+			};
 
 			if (isValidObjectId(conversationId) === false) {
-                await increaseLimit();
+				await increaseLimit();
 				return Response.json({ success: false, message: 'Invalid conversation ID' }, { status: 400 });
 			};
 
@@ -183,9 +190,9 @@ export const POST = async (
 			const requestModel = models.find(m => m === model);
 
 			if (!requestModel) {
-                await increaseLimit();
-                return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
-            };
+				await increaseLimit();
+				return Response.json({ success: false, message: 'Invalid model' }, { status: 400 });
+			};
 
 			const conversation = await Conversation.findOne({
 				_id: conversationId,
@@ -193,9 +200,9 @@ export const POST = async (
 			}).select('-messages').lean();
 
 			if (!conversation) {
-                await increaseLimit();
-                return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
-            };
+				await increaseLimit();
+				return Response.json({ success: false, message: 'Conversation not found' }, { status: 404 });
+			};
 
 			const existingRespond = await Message.findOne({
 				chatId: conversationId,
@@ -204,7 +211,7 @@ export const POST = async (
 			}).lean();
 
 			if (existingRespond) {
-                await increaseLimit();
+				await increaseLimit();
 
 				return Response.json({
 					success: false,
@@ -221,7 +228,7 @@ export const POST = async (
 			})).safeParse(attachments);
 
 			if (!attachmentsSchema.success) {
-                await increaseLimit();
+				await increaseLimit();
 
 				return Response.json({
 					success: false,
@@ -381,7 +388,7 @@ export const POST = async (
 								experimental_attachments: uploadedImages
 							} as any);
 						} catch (error) {
-                            await increaseLimit();
+							await increaseLimit();
 
 							dataStream.writeData({
 								type: 'error',
@@ -407,9 +414,11 @@ export const POST = async (
 						const result = streamText({
 							model: d.languageModel(requestModel),
 							system: systemPrompt({
-								extensions: [
-									""
-								],
+								z3c: z3c ? {
+									name: z3c.name,
+									description: z3c.description,
+									instructions: z3c.instructions
+								} : {},
 								preferences: {
 									interests: session?.user?.interests || "",
 									tone: session?.user?.tone || "neutral",
@@ -453,7 +462,7 @@ export const POST = async (
 							experimental_transform: smoothStream({ chunking: 'word' }),
 							onError: async ({ error }) => {
 								try {
-                                    await increaseLimit();
+									await increaseLimit();
 
 									dataStream.writeData({
 										type: 'error',
@@ -508,7 +517,7 @@ export const POST = async (
 				});
 			}
 		} catch (error) {
-            if (fn) await fn();
+			if (fn) await fn();
 
 			console.error('Error occurred while processing request:', error);
 			return Response.json({

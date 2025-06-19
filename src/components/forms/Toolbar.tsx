@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useMemo } from "react";
+import { useContext, useMemo, useState } from "react";
 import { useMessages } from "@/hooks/use-messages";
 import { useEnhanceStore } from "@/stores/use-enhance";
 import { useAgentActionsStore } from "@/stores/use-agent-actions";
@@ -8,7 +8,7 @@ import { useAgentSelectionStore } from "@/stores/use-agent-selection";
 import { Z3Context } from "@/contexts/Z3Provider";
 import { Dropdown } from "../ui/Dropdown";
 import { cn } from "@colidy/ui-utils";
-import { Add01Icon, ArrowUp01Icon, Brain02Icon, CrownIcon, FileAddIcon, Globe02Icon, ImageAdd01Icon, SlidersHorizontalIcon } from "hugeicons-react";
+import { Add01Icon, ArrowLeft01Icon, ArrowRight01Icon, ArrowUp01Icon, Brain02Icon, CharacterPhoneticIcon, CrownIcon, FileAddIcon, Globe02Icon, IdentificationIcon, ImageAdd01Icon, SlidersHorizontalIcon, SparklesIcon, Tick01Icon, Tick02Icon } from "hugeicons-react";
 import { useAgentFeatureStore } from "@/stores/use-feature-store";
 import { Select } from "@/ui/Select";
 import {
@@ -29,6 +29,12 @@ import { Button } from "../ui/Button";
 import { Switch } from "../ui/Switch";
 import { usePromptStore } from "@/stores/use-prompt";
 import { RiSparkling2Fill } from "@remixicon/react";
+import { useZ3cSelectionStore } from "@/stores/use-z3cs-select";
+import { Z3cModel } from "@/lib/definitions";
+import { useAttachmentsStore } from "@/stores/use-attachments";
+import { Popover } from "../ui/Popover";
+import { AnimatePresence, motion } from "motion/react";
+import { ScrollArea } from "radix-ui";
 
 export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, setIsResponding, uploadRef, shouldShowSpinner }: {
 	handleSubmit: () => void;
@@ -38,16 +44,21 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 	uploadRef: React.RefObject<HTMLInputElement | null>;
 	shouldShowSpinner?: boolean;
 }) {
+	const [activeToolMenu, setActiveToolMenu] = useState<string | null>(null);
 	const z3Context = useContext(Z3Context);
 	const agents = z3Context?.agents || [];
 	const changeAgent = useAgentActionsStore(s => s.changeAgent);
 	const selectedAgent = useAgentSelectionStore(s => s.selectedAgent);
 	const prompt = usePromptStore(state => state.prompt);
-
+	const attachments = useAttachmentsStore(state => state.attachments);
 	const setFeature = useAgentFeatureStore(state => state.setFeature);
 	const features = useAgentFeatureStore(state => state.features);
 	const isEnhancing = useEnhanceStore(state => state.isEnhancing);
 	const enhancePrompt = useEnhanceStore(state => state.enhancePrompt);
+
+	const selectedZ3C = useZ3cSelectionStore(state => state.selectedZ3C);
+	const setSelectedZ3C = useZ3cSelectionStore(state => state.setSelectedZ3C);
+	const z3cs = z3Context?.installedZ3Cs || [];
 
 	const { messages: allMessages } = useMessages();
 
@@ -63,52 +74,183 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 		"border w-9 h-9 rounded-xl bg-muted/20 hover:bg-muted/30 active:bg-muted/40"
 	], className);
 
+	const toolMenuVariants = {
+		initial: { opacity: 0, x: 5 },
+		animate: { opacity: 1, x: 0 },
+		exit: { opacity: 0, x: -5 },
+		transition: { duration: 0.1 }
+	}
+
+	const toolItem = cn([
+		"flex items-center gap-2 cursor-pointer transition-all px-3 py-2",
+		"w-full rounded-xl hover:bg-popover-hover text-sm"
+	]);
+
+	const isSettingsVisible = (
+		selectedAgent?.features.reasoning || selectedAgent?.features.search
+		|| selectedAgent?.features.vision || selectedAgent?.features.pdfSupport
+		|| z3cs.length > 0
+	);
+
 	return (
 		<div className={toolsClassName}>
 			<div className="flex items-center gap-2">
-				{selectedAgent && (selectedAgent.features.vision || selectedAgent.features.pdfSupport) && (
-					<Dropdown>
-						<Dropdown.Trigger className={actionButtonClasses("")}>
-							<Add01Icon className="w-4 h-4" />
-						</Dropdown.Trigger>
-						<Dropdown.Content side="top" align="start" className="!min-w-[0px] z-[11]">
-							{selectedAgent?.features.vision && (
-								<Dropdown.Item
-									className="flex items-center justify-start gap-2"
-									onClick={() => {
-										uploadRef.current?.setAttribute("accept", "image/*");
-										uploadRef.current?.click();
-									}}
-								>
-									<ImageAdd01Icon className="w-4 h-4" />
-									<span>
-										Add photos
-									</span>
-								</Dropdown.Item>
-							)}
-							{selectedAgent?.features.pdfSupport && (
-								<Dropdown.Item
-									className="flex items-center justify-start gap-2"
-									onClick={() => {
-										uploadRef.current?.setAttribute("accept", ".pdf,.txt,.doc,.docx");
-										uploadRef.current?.click();
-									}}
-								>
-									<FileAddIcon className="w-4 h-4" />
-									<span>
-										Add files (pdf, txt...)
-									</span>
-								</Dropdown.Item>
-							)}
-						</Dropdown.Content>
-					</Dropdown>
+				{isSettingsVisible && (
+					<Popover
+						onOpenChange={(e) => {
+							if (!e) {
+								setActiveToolMenu(null);
+							}
+						}}
+					>
+						<Popover.Trigger className={actionButtonClasses("")}>
+							<SlidersHorizontalIcon className="w-4 h-4" />
+						</Popover.Trigger>
+						<Popover.Content side="top" align="start" className="p-2">
+							<motion.div initial="initial" animate="animate" exit="exit" transition={{ duration: 0.3 }}>
+								<AnimatePresence mode="wait">
+									{!activeToolMenu && (
+										<motion.div className="flex flex-col items-center gap-1" {...toolMenuVariants} key="menu">
+											{selectedAgent && (selectedAgent.features.vision || selectedAgent.features.pdfSupport) && (
+												<button className={toolItem} onClick={() => setActiveToolMenu("vision")} key="vision">
+													<ImageAdd01Icon className="w-4 h-4" />
+													İçerik Yükle
+													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
+												</button>
+											)}
+											{z3cs.length > 0 && (
+												<button className={toolItem} onClick={() => setActiveToolMenu("z3cs")} key="z3cs">
+													<IdentificationIcon className="w-4 h-4" />
+													Z3Cs
+													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
+												</button>
+											)}
+											{selectedAgent?.features.reasoning || selectedAgent?.features.search && (
+												<button className={toolItem} onClick={() => setActiveToolMenu("features")} key="ozellikler">
+													<SparklesIcon className="w-4 h-4" />
+													Model Özellikleri
+													<ArrowRight01Icon className="w-4 h-4 ml-auto" />
+												</button>
+											)}
+										</motion.div>
+									)}
+									{activeToolMenu === "vision" && (selectedAgent?.features.vision || selectedAgent?.features.pdfSupport) && (
+										<motion.div className="flex flex-col gap-2" {...toolMenuVariants} key="vision">
+											<div className={cn(toolItem, "!bg-transparent !px-2")} onClick={() => setActiveToolMenu(null)} key="geri">
+												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
+													<ArrowLeft01Icon className="w-4 h-4" />
+												</button>
+												<p>İçerik Yükle</p>
+											</div>
+											<hr className="w-full bg-border border-border" key="hr-icerik" />
+											{selectedAgent?.features.vision && (
+												<button
+													className={toolItem}
+													onClick={() => {
+														uploadRef.current?.setAttribute("accept", "image/*");
+														uploadRef.current?.click();
+													}}
+													key="resim-yukle"
+												>
+													<ImageAdd01Icon className="w-4 h-4" />
+													<span>
+														Resim yükle
+													</span>
+												</button>
+											)}
+											{selectedAgent?.features.pdfSupport && (
+												<button
+													className={toolItem}
+													onClick={() => {
+														uploadRef.current?.setAttribute("accept", ".pdf,.txt,.doc,.docx");
+														uploadRef.current?.click();
+													}}
+													key="dosya-yukle"
+												>
+													<FileAddIcon className="w-4 h-4" />
+													<span>
+														Dosya yükle
+													</span>
+												</button>
+											)}
+										</motion.div>
+									)}
+									{activeToolMenu === "z3cs" && z3cs.length > 0 && (
+										<motion.div className="flex flex-col gap-2" {...toolMenuVariants} key="z3cs">
+											<div className={cn(toolItem, "!bg-transparent !px-2")} onClick={() => setActiveToolMenu(null)} key="geri">
+												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
+													<ArrowLeft01Icon className="w-4 h-4" />
+												</button>
+												<p>Z3Cs</p>
+											</div>
+											<hr className="w-full bg-border border-border" key="hr-z3cs" />
+											<div className="flex flex-col gap-1 overflow-y-auto max-h-[300px]" key="z3cs-listesi">
+												<button className={toolItem} onClick={() => setSelectedZ3C(null)} key="devredisi-birak">
+													<span className="text-sm">
+														Devredışı Bırak
+													</span>
+													{!selectedZ3C && (
+														<Tick02Icon className="w-4 h-4 ml-auto" />
+													)}
+												</button>
+												{z3cs.map((z3c, index) => (
+													<button key={index} className={toolItem} onClick={() => setSelectedZ3C(z3c)}>
+														{z3c.profile_image && (
+															<img src={z3c.profile_image} alt={z3c.name} className="w-4 h-4 rounded-full" />
+														)}
+														<span className="text-sm">
+															{z3c.name}
+														</span>
+														{selectedZ3C?._id === z3c._id && (
+															<Tick02Icon className="w-4 h-4 ml-auto" />
+														)}
+													</button>
+												))}
+											</div>
+										</motion.div>
+									)}
+									{activeToolMenu === "features" && (selectedAgent?.features.reasoning || selectedAgent?.features.search) && (
+										<motion.div className="flex flex-col gap-2" {...toolMenuVariants} key="z3cs">
+											<div className={cn(toolItem, "!bg-transparent !px-2")} onClick={() => setActiveToolMenu(null)} key="geri">
+												<button className={cn(toolItem, "w-5 h-5 !p-0 justify-center")}>
+													<ArrowLeft01Icon className="w-4 h-4" />
+												</button>
+												<p>Model Özellikleri</p>
+											</div>
+											<hr className="w-full bg-border border-border" key="hr-ozellikler" />
+											<div className="flex flex-col gap-1 overflow-y-auto max-h-[300px]" key="ozellikler-listesi">
+												{selectedAgent?.features.reasoning && (
+													<div className={toolItem} onClick={() => setFeature('reasoning', !features.reasoning)} key="reasoning">
+														<Brain02Icon className="w-4 h-4" />
+														<span className="flex-1 text-left">
+															Reasoning
+														</span>
+														<Switch checked={features.reasoning} />
+													</div>
+												)}
+												{selectedAgent?.features.search && (
+													<div className={toolItem} onClick={() => setFeature('search', !features.search)} key="web-search">
+														<Globe02Icon className="w-4 h-4" />
+														<span className="flex-1 text-left">
+															Web search
+														</span>
+														<Switch checked={features.search} />
+													</div>
+												)}
+											</div>
+										</motion.div>
+									)}
+								</AnimatePresence>
+							</motion.div>
+						</Popover.Content>
+					</Popover>
 				)}
 				<Select
 					placeholder="Select a model"
 					value={selectedAgent?.id || ''}
 					onValueChange={(change: string) => changeAgent(change, z3Context as any)}
 					triggerProps={{
-						className: actionButtonClasses("w-auto px-4 justify-start max-w-56 text-left")
+						className: actionButtonClasses("w-auto md:px-4 justify-start overflow-hidden max-w-24 min-w-24 md:min-w-48 md:max-w-56 text-left")
 					}}
 				>
 					{reduceAgents(agents).map((agent) => (
@@ -134,42 +276,6 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 						</Select.Group>
 					))}
 				</Select>
-				{selectedAgent && (selectedAgent.features.reasoning || selectedAgent.features.search) && (
-					<Dropdown>
-						<Dropdown.Trigger className={actionButtonClasses("")}>
-							<SlidersHorizontalIcon className="w-4 h-4" />
-						</Dropdown.Trigger>
-						<Dropdown.Content side="top" align="start" className="!min-w-[0px] z-[11]">
-							{selectedAgent.features.reasoning && (
-								<Dropdown.Item
-									className="flex items-center justify-between gap-2"
-									onClick={() => setFeature('reasoning', !features.reasoning)}
-								>
-									<div className="flex items-center gap-2">
-										<Brain02Icon className="w-4 h-4" />
-										<span>
-											Reasoning
-										</span>
-									</div>
-									<Switch checked={features.reasoning} />
-								</Dropdown.Item>
-							)}
-							{selectedAgent.features.search && (
-								<Dropdown.Item className="flex items-center justify-between gap-2" onClick={() => setFeature('search', !features.search)}>
-									<div className="flex items-center gap-2">
-										<Globe02Icon className="w-4 h-4" />
-										<span>
-											Web search
-										</span>
-									</div>
-									<Switch checked={features.search} />
-								</Dropdown.Item>
-							)}
-						</Dropdown.Content>
-					</Dropdown>
-				)}
-
-
 			</div>
 
 			<div className="flex items-center gap-2">
@@ -189,7 +295,7 @@ export function Toolbar({ handleSubmit, isResponding, isCreatingConversation, se
 				<Button
 					size="icon"
 					onClick={handleSubmit}
-					disabled={shouldShowSpinner || !prompt}
+					disabled={shouldShowSpinner || (!prompt && attachments.length === 0)}
 					isLoading={shouldShowSpinner}
 					className="bg-colored"
 				>
@@ -246,7 +352,7 @@ function Model({
 	})();
 
 	return (
-		<div className="flex items-center space-x-2 w-full">
+		<div className="flex items-center space-x-2">
 			{Icon && <Icon size={12} />}
 			<div className="flex-1 flex items-center justify-between gap-2">
 				<span className="text-sm font-medium line-clamp-1">{modelName}</span>

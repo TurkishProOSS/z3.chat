@@ -32,6 +32,21 @@ export const agentModelSchema = z.object({
 });
 export type AgentModel = z.infer<typeof agentModelSchema>;
 
+export const z3cModelSchema = z.object({
+	_id: z.string(),
+	name: z.string(),
+	description: z.string(),
+	instructions: z.string(),
+	profile_image: z.string().optional().nullable(),
+	likes: z.number().int().min(0).default(0),
+	downloads: z.number().int().min(0).default(0),
+	conversations: z.number().int().min(0).default(0),
+	createdAt: z.date(),
+	updatedAt: z.date(),
+	category: z.string().optional().nullable()
+});
+export type Z3cModel = z.infer<typeof z3cModelSchema>;
+
 export const z3Schema = z.object({
 	agents: z.array(agentModelSchema).default([]),
 	cookies: z.array(z.object({
@@ -76,10 +91,11 @@ export const z3Schema = z.object({
 		preview: z.string(),
 		extension: z.string(),
 		uploading: z.boolean().optional()
-	}))).returns(z.void())
+	}))).returns(z.void()),
+	installedZ3Cs: z.array(z3cModelSchema).default([])
 });
 
-export const initZ3Schema = z3Schema.pick({ agents: true, defaultAgent: true });
+export const initZ3Schema = z3Schema.pick({ agents: true, defaultAgent: true, installedZ3Cs: true });
 export type Z3Schema = z.infer<typeof z3Schema>;
 export type InitZ3Schema = z.infer<typeof initZ3Schema>;
 

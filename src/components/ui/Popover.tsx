@@ -28,9 +28,11 @@ function PopoverTrigger(props: React.ComponentProps<typeof Popover.Trigger>) {
 
 function PopoverContent({
 	children,
+	className,
 	...props
 }: {
 	children: React.ReactNode;
+	className?: string;
 } & React.ComponentProps<typeof Popover.Content>) {
 	return (
 		<Popover.Portal>
@@ -52,7 +54,7 @@ function PopoverContent({
 					"data-[align=center]:data-[side=top]:origin-bottom",
 					"data-[align=start]:data-[side=top]:origin-bottom-left",
 					"data-[align=end]:data-[side=top]:origin-bottom-right"
-				])}
+				], className)}
 				sideOffset={5}
 				asChild
 				{...props}

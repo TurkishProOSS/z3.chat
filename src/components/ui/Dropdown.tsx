@@ -40,7 +40,7 @@ function DropdownMenuContent({
 			<DropdownMenuPrimitive.Content
 				data-slot="dropdown-menu-content"
 				sideOffset={sideOffset}
-				className={cn("bg-popover border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl", [
+				className={cn("bg-popover border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl z-50", [
 
 					"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 					"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2",

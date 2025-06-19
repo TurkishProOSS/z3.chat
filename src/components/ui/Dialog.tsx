@@ -13,12 +13,14 @@ const Content = ({
 	className,
 	titleChildren,
 	descriptionChildren,
+	hiddenHeader,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
 	children: React.ReactNode;
 	className?: string;
 	titleChildren?: React.ReactNode | string;
 	descriptionChildren?: React.ReactNode | string;
+	hiddenHeader?: boolean;
 }) => (
 	<DialogPrimitive.Portal>
 		<DialogPrimitive.Overlay className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/50" />
@@ -27,12 +29,21 @@ const Content = ({
 			"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
 			"fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-2xl duration-200 sm:max-w-lg"
 		])}>
-			<DialogPrimitive.Title className="m-0 text-[17px] font-medium text-foreground">
-				{titleChildren}
-			</DialogPrimitive.Title>
-			<DialogPrimitive.Description className="mb-5 text-[15px] leading-normal text-muted">
-				{descriptionChildren}
-			</DialogPrimitive.Description>
+			{hiddenHeader ? (
+				<>
+					<DialogPrimitive.Title />
+					<DialogPrimitive.Description />
+				</>
+			) : (
+				<>
+					<DialogPrimitive.Title className="m-0 text-[17px] font-medium text-foreground">
+						{titleChildren}
+					</DialogPrimitive.Title>
+					<DialogPrimitive.Description className="mb-5 text-[15px] leading-normal text-muted">
+						{descriptionChildren}
+					</DialogPrimitive.Description>
+				</>
+			)}
 			<div className={cn("flex flex-col gap-4", className)} {...props}>
 				{children}
 			</div>

@@ -3,7 +3,28 @@
 import { cn } from "@colidy/ui-utils";
 import Link from "next/link";
 import { useSWRApi } from "@/hooks/use-swr-api";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { categories } from "@/constants/categories";
+import { Dialog } from "@/components/ui/Dialog";
+import { Button } from "@/components/ui/Button";
+import { api } from "@/lib/api";
+import { RotatingLines } from "@/components/ui/Spinner";
+import { Cancel01Icon, Delete02Icon, Edit02Icon, MoreVerticalSquare01Icon, Share01Icon, ThumbsUpIcon } from "hugeicons-react";
+import { createContext, useContext } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { useSession } from "@/hooks/use-session";
+import { toast } from "sonner";
+import { Input } from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import { RiSave2Fill } from "@remixicon/react";
+import { Select } from "@/components/ui/Select";
+
+const Z3CContext = createContext<any>(null);
+
+export const useZ3C = () => {
+	return useContext(Z3CContext);
+}
 
 interface Z3C {
 	id: string;
@@ -15,212 +36,618 @@ interface Z3C {
 	createdBy?: string;
 }
 
-// Mock data - gerçek API'den gelecek
-const mockZ3Cs: Z3C[] = [
-	{
-		id: "1",
-		name: "Yazma Asistanı",
-		description: "Yaratıcı yazım, makale ve içerik üretiminde uzmanlaşmış AI asistanı. Blog yazıları, hikayeler ve akademik metinler yazabilir.",
-		category: "writing",
-		featured: true,
-		popular: true,
-		createdBy: "OpenAI"
-	},
-	{
-		id: "2",
-		name: "Kod Mentoru",
-		description: "Programlama öğrenme ve geliştirme sürecinizde size rehberlik eden uzman AI. Kod inceleme, hata ayıklama ve en iyi uygulamalar.",
-		category: "programming",
-		featured: true,
-		popular: true,
-		createdBy: "GitHub"
-	},
-	{
-		id: "3",
-		name: "Araştırma Uzmanı",
-		description: "Akademik araştırma ve veri analizi konularında derinlemesine yardım sunan AI asistanı. Kaynak bulma ve analiz etme.",
-		category: "research",
-		featured: true,
-		createdBy: "Research.ai"
-	},
-	{
-		id: "4",
-		name: "Dil Öğretmeni",
-		description: "Çoklu dil öğretimi ve pratik konuşma egzersizleri ile dil becerilerinizi geliştiren AI öğretmen.",
-		category: "education",
-		popular: true,
-		createdBy: "EduAI"
-	},
-	{
-		id: "5",
-		name: "İş Planlayıcısı",
-		description: "İş stratejileri, proje yönetimi ve verimlilik artışı için profesyonel çözümler sunan AI danışmanı.",
-		category: "business",
-		createdBy: "BizAI"
-	},
-	{
-		id: "6",
-		name: "Yaratıcı Tasarımcı",
-		description: "Görsel tasarım fikirleri, renk paleti önerileri ve kreatif çözümler üreten AI tasarım asistanı.",
-		category: "creative",
-		createdBy: "DesignBot"
-	}
-];
-
-const categories = [
-	{ id: "all", name: "Tümü" },
-	{ id: "writing", name: "Yazma" },
-	{ id: "programming", name: "Programlama" },
-	{ id: "education", name: "Eğitim" },
-	{ id: "business", name: "İş Hayatı" },
-	{ id: "creative", name: "Yaratıcılık" },
-	{ id: "research", name: "Araştırma" }
-];
-
 export default function Z3Cs() {
+	const { data: session } = useSession();
 	const [search, setSearch] = useState("");
 	const [selectedCategory, setSelectedCategory] = useState("all");
-	const [isLoading, setIsLoading] = useState(false);
+	const [showingData, setShowingData] = useState<any>(null);
+	const [loading, setLoading] = useState(false);
+	const [open, setOpen] = useState(false);
+	const [isDownloading, setIsDownloading] = useState(false);
+	const [downloaded, setDownloaded] = useState(false);
+	const [liked, setLiked] = useState(false);
+	const [newLiked, setNewLiked] = useState(false);
+	const [editMode, setEditMode] = useState(false);
+	const [formData, setFormData] = useState<any>({
+		name: "",
+		description: "",
+		profile_image: "",
+		instructions: ""
+	});
+	const [createOpen, setCreateOpen] = useState(false);
+	const [createLoading, setCreateLoading] = useState(false);
+	const [createForm, setCreateForm] = useState<any>({
+		name: "",
+		description: "",
+		category: categories[0] || "",
+		profile_image: "",
+		instructions: ""
+	});
+	const [createError, setCreateError] = useState("");
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	useEffect(() => {
+		const appId = searchParams.get("appId");
+		if (appId) fetchApp(appId);
+	}, [searchParams]);
 
-	// Gerçek API çağrısı için hazır
-	const { data, error, mutate } = useSWRApi("/z3cs", {}, {
+	const fetchApp = async (appId: string) => {
+		setDownloaded(false);
+		setOpen(true);
+		setShowingData(null);
+		setLoading(true);
+		setEditMode(false);
+
+		const response = await api(`/z3cs/${appId}`);
+		setShowingData(response.data.data);
+		if (response.data.data.is_downloaded) setDownloaded(true);
+		if (response.data.data.is_liked) setLiked(true);
+		setFormData(response.data.data);
+		setLoading(false);
+	}
+
+	const {
+		data: {
+			data
+		} = {
+			data: {
+				mostLikedAllTimes: [],
+				mostDownloadedAllTimes: [],
+				mostUsedAllTimes: [],
+				categories: [],
+				totalZ3Cs: 0
+			}
+		},
+		isLoading,
+		mutate
+	} = useSWRApi("/z3cs?search=" + search, {}, {
 		revalidateOnFocus: false,
 		revalidateOnReconnect: false,
 		refreshInterval: 30000
 	});
 
-	// Şimdilik mock data kullanıyoruz
-	const z3cs = data?.z3cs || mockZ3Cs;
 
-	const filteredZ3Cs = useMemo(() => {
-		if (!z3cs) return [];
-		return z3cs.filter((z3c: Z3C) => {
-			const matchesSearch = !search || z3c.name.toLowerCase().includes(search.toLowerCase()) ||
-				z3c.description.toLowerCase().includes(search.toLowerCase());
-			const matchesCategory = selectedCategory === "all" || z3c.category === selectedCategory;
-			return matchesSearch && matchesCategory;
-		});
-	}, [z3cs, search, selectedCategory]);
+	const handleDownload = async () => {
+		setIsDownloading(true);
+		api.post(`/z3cs/${showingData?._id.toString()}/download`)
+			.then((res) => {
+				setDownloaded(res.data.data.is_downloaded);
+			})
+			.finally(() => {
+				setIsDownloading(false);
+			});
+	}
 
-	const featuredZ3Cs = z3cs.filter((z3c: Z3C) => z3c.featured);
+	const handleEdit = async () => {
+		setLoading(true);
+		await api.put(`/z3cs/${showingData?._id.toString()}`, formData)
+			.then((res) => {
+				toast.success("Z3C başarıyla düzenlendi");
+				setEditMode(false);
+				setShowingData({ ...showingData, ...formData });
+				mutate();
+			})
+			.catch((err) => {
+				toast.error("Z3C düzenlenirken bir hata oluştu");
+			})
+			.finally(() => {
+				setLoading(false);
+			});
+	}
 
 	return (
-		<div className="flex flex-col h-full w-full max-w-7xl mx-auto p-3 sm:p-6">
-			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
-				<div>
-					<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
-						Z3Cs
-					</h1>
-					<p className="text-sm sm:text-base text-muted max-w-2xl">
-						Farklı görevler için özelleştirilmiş AI asistanlarını keşfet ve kullan. Her biri belirli konularda uzmanlaşmış.
-					</p>
-				</div>
-				<div className="flex items-center gap-3 justify-between sm:justify-end">
-					<span className="text-xs sm:text-sm text-muted bg-secondary px-2 sm:px-3 py-1 rounded-full">
-						{filteredZ3Cs.length} Z3C
-					</span>
-					<Link href="/" className="text-xs sm:text-sm text-orange-500 hover:underline">
-						Ana sayfaya dön
-					</Link>
-				</div>
-			</div>
-
-			{/* Arama */}
-			<input
-				className={cn(
-					"w-full rounded-xl sm:rounded-2xl bg-input outline-none border p-3 sm:p-4 text-sm text-foreground resize-none mb-6",
-					"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
-					"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
-				)}
-				placeholder="Z3C'lerde ara..."
-				type="text"
-				value={search}
-				onChange={(e) => setSearch(e.target.value)}
-			/>
-
-			{/* Kategoriler */}
-			<div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide">
-				{categories.map((category) => (
-					<button
-						key={category.id}
-						onClick={() => setSelectedCategory(category.id)}
-						className={cn(
-							"px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap",
-							selectedCategory === category.id
-								? "bg-orange-500 text-white shadow-sm"
-								: "bg-secondary hover:bg-tertiary text-foreground hover:shadow-sm"
+		<Z3CContext.Provider value={fetchApp}>
+			<div className="flex flex-col w-full max-w-7xl mx-auto p-3 sm:p-6">
+				{/* Header */}
+				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between my-6 sm:mt-0 sm:mb-8 gap-4">
+					<div>
+						<h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1 sm:mb-2">
+							Z3Cs
+						</h1>
+						<p className="text-sm sm:text-base text-muted max-w-2xl">
+							Farklı görevler için özelleştirilmiş AI asistanlarını keşfet ve kullan. Her biri belirli konularda uzmanlaşmış.
+						</p>
+					</div>
+					<div className="flex items-center gap-3 justify-between sm:justify-end">
+						<span className="text-xs sm:text-sm text-muted bg-secondary px-2 sm:px-3 py-1 rounded-full">
+							{data?.totalZ3Cs} Z3C
+						</span>
+						{/* Kullanıcı giriş yaptıysa ve anonim değilse oluştur butonu */}
+						{session?.user && !session.user.isAnonymous && (
+							<Button className="bg-orange-500 text-white hover:bg-orange-600 transition-all" onClick={() => setCreateOpen(true)}>
+								Z3C Oluştur
+							</Button>
 						)}
-					>
-						{category.name}
-					</button>
-				))}
+					</div>
+				</div>
+
+				{/* Arama */}
+				<div className="gap-2 bg-primary pt-6">
+					<input
+						className={cn(
+							"w-full rounded-xl sm:rounded-2xl bg-input outline-none border p-3 sm:p-4 text-sm text-foreground resize-none mb-6",
+							"focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-background",
+							"transition-all duration-200 ease-in-out hover:border-border-hover focus:!bg-input"
+						)}
+						placeholder="Z3C'lerde ara..."
+						type="text"
+						value={search}
+						onChange={(e) => setSearch(e.target.value)}
+					/>
+				</div>
+
+				{isLoading ? (
+					<LoadingState />
+				) : (
+					<div className="flex flex-col gap-12">
+						{search ? (
+							<>
+								<CardGroup
+									title={`\"${search}\" ile ilgili Z3C'ler`}
+									type="featured"
+									data={{
+										isLoading,
+										Z3Cs: data
+									}}
+									observeId="mostLikedAllTimes"
+								/>
+							</>
+						) : (
+							<>
+
+								{/* Featured Section */}
+								<CardGroup
+									title="En çok beğenilen Z3C'ler"
+									type="featured"
+									data={{
+										isLoading,
+										Z3Cs: data?.mostLikedAllTimes
+									}}
+									observeId="mostLikedAllTimes"
+								/>
+
+								<CardGroup
+									title="En çok kullanılan Z3C'ler"
+									type="featured"
+									data={{
+										isLoading,
+										Z3Cs: data?.mostUsedAllTimes
+									}}
+									observeId="mostUsedAllTimes"
+								/>
+
+								<CardGroup
+									title="En çok indirilen Z3C'ler"
+									type="featured"
+									data={{
+										isLoading,
+										Z3Cs: data?.mostDownloadedAllTimes
+									}}
+									observeId="mostDownloadedAllTimes"
+								/>
+
+								{/* Tüm Z3C'ler */}
+								{data?.categories.filter((category: any) => category.id).map((category: any) => (
+									<CardGroup
+										key={category.id}
+										title={category.id}
+										type="standart"
+										data={{
+											isLoading,
+											Z3Cs: category.z3cs
+										}}
+										observeId={category.id}
+									/>
+								))}
+							</>
+
+						)}
+					</div>
+				)}
 			</div>
 
-			{/* Featured Section */}
-			{selectedCategory === "all" && featuredZ3Cs.length > 0 && (
-				<div className="mb-8">
-					<h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">
-						Öne Çıkanlar
-					</h2>
-					<p className="text-sm text-muted mb-6">Bu haftanın seçkin Z3C'leri</p>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-						{featuredZ3Cs.slice(0, 3).map((z3c: Z3C, index: number) => (
-							<div
-								key={z3c.id}
-								className="bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-200/30 rounded-xl sm:rounded-2xl p-4 sm:p-6 hover:shadow-lg transition-all duration-300 cursor-pointer group hover:scale-[1.02] hover:border-orange-300/40 opacity-0 animate-fade-in"
-								style={{ animationDelay: `${index * 150}ms` }}
-							>
-								<div className="flex flex-col gap-3">
-									<div className="flex items-start justify-between">
-										<h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-orange-600 transition-colors duration-200">
-											{z3c.name}
-										</h3>
-										{z3c.popular && (
-											<span className="text-xs bg-orange-500/20 text-orange-600 px-2 py-0.5 rounded-full font-medium">
-												Popüler
-											</span>
+			<Dialog
+				open={open}
+				onOpenChange={setOpen}
+			>
+				<Dialog.Content
+					className="max-h-[calc(100vh-10rem)] overflow-y-auto w-full h-full space-y-6"
+					hiddenHeader
+				>
+					{(loading && !showingData) ? (
+						<div className="flex items-center justify-center h-96">
+							<RotatingLines size={48} color="currentColor" />
+						</div>
+					) : (
+						<div className="flex flex-col gap-4 max-w-sm mx-auto w-full py-12">
+							<div className="w-full flex flex-col items-center text-center">
+								{editMode ? (
+									<div className="w-full flex items-center justify-start gap-2 mb-4">
+										{formData?.profile_image ? (
+											<div className="size-20">
+												<img className="w-full object-contain rounded-full" src={formData?.profile_image} alt={formData?.name} />
+											</div>
+										) : (
+											<div className="group" data-hs-file-upload-previews="" data-hs-file-upload-pseudo-trigger="">
+												<span className="group-has-[div]:hidden flex shrink-0 justify-center items-center size-20 border-2 border-dotted border-gray-300 text-gray-400 cursor-pointer rounded-full hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-600 dark:hover:bg-neutral-700/50">
+													<svg className="shrink-0 size-7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+														<circle cx="12" cy="12" r="10"></circle>
+														<circle cx="12" cy="10" r="3"></circle>
+														<path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+													</svg>
+												</span>
+											</div>
 										)}
+										<input
+											id="upload-photo"
+											type="file"
+											className="opacity-0 pointer-events-none w-0 h-0"
+											accept="image/*"
+											onChange={async (e) => {
+												const file = e.target.files?.[0];
+												if (!file) return;
+
+												const formData = new FormData();
+												formData.append('file', file);
+												formData.append('name', file.name);
+
+												const response = await api.post('/upload?filename=' + file.name, formData, {
+													headers: {
+														'Content-Type': 'multipart/form-data',
+													},
+												});
+
+												if (response.data) {
+													setFormData({ ...formData, profile_image: response.data.url });
+												} else {
+													toast.error("Fotoğraf yüklenirken bir hata oluştu");
+												}
+											}}
+										/>
+										{/* @ts-ignore */}
+										<Button as="label" htmlFor="upload-photo" className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground relative">
+											Upload photo
+										</Button>
 									</div>
-									<p className="text-xs sm:text-sm text-muted leading-relaxed">
-										{z3c.description}
+								) : (
+									showingData?.profile_image && (
+										<img
+											src={showingData?.profile_image}
+											alt={showingData?.name}
+											width={72}
+											height={72}
+											className="rounded-full mb-4"
+										/>
+									)
+								)}
+								{editMode ? (
+									<Input
+										value={formData?.name}
+										onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+									/>
+								) : (
+									<h2 className="text-xl font-bold text-foreground">
+										{showingData?.name}
+									</h2>
+								)}
+								<div className="flex items-center gap-1 my-3">
+									<img
+										src={showingData?.author?.image}
+										alt={showingData?.author?.username}
+										width={16}
+										height={16}
+										className="rounded-full"
+									/>
+									<span className="text-sm text-foreground">
+										{showingData?.author?.username} tarafından
+									</span>
+								</div>
+								{editMode ? (
+									<Input
+										value={formData?.description}
+										onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+									/>
+								) : (
+									<p className="text-sm text-muted leading-relaxed max-w-md">
+										{showingData?.description}
 									</p>
-									<div className="flex items-center justify-between mt-auto pt-2">
-										<span className="text-xs text-orange-600 font-medium">
-											by {z3c.createdBy}
-										</span>
-										<button className="text-xs bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 px-2 sm:px-3 py-1 rounded-lg font-medium transition-all duration-200 hover:scale-105">
-											Kullan
-										</button>
+								)}
+							</div>
+
+							<div className="w-full flex justify-center items-center gap-8 py-6">
+								<div className="text-center">
+									<div className="text-2xl font-bold text-foreground">
+										{new Intl.NumberFormat("tr-TR", {
+											maximumFractionDigits: 1
+										}).format(+(showingData?.likes || 0) + +(newLiked ? (liked ? 1 : (showingData?.likes === 0 ? 0 : -1)) : 0))}
+									</div>
+									<div className="text-xs text-muted">
+										Beğeni
+									</div>
+								</div>
+								<div className="text-center">
+									<div className="text-2xl font-bold text-foreground">
+										#{showingData?.placement}
+									</div>
+									<div className="text-xs text-muted">
+										{showingData?.category} kategorisinde
+									</div>
+								</div>
+								<div className="text-center">
+									<div className="text-2xl font-bold text-foreground">
+										{showingData?.conversations > 999 ? `${Math.floor(showingData?.conversations / 1000)}K+` : showingData?.conversations}
+									</div>
+									<div className="text-xs text-muted">
+										Konuşma
 									</div>
 								</div>
 							</div>
-						))}
-					</div>
-				</div>
-			)}
 
-			{/* Tüm Z3C'ler */}
-			<CardGroup
-				type="standart"
-				category="all"
-				data={{
-					isLoading,
-					Z3Cs: filteredZ3Cs
-				}}
-			/>
-		</div>
+							<div className="w-full">
+								<h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+									Talimatlar
+								</h3>
+								{editMode ? (
+									<Textarea
+										value={formData?.instructions}
+										onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+									/>
+								) : (
+									<div className="space-y-2 bg-secondary rounded-xl p-4">
+										<p className="text-sm text-muted">
+											{showingData?.instructions}
+										</p>
+									</div>
+								)}
+							</div>
+
+							{editMode ? (
+								<div className="w-full flex gap-2">
+									<Button
+										className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground"
+										onClick={() => {
+											setEditMode(false);
+											setFormData(showingData);
+										}}
+									>
+										<Cancel01Icon className="w-4 h-4" />
+										<span>İptal</span>
+									</Button>
+									<Button className="flex-1 rounded-full px-4 h-10" onClick={handleEdit}>
+										<RiSave2Fill className="w-4 h-4" />
+										<span>Değişiklikleri Kaydet</span>
+									</Button>
+								</div>
+							) : (
+								<div className="flex items-center gap-2">
+									<Button
+										className={cn("rounded-full flex-1 h-10 relative", {
+											"bg-green-500 text-foreground": downloaded
+										})}
+										onClick={handleDownload}
+										isLoading={isDownloading}
+									>
+										{downloaded ? "İndirildi" : "İndir"}
+									</Button>
+									<Dropdown>
+										<Dropdown.Trigger asChild>
+											<Button className="rounded-full h-10 w-10 flex-shrink-0 bg-secondary hover:bg-accent text-foreground" size="icon">
+												<MoreVerticalSquare01Icon strokeWidth={2} fill="currentColor" className="w-4 h-4" />
+											</Button>
+										</Dropdown.Trigger>
+										<Dropdown.Content align="end">
+											<Dropdown.Item
+												className="flex items-center justify-start gap-2"
+												onClick={() => {
+													api.post(`/z3cs/${showingData?._id.toString()}/like`)
+														.then((res) => {
+															setNewLiked(true);
+															setLiked(res.data.data.is_liked);
+														});
+												}}
+											>
+												<ThumbsUpIcon className="w-4 h-4" fill={liked ? "currentColor" : "none"} />
+												<span>
+													{liked ? "Beğenildi" : "Beğen"}
+												</span>
+											</Dropdown.Item>
+											<Dropdown.Item
+												onClick={() => {
+													navigator.clipboard.writeText(window.location.href + '?appId=' + showingData?._id.toString());
+												}}
+												className="flex items-center justify-start gap-2"
+											>
+												<Share01Icon className="w-4 h-4" />
+												<span>Paylaş</span>
+											</Dropdown.Item>
+											{session?.user?.id === showingData?.author?._id && (
+												<>
+													<Dropdown.Item
+														onClick={() => {
+															api.delete(`/z3cs/${showingData?._id.toString()}`)
+																.then((res) => {
+																	if (res.data.success) {
+																		toast.success("Z3C başarıyla silindi");
+																		setOpen(false);
+																		mutate();
+																	} else {
+																		toast.error("Z3C silinirken bir hata oluştu");
+																	}
+																});
+														}}
+														className="flex items-center justify-start gap-2"
+													>
+														<Delete02Icon className="w-4 h-4" />
+														<span>Sil</span>
+													</Dropdown.Item>
+													<Dropdown.Item
+														onClick={() => {
+															setEditMode(true);
+														}}
+														className="flex items-center justify-start gap-2"
+													>
+														<Edit02Icon className="w-4 h-4" />
+														<span>Düzenle</span>
+													</Dropdown.Item>
+												</>
+											)}
+										</Dropdown.Content>
+									</Dropdown>
+								</div>
+							)}
+
+							{showingData?.author?.apps?.length > 0 && (
+								<div className="w-full flex flex-col gap-2 mt-4">
+									<p className="text-sm text-muted">
+										{showingData?.author?.username} adlı kullanıcıdan daha fazlası:
+									</p>
+									<div className="flex flex-col gap-1">
+										{showingData?.author?.apps?.map((app: any) => (
+											<div
+												key={app._id.toString()}
+												className="-mx-4 flex flex-col items-start gap-1 px-4 py-3 rounded-xl bg-secondary hover:bg-accent transition-all cursor-pointer"
+												onClick={() => fetchApp(app._id.toString())}
+											>
+												<div className="flex items-center gap-1">
+													<img src={app.profile_image} alt={app.name} width={16} height={16} className="rounded-full" />
+													<p className="text-sm text-foreground">{app.name}</p>
+												</div>
+												<p className="text-xs text-muted">
+													{app.description}
+												</p>
+											</div>
+										))}
+									</div>
+								</div>
+							)}
+						</div>
+					)}
+				</Dialog.Content>
+			</Dialog>
+
+			{/* Create Modal */}
+			<Dialog open={createOpen} onOpenChange={setCreateOpen}>
+				<Dialog.Content className="max-w-md w-full" titleChildren={"Yeni Z3C Oluştur"} descriptionChildren={"Z3C oluşturmak için aşağıdaki alanları doldurun."}>
+					<div className="flex flex-col gap-3">
+						<Input
+							placeholder="Z3C adı"
+							value={createForm.name}
+							onChange={e => setCreateForm({ ...createForm, name: e.target.value })}
+						/>
+						<Input
+							placeholder="Açıklama"
+							value={createForm.description}
+							onChange={e => setCreateForm({ ...createForm, description: e.target.value })}
+						/>
+						<Select
+							value={createForm.category}
+							onValueChange={value => setCreateForm({ ...createForm, category: value })}
+						>
+							{categories.map((cat: any) => (
+								<Select.Item key={cat} value={cat}>{cat}</Select.Item>
+							))}
+						</Select>
+
+						{/* Profil görseli alanı: upload ve url birlikte */}
+						<div className="flex items-center justify-start gap-2">
+							{createForm.profile_image ? (
+								<div className="size-20">
+									<img className="w-full object-contain rounded-full" src={createForm.profile_image} alt="Profil" />
+								</div>
+							) : (
+								<div className="group" data-hs-file-upload-previews="" data-hs-file-upload-pseudo-trigger="">
+									<span className="group-has-[div]:hidden flex shrink-0 justify-center items-center size-20 border-2 border-dotted border-gray-300 text-gray-400 cursor-pointer rounded-full hover:bg-gray-50 dark:border-neutral-700 dark:text-neutral-600 dark:hover:bg-neutral-700/50">
+										<svg className="shrink-0 size-7" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+											<circle cx="12" cy="12" r="10"></circle>
+											<circle cx="12" cy="10" r="3"></circle>
+											<path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path>
+										</svg>
+									</span>
+								</div>
+							)}
+							<input
+								id="create-upload-photo"
+								type="file"
+								className="opacity-0 pointer-events-none w-0 h-0"
+								accept="image/*"
+								onChange={async (e) => {
+									const file = e.target.files?.[0];
+									if (!file) return;
+
+									setCreateLoading(true);
+									const formData = new FormData();
+									formData.append('file', file);
+									formData.append('name', file.name);
+
+									try {
+										const response = await api.post('/upload?filename=' + file.name, formData, {
+											headers: {
+												'Content-Type': 'multipart/form-data',
+											},
+										});
+
+										if (response.data) {
+											setCreateForm({ ...createForm, profile_image: response.data.url });
+										} else {
+											toast.error("Fotoğraf yüklenirken bir hata oluştu");
+										}
+									} catch (error) {
+										toast.error("Fotoğraf yüklenirken bir hata oluştu");
+									} finally {
+										setCreateLoading(false);
+									}
+								}}
+							/>
+							{/* @ts-ignore */}
+							<Button as="label" htmlFor="create-upload-photo" className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground relative">
+								Fotoğraf Yükle
+							</Button>
+						</div>
+						<Textarea
+							placeholder="Talimatlar"
+							value={createForm.instructions}
+							onChange={e => setCreateForm({ ...createForm, instructions: e.target.value })}
+						/>
+						{createError && <div className="text-red-500 text-sm">{createError}</div>}
+					</div>
+					<div className="flex gap-2 mt-6">
+						<Button className="rounded-full h-10 px-4 bg-secondary hover:bg-accent text-foreground" onClick={() => setCreateOpen(false)} disabled={createLoading}>İptal</Button>
+						<Button className="flex-1 bg-orange-500 text-white hover:bg-orange-600" isLoading={createLoading} onClick={async () => {
+							setCreateLoading(true);
+							setCreateError("");
+							try {
+								const res = await api.post("/z3cs", createForm);
+								if (res.data.success) {
+									setCreateOpen(false);
+									setCreateForm({ name: "", description: "", category: categories[0] || "", profile_image: "", instructions: "" });
+									mutate();
+									toast.success("Z3C başarıyla oluşturuldu");
+								} else {
+									setCreateError("Bir hata oluştu");
+								}
+							} catch (e) {
+								setCreateError("Bir hata oluştu");
+							} finally {
+								setCreateLoading(false);
+							}
+						}}>
+							Oluştur
+						</Button>
+					</div>
+				</Dialog.Content>
+			</Dialog>
+		</Z3CContext.Provider >
 	);
 }
 
-function EmptyState() {
+function EmptyState({ category }: { category: string }) {
 	return (
 		<div className="flex flex-col items-center justify-center h-64 border border-dotted border-border rounded-2xl transition-all duration-300 hover:border-orange-200/50">
 			<div className="w-16 h-16 bg-secondary rounded-full mb-4 opacity-50 transition-all duration-300" />
 			<h3 className="text-muted-foreground text-lg font-medium mb-2">Z3C bulunamadı</h3>
 			<p className="text-muted-foreground text-sm text-center max-w-md">
-				Aradığınız kriterlere uygun Z3C bulunamadı. Arama terimini değiştirmeyi veya kategori filtresini kaldırmayı deneyin.
+				{category} kategorisinde henüz Z3C bulunamadı.
 			</p>
 		</div>
 	);
@@ -228,21 +655,17 @@ function EmptyState() {
 
 function LoadingState() {
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-			{Array.from({ length: 8 }).map((_, index) => (
-				<div key={index} className="bg-secondary rounded-2xl p-5 animate-pulse">
-					<div className="flex items-start justify-between mb-3">
-						<div className="h-4 bg-secondary/50 rounded flex-1 mr-2" />
-						<div className="h-5 bg-secondary/50 rounded w-12" />
-					</div>
-					<div className="space-y-2 mb-4">
-						<div className="h-3 bg-secondary/50 rounded" />
-						<div className="h-3 bg-secondary/50 rounded" />
-						<div className="h-3 bg-secondary/50 rounded w-3/4" />
-					</div>
-					<div className="flex items-center justify-between">
-						<div className="h-3 bg-secondary/50 rounded w-16" />
-						<div className="h-6 bg-secondary/50 rounded w-12" />
+		<div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+			{Array.from({ length: 10 }).map((_, index) => (
+				<div key={index} className="bg-secondary rounded-2xl overflow-hidden h-40">
+					<div className="w-full h-full bg-secondary/50 shimmer" />
+					<div className="p-4 space-y-3">
+						<div className="h-4 bg-secondary/50 shimmer rounded" />
+						<div className="h-3 bg-secondary/50 shimmer rounded w-2/3" />
+						<div className="flex gap-2 mt-4">
+							<div className="h-8 bg-secondary/50 shimmer rounded flex-1" />
+							<div className="h-8 bg-secondary/50 shimmer rounded flex-1" />
+						</div>
 					</div>
 				</div>
 			))}
@@ -251,23 +674,23 @@ function LoadingState() {
 }
 
 function CardGroup({
-	category,
+	title,
 	type = "standart",
-	data
+	data,
+	observeId
 }: {
-	category: string,
+	title: string,
 	type?: "standart" | "featured",
-	data: any
+	data: any,
+	observeId?: string
 }) {
 	const { isLoading, Z3Cs, } = data;
-	const c = categories.find(c => c.id === category) || { id: "all", name: "Tüm Z3C'ler" };
 
 	return (
-
-		<div className="flex-1 overflow-y-auto">
+		<div className="flex-1" data-observe-id={observeId}>
 			<div className="flex items-center justify-between mb-4">
 				<h2 className="text-lg sm:text-xl font-bold text-foreground">
-					{c?.name}
+					{title}
 				</h2>
 			</div>
 
@@ -275,13 +698,66 @@ function CardGroup({
 				<LoadingState />
 			) : (
 				!Z3Cs || Z3Cs?.length === 0 ? (
-					<EmptyState />
+					<EmptyState category={title || ""} />
 				) : (
-					<pre>
-						{JSON.stringify(Z3Cs, null, 2)}
-					</pre>
+					type === "standart" ? (
+						<StandartCard data={data.Z3Cs} />
+					) : (
+						<StandartCard data={data.Z3Cs} />
+					)
 				)
 			)}
 		</div>
 	);
+}
+
+function StandartCard({ data }: { data: any }) {
+	const fetchApp = useZ3C();
+
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+			{data.map((z3c: any, index: number) => (
+				<div
+					key={z3c._id.toString()}
+					className="bg-secondary hover:bg-tertiary border-2 border-transparent rounded-xl sm:rounded-2xl p-4 sm:p-5 transition-all duration-300 cursor-pointer"
+					onClick={() => fetchApp(z3c._id.toString())}
+				>
+					{/* Header */}
+					<div className="flex items-start justify-between mb-3">
+						<div className="flex items-center gap-2">
+							{z3c.profile_image && (
+								<img
+									src={z3c.profile_image}
+									alt={z3c.name}
+									width={36}
+									height={36}
+									className="rounded-full"
+								/>
+							)}
+							<h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-orange-600 transition-colors duration-200 flex-1 pr-2">
+								{z3c.name}
+							</h3>
+						</div>
+						{z3c.popular && (
+							<span className="text-xs bg-orange-500/10 text-orange-600 px-2 py-0.5 rounded-full font-medium whitespace-nowrap">
+								Popüler
+							</span>
+						)}
+					</div>
+
+					{/* Description */}
+					<p className="text-xs sm:text-sm text-muted leading-relaxed mb-4 line-clamp-3 text-left">
+						{z3c.description}
+					</p>
+
+					{/* Footer */}
+					<div className="flex items-center justify-between">
+						<span className="text-xs text-muted">
+							by {z3c.author.username}
+						</span>
+					</div>
+				</div>
+			))}
+		</div>
+	)
 }

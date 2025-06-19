@@ -66,7 +66,22 @@ export default function PromptInput({
 	const autoSubmit = useAutoSubmit((state) => state.autoSubmit);
 	const isCreatingConversation = useIsConversationCreating(state => state.isCreatingConversation);
 	const [usageWarning, setUsageWarning] = useState<boolean>(false);
+	const [usageWarningDismissed, setUsageWarningDismissed] = useState<boolean>(false);
 	const { messages: allMessages } = useMessages();
+
+	// localStorage'dan dismiss durumunu yükle
+	useEffect(() => {
+		const dismissed = localStorage.getItem('usage-warning-dismissed');
+		if (dismissed === 'true') {
+			setUsageWarningDismissed(true);
+		}
+	}, []);
+
+	// Uyarıyı dismiss etme fonksiyonu
+	const dismissUsageWarning = useCallback(() => {
+		setUsageWarningDismissed(true);
+		localStorage.setItem('usage-warning-dismissed', 'true');
+	}, []);
 
 	const { handleSubmit } = useChat({
 		isResponding,
@@ -94,13 +109,18 @@ export default function PromptInput({
 		const WARNING_THRESHOLD = 20; // 20%
 
 		if (promptEnhancementPercentage <= WARNING_THRESHOLD || modelUsagePercentage <= WARNING_THRESHOLD) {
-			if (usageWarning) return;
+			if (usageWarning || usageWarningDismissed) return;
 			setUsageWarning(true);
 		} else {
 			if (!usageWarning) return;
 			setUsageWarning(false);
+			// Kullanıcının limitleri yenilendiyse dismiss durumunu sıfırla
+			if (usageWarningDismissed) {
+				setUsageWarningDismissed(false);
+				localStorage.removeItem('usage-warning-dismissed');
+			}
 		}
-	}, [usages, t, setUsageWarning, usageWarning, isLoading, error]);
+	}, [usages, t, setUsageWarning, usageWarning, usageWarningDismissed, isLoading, error]);
 
 	const handleChange = useCallback(
 		(e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -169,11 +189,11 @@ export default function PromptInput({
 	);
 
 	const showTopBar = useMemo(() => {
-		if ((alert && alert.length > 0) || usageWarning || attachments.length > 0) {
+		if ((alert && alert.length > 0) || (usageWarning && !usageWarningDismissed) || attachments.length > 0) {
 			return true;
 		}
 		return false;
-	}, [attachments, alert, usageWarning]);
+	}, [attachments, alert, usageWarning, usageWarningDismissed]);
 
 	return (
 		<motion.div className={cn("relative w-full max-w-2xl bg-border border rounded-2xl", className)} ref={inputContainerRef} layout>
@@ -181,23 +201,24 @@ export default function PromptInput({
 			<AnimatePresence>
 				{showTopBar && (
 					<motion.div
-						className="bg-input-darker absolute bottom-full left-0 right-0 pb-7 -mb-6 rounded-t-2xl space-y-2"
+						className="bg-input-darker absolute bottom-full left-0 right-0 pb-8 -mb-6 rounded-t-2xl space-y-2 flex flex-col"
 						initial="initial"
 						animate="animate"
 						exit="exit"
 						variants={{
-							initial: { opacity: 0, maxHeight: 0 },
-							animate: { opacity: 1, maxHeight: "100px" },
-							exit: { opacity: 0, maxHeight: 0 },
+							initial: { opacity: 0, maxHeight: 0, paddingTop: 0, paddingBottom: 0 },
+							animate: { opacity: 1, maxHeight: "300px", paddingTop: "1rem", paddingBottom: "2rem" },
+							exit: { opacity: 0, maxHeight: 0, paddingTop: 0, paddingBottom: 0 },
 						}}
+						transition={{ duration: 0.3, ease: "easeInOut" }}
 					>
 						<AnimatePresence mode="popLayout">
-							{usageWarning && (
+							{usageWarning && !usageWarningDismissed && (
 								<motion.div
 									key={`usage-warning`}
 									className="text-sm"
 									initial={{ opacity: 0, y: 5, maxHeight: 0 }}
-									animate={{ opacity: 1, y: 0, maxHeight: "100px" }}
+									animate={{ opacity: 1, y: 0, maxHeight: "80px" }}
 									exit={{
 										opacity: 0,
 										y: 5,
@@ -209,9 +230,30 @@ export default function PromptInput({
 										<p className="text-sm">
 											{t("Usage_Warning")}
 										</p>
-										<Button href="/settings/usage" className="w-fit whitespace-nowrap">
-											{t("Check_Usage")}
-										</Button>
+										<div className="flex items-center gap-2">
+											<Button href="/settings/usage" className="w-fit whitespace-nowrap">
+												{t("Check_Usage")}
+											</Button>
+											<button
+												onClick={dismissUsageWarning}
+												className="ml-2 text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-secondary"
+												aria-label="Uyarıyı kapat"
+											>
+												<svg
+													width="16"
+													height="16"
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													strokeWidth="2"
+													strokeLinecap="round"
+													strokeLinejoin="round"
+												>
+													<line x1="18" y1="6" x2="6" y2="18"></line>
+													<line x1="6" y1="6" x2="18" y2="18"></line>
+												</svg>
+											</button>
+										</div>
 									</div>
 								</motion.div>
 							)}
@@ -220,7 +262,7 @@ export default function PromptInput({
 									key="alert"
 									className="text-sm"
 									initial={{ opacity: 0, y: 5, maxHeight: 0 }}
-									animate={{ opacity: 1, y: 0, maxHeight: "100px" }}
+									animate={{ opacity: 1, y: 0, maxHeight: "120px" }}
 									exit={{
 										opacity: 0,
 										y: 5,
@@ -247,8 +289,7 @@ export default function PromptInput({
 								transition={{ duration: 0.25, ease: "easeOut" }}
 							>
 								<motion.div
-									className="flex items-center gap-2 px-4 py-3 select-none drag-none overflow-x-auto"
-									style={textareaStyles}
+									className="flex items-center gap-2 px-4 py-3 select-none drag-none overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border hover:scrollbar-thumb-border-hover"
 									initial="initial"
 									animate="animate"
 									transition={{

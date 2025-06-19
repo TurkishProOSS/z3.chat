@@ -76,8 +76,6 @@ export const getModels = async (session?: SessionData) => {
 		return acc;
 	}, {});
 
-	console.log(imageModels);
-
 	return {
 		languageModels: Object.assign({
 			"title-0": z3c.chat("google/gemma-3n-e4b-it:free"),

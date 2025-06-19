@@ -18,6 +18,7 @@ import { useAlertStore } from "@/stores/use-alert";
 import { useAgentFeatureStore } from "@/stores/use-feature-store";
 import { useAttachmentsStore } from "@/stores/use-attachments";
 import { useIsConversationCreating } from "@/stores/use-is-conversation-creating";
+import { useZ3cSelectionStore } from "@/stores/use-z3cs-select";
 
 export const useChat = (options?: UseChatOptions) => {
 	const router = useRouter();
@@ -31,6 +32,7 @@ export const useChat = (options?: UseChatOptions) => {
 	const features = useAgentFeatureStore((state) => state.features);
 	const attachments = useAttachmentsStore((state) => state.attachments);
 	const setAttachments = useAttachmentsStore((state) => state.setAttachments);
+	const selectedZ3C = useZ3cSelectionStore((state) => state.selectedZ3C);
 
 	const autoSubmit = useAutoSubmit(state => state.autoSubmit);
 	const setAutoSubmit = useAutoSubmit(state => state.setAutoSubmit);
@@ -103,7 +105,7 @@ export const useChat = (options?: UseChatOptions) => {
 	const sendMessage = useCallback(async (cId?: string) => {
 		if (options?.disableSubmittion) return;
 		if (isEnhancing) return;
-		if (!prompt) return;
+		if (!prompt && attachments.length === 0) return;
 		const $prompt = prompt;
 
 		setPrompt("");
@@ -118,7 +120,8 @@ export const useChat = (options?: UseChatOptions) => {
 				model: model?.id as string,
 				prompt,
 				modelOptions: features,
-				attachments
+				attachments,
+				z3cId: selectedZ3C?._id || null
 			}, {
 				adapter: 'fetch',
 				responseType: "stream"
@@ -155,7 +158,7 @@ export const useChat = (options?: UseChatOptions) => {
 	};
 
 	const handleSubmit = useCallback(async () => {
-        if (options?.disableSubmittion) return;
+		if (options?.disableSubmittion) return;
 		if (isEnhancing) return;
 
 		const conversationId = params?.conversationId as string;

@@ -12,7 +12,6 @@ const Z3CsSchema = new Schema({
 	// Basit kategori - artık opsiyonel
 	category: {
 		type: String,
-		enum: categories,
 		default: null
 	},
 

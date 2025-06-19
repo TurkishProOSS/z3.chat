@@ -12,7 +12,7 @@ export const POST = async (
 	request: NextRequest
 ) => {
 	return await withAuth(async (session) => {
-        let fn: any;
+		let fn: any;
 
 		try {
 			const ip = ipAddress(request) || (!session?.user?.isAnonymous ? session?.user?.id : (process.env.NODE_ENV === 'development' ? '127.0.0.1' : ''));
@@ -30,13 +30,13 @@ export const POST = async (
 
 			const { success, remaining, limit, reset } = await ratelimit.limit(`prompt-enhancement:${md5(ip)}`);
 
-            const increaseLimit = async () => {
-                const key = `prompt-enhancement:${md5(ip)}`;
-                await ratelimit.resetUsedTokens(key);
-                await Promise.all(Array.from({ length: (session?.user?.usage_enhance || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
-            };
+			const increaseLimit = async () => {
+				const key = `prompt-enhancement:${md5(ip)}`;
+				await ratelimit.resetUsedTokens(key);
+				await Promise.all(Array.from({ length: (session?.user?.usage_enhance || 20) - (remaining + 1) }).map(() => ratelimit.limit(key)));
+			};
 
-            fn = increaseLimit;
+			fn = increaseLimit;
 
 			if (!success) {
 				return Response.json({
@@ -66,6 +66,7 @@ export const POST = async (
 						content: `
 Enhance the following user prompt by making it more clear, concise, and descriptive. The enhanced prompt should maintain the original intent and context of the user's request. Avoid using special characters and keep it in the same language as the original prompt.
 Write in the same language as the original prompt.
+- just return the enhanced prompt, no other text
 
 Here is the original prompt:
 ${prompt}
@@ -77,7 +78,7 @@ ${prompt}
 			});
 
 			if (!response || !response.text) {
-                await increaseLimit();
+				await increaseLimit();
 
 				return Response.json({
 					success: false,
@@ -101,7 +102,7 @@ ${prompt}
 				}
 			});
 		} catch (error) {
-            if (fn) await fn();
+			if (fn) await fn();
 
 			return Response.json({
 				success: false,

@@ -401,16 +401,27 @@ function UserMessage({ parts, attachments }: {
 	parts: UIMessage['parts'];
 	attachments: AdditionalParts['experimental_attachments'];
 }) {
+	const prt = useMemo(() => {
+		return parts.filter((e: any) => e.text !== '.' || e.text.trim().length > 0).map((e: any) => {
+			if (e.text === '.') return null;
+			if (e.text.trim().length === 0) return null;
+			return e;
+		}).filter((e: any) => e !== null);
+	}, [parts]);
+
 	return (
 		<div className="ml-auto flex flex-col gap-2">
 			{attachments && (
 				<FileMessage attachments={attachments} />
 			)}
-			<div className="p-4 rounded-2xl rounded-br-none w-fit ml-auto bg-secondary border">
-				{parts.map((part, index) => (
-					part.type === 'text' && <p key={part.text + index} className="text-foreground">{part.text}</p>
-				))}
-			</div>
+			{prt
+				.length > 0 && (
+					<div className="p-4 rounded-2xl rounded-br-none w-fit ml-auto bg-secondary border">
+						{prt.map((part, index) => (
+							part.type === 'text' && <p key={part.text + index} className="text-foreground">{part.text}</p>
+						))}
+					</div>
+				)}
 		</div>
 	);
 }

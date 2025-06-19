@@ -32,16 +32,20 @@ export const AuthProvider = ({
 	} = authClient.useSession();
 
 	useEffect(() => {
-		if (isPending) return;
-		if (error) {
-			console.error("Error fetching session:", error);
-			setSession(null);
-			return;
-		}
+		try {
+			if (isPending) return;
+			if (error) {
+				setSession(null);
+				return;
+			}
 
-		if (data) {
-			setSession(data as SessionData);
-		} else {
+			if (data) {
+				setSession(JSON.parse(JSON.stringify(data)) as SessionData);
+			} else {
+				setSession(null);
+			}
+		} catch (error) {
+			console.error("Error fetching session:", error);
 			setSession(null);
 		}
 	}, [isPending, data, error]);

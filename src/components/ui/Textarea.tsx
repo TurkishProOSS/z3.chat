@@ -141,8 +141,10 @@ export default function Textarea({
 					className={cn([
 						"w-full bg-transparent outline-none text-sm text-foreground px-4 resize-none",
 						"transition-all duration-200 ease-in-out",
-						"pt-6 pb-4 leading-relaxed"
+						"leading-relaxed"
 					], {
+						"pt-6 pb-4": label,
+						"py-4": !label,
 						"overflow-hidden": !disableAutosize
 					})}
 					rows={disableAutosize ? minRows : undefined}

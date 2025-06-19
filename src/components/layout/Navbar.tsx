@@ -29,12 +29,14 @@ export default function Navbar({
 	showChat = false,
 	rightContent,
 	leftContent,
-	sub
+	sub,
+	hiddenMenu
 }: {
 	showChat?: boolean;
 	rightContent?: React.ReactNode;
 	leftContent?: React.ReactNode;
 	sub?: string;
+	hiddenMenu?: boolean;
 }) {
 	const pathname = usePathname();
 	const params = useParams();
@@ -88,11 +90,13 @@ export default function Navbar({
 		})}>
 			{/* <span className="fixed top-0 left-0 right-0 h-16 bg-primary lg:hidden -z-1" /> */}
 			<div className="flex items-center gap-2">
-				<div className="lg:hidden w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-					<button onClick={toggleSidebar} className="!outline-none !ring-0 !border-0 !bg-transparent cursor-pointer select-none text-foreground">
-						<RiMenuLine size={20} />
-					</button>
-				</div>
+				{!hiddenMenu && (
+					<div className="lg:hidden w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
+						<button onClick={toggleSidebar} className="!outline-none !ring-0 !border-0 !bg-transparent cursor-pointer select-none text-foreground">
+							<RiMenuLine size={20} />
+						</button>
+					</div>
+				)}
 				<Link href="/">
 					<h1 className="text-lg lg:hidden font-medium text-foreground">
 						z3c<span className="font-normal opacity-50">.dev</span>
@@ -107,10 +111,17 @@ export default function Navbar({
 				<AnimatePresence>
 					{title && (
 						<motion.h1
-							className="hidden lg:block text-lg font-medium text-foreground"
+							className="hidden lg:block text-lg font-medium text-foreground max-w-sm line-clamp-1"
 							initial={{ opacity: 0, y: -10 }}
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: -10 }}
+							style={{
+								WebkitLineClamp: 1,
+								WebkitBoxOrient: 'vertical',
+								overflow: 'hidden',
+								textOverflow: 'ellipsis',
+								display: '-webkit-box',
+							}}
 						>
 							{title}
 						</motion.h1>

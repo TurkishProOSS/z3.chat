@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes, forwardRef } from 'react';
+import React, { AnchorHTMLAttributes, ButtonHTMLAttributes, forwardRef, InputHTMLAttributes, LabelHTMLAttributes } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import Link, { LinkProps } from 'next/link';
 import Ink from 'react-ink';
@@ -40,7 +40,7 @@ export interface ButtonProps
 	linkProps?: Omit<LinkProps, 'href'>;
 	target?: "_blank" | "_self";
 	as?: React.ElementType; // 'button' veya 'a' gibi farklı element tipleri için
-}
+};
 
 const Button = forwardRef<HTMLElement, ButtonProps>(
 	({ as = 'button', className, href, variant = "default", size = "default", isLoading = false, children, startIcon, linkProps, ...props }, ref) => {

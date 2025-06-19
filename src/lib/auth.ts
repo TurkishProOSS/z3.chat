@@ -82,6 +82,24 @@ export const auth = betterAuth({
 				input: true,
 				default: []
 			},
+			downloaded_z3cs: {
+				type: 'string[]',
+				references: {
+					model: 'z3cs',
+					field: '_id'
+				},
+				input: false,
+				default: []
+			},
+			liked_z3cs: {
+				type: 'string[]',
+				references: {
+					model: 'z3cs',
+					field: '_id'
+				},
+				input: false,
+				default: []
+			}
 		}
 	},
 	databaseHooks: {
@@ -98,7 +116,10 @@ export const auth = betterAuth({
 							usage_enhance: 5,
 							bio: "",
 							interests: "",
-							tone: ""
+							tone: "",
+							downloaded_z3cs: [],
+							liked_z3cs: [],
+							pinned_agents: []
 						});
 					}
 
@@ -126,7 +147,10 @@ export const auth = betterAuth({
 							usage_enhance: 20,
 							bio: "",
 							interests: "",
-							tone: ""
+							tone: "",
+							downloaded_z3cs: [],
+							liked_z3cs: [],
+							pinned_agents: []
 						}),
 					};
 				}

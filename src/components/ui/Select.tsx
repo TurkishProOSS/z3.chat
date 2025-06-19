@@ -24,7 +24,7 @@ function SelectComp({
 	return (
 		<Select.Root {...props}>
 			{SelectTriggerComponent ? SelectTriggerComponent : (
-				<Select.Trigger {...triggerProps} className={cn("cursor-pointer hover:bg-tertiary transition-all bg-secondary border p-3 text-sm min-w-48 justify-between rounded-xl outline-none flex items-center space-x-2", triggerProps.className || '')}>
+				<Select.Trigger {...triggerProps} className={cn("cursor-pointer hover:bg-secondary transition-all bg-input border h-14 px-4 text-sm min-w-48 justify-between rounded-2xl outline-none flex items-center space-x-2", triggerProps.className || '')}>
 					<Select.Value placeholder={placeholder} />
 					<Select.Icon className="text-muted data-[state=open]:rotate-180 transition-transform ml-auto">
 						<RiArrowDownSLine />
@@ -33,7 +33,7 @@ function SelectComp({
 			)}
 			<Select.Portal>
 				<Select.Content
-					className={cn("bg-popover border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl", [
+					className={cn("bg-popover border rounded-xl p-1 w-[var(--radix-select-trigger-width)] min-w-64 shadow-xl z-50", [
 
 						"data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
 						"data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2",

@@ -1,9 +1,9 @@
 "use client";
 
-import { RiAppsFill, RiAppsLine, RiHistoryFill, RiHistoryLine, RiHome3Fill, RiHome3Line, RiExpandRightLine, RiImage2Line, RiImage2Fill, RiSearch2Line, RiSearch2Fill } from '@remixicon/react';
+import { RiExpandRightLine } from '@remixicon/react';
 import { useClientFunctions } from '@/hooks/use-client-functions';
 import { redirect, usePathname } from 'next/navigation';
-import { CustomizeIcon, Delete01Icon, FolderLibraryIcon, Home01Icon, PinIcon, WorkHistoryIcon } from 'hugeicons-react';
+import { Brain01Icon, CustomizeIcon, Delete01Icon, FolderLibraryIcon, Home01Icon, PinIcon, WorkHistoryIcon } from 'hugeicons-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useExpandStore } from '@/stores/use-expand';
 import { useEffect, useId, useMemo, useState } from 'react';
@@ -68,6 +68,7 @@ export default function Sidebar() {
 	const items = [
 		{ icon: Home01Icon, label: 'New Chat', path: '/' },
 		{ icon: FolderLibraryIcon, label: "Library", path: '/library' },
+		{ icon: Brain01Icon, label: "Models", path: '/models' },
 		// { type: 'spacer' },
 		{ icon: WorkHistoryIcon, label: 'Chat History', path: '/chats' },
 		{ icon: CustomizeIcon, label: "Z3Cs", path: '/z3cs', badge: 'NEW' }

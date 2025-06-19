@@ -1,6 +1,7 @@
 import { AgentModel } from "@/database/models/Models";
 import { AgentModel as TAgentModel } from "@/lib/definitions";
 import { withAuth } from "@/middleware/withAuth";
+import { isValidObjectId } from "mongoose";
 import { ObjectId } from "mongoose";
 import { type NextRequest } from 'next/server';
 
@@ -10,12 +11,7 @@ export const GET = async (
 ) => {
 	return await withAuth(async (session) => {
 		const userPinnedAgents = session?.user?.pinned_agents || [];
-
-		const page = request.nextUrl.searchParams.get("page") || "1";
-		const limit = request.nextUrl.searchParams.get("limit") || "10";
-		const skip = (parseInt(page) - 1) * parseInt(limit);
-
-		const userPinnedAgentsWithFallback = userPinnedAgents.length > 0 ? userPinnedAgents : [
+		const fallbackModels = [
 			"google/imagen-4-ultra",
 			"deepseek/deepseek-chat-v3-0324:free",
 			"deepseek/deepseek-r1-0528:free",
@@ -35,6 +31,8 @@ export const GET = async (
 			"google/gemini-2.5-flash-preview"
 		];
 
+		const userPinnedAgentsWithFallback = userPinnedAgents.length > 0 ? userPinnedAgents : fallbackModels;
+
 		type Model = TAgentModel & any;
 
 		const fallbackModel: Model | null = await AgentModel.findOne({
@@ -48,20 +46,22 @@ export const GET = async (
 			}, { status: 404 });
 		}
 
-		const selectionInput = request.nextUrl.searchParams.get("selection") == "1";
-		const selector: Record<string, any> = selectionInput ? {
-			openRouterId: {
-				$in: [
-					fallbackModel.openRouterId
-				].concat(userPinnedAgentsWithFallback.filter(id => id !== fallbackModel.openRouterId))
-			},
-		} : {};
+		const $in = [
+			fallbackModel.openRouterId
+		].concat(userPinnedAgentsWithFallback.filter((id: any) => (id !== fallbackModel.openRouterId) && (id !== fallbackModel._id)));
+
+		const objectIds = $in.map(id => isValidObjectId(id) ? id : null).filter(id => id !== null);
+		const openRouterIds = $in.map(id => !isValidObjectId(id) ? id : null).filter(id => id !== null);
+
+		const selector: Record<string, any> = {
+			$or: [
+				{ openRouterId: { $in: openRouterIds } },
+				{ _id: { $in: objectIds } }
+			]
+		};
 
 
 		let agents = await AgentModel.find(selector)
-			.sort({ createdAt: -1 })
-			.skip(+(selectionInput ? 0 : skip))
-			.limit(+(selectionInput ? (userPinnedAgents.length > 0 ? 10 : 1000) : limit))
 			.lean()
 			.exec();
 

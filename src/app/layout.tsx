@@ -42,8 +42,8 @@ export default async function RootLayout({
 }>) {
 	const cookieList = await cookies();
 	const locale = await getLocale();
-	const init = await initZ3();
-    
+	const init = await initZ3(cookieList.toString());
+
 	const session = await auth.api.getSession({
 		headers: {
 			'Cookie': cookieList.toString()
@@ -53,7 +53,7 @@ export default async function RootLayout({
 	return (
 		<html lang={locale} suppressHydrationWarning>
 			<body className={`${Object.values(mainFonts).map(f => f.variable).join(' ')} ${pixelTheme.variable} antialiased overflow-x-hidden`}>
-				<AuthProvider initialSession={session as SessionData | null}>
+				<AuthProvider initialSession={JSON.parse(JSON.stringify(session)) as SessionData | null}>
 					<Z3Provider z3={init}>
 						<ThemeProvider themes={["light", "dark", "pixel"]} attribute={"class"} defaultTheme="system" enableSystem>
 							<NextIntlClientProvider>

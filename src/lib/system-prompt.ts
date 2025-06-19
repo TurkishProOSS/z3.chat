@@ -1,5 +1,9 @@
 export const systemPrompt = ({
-	extensions = [],
+	z3c = {
+		name: '',
+		description: '',
+		instructions: '',
+	},
 	preferences = {
 		interests: '',
 		tone: '',
@@ -12,7 +16,11 @@ export const systemPrompt = ({
 		country: '',
 	},
 }: {
-	extensions?: string[];
+	z3c?: {
+		name?: string;
+		description?: string;
+		instructions?: string;
+	};
 	preferences?: {
 		interests?: string;
 		tone?: string;
@@ -30,9 +38,12 @@ export const systemPrompt = ({
 		"You are a highly advanced AI assistant with the following capabilities:",
 	];
 
-	if (extensions.length > 0) {
+	if (z3c.name || z3c.description || z3c.instructions) {
 		basePrompt.push(
-			`1. **Extensions**: You can use the following extensions to enhance your responses: ${extensions.join(', ')}.`
+			`1. **Z3C**: You are using a Z3C. The Z3C is ${z3c.name}.` +
+			(z3c.description ? ` - Z3C Description: ${z3c.description}.` : '') +
+			(z3c.instructions ? ` - Z3C Instructions: ${z3c.instructions}.` : '') +
+			(z3c.instructions ? `You should follow the Z3C Instructions strictly.` : '')
 		);
 	}
 
